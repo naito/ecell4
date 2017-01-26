@@ -19,13 +19,23 @@ public:
 
 public:
 
-    StructureType(
-        const Species& species, VoxelPool* location,
-        const Real& radius = 0.0, const Shape::dimension_kind& dimension=Shape::UNDEF)
-        : base_type(species, location, radius, 0),
+    StructureType(const Species& species,
+                  VoxelPool* location,
+                  const Real& radius = 0.0,
+                  const Shape::dimension_kind& dimension=Shape::UNDEF)
+        : base_type(species, location, radius, /* D = */0),
           dimension_(std::min(dimension, location->get_dimension()))
     {
         ;
+    }
+
+    static StructureType* allocVacant(const std::string& serial,
+                                      const Shape::dimension_kind& dimension)
+    {
+        return new StructureType(/* species   = */ Species(serial, "0", "0"),
+                                 /* location  = */ NULL,
+                                 /* radius    = */ 0,
+                                 /* dimension = */ dimension);
     }
 
     virtual ~StructureType()

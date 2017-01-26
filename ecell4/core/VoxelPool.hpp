@@ -107,7 +107,8 @@ public:
 
     bool is_vacant() const
     {
-        return voxel_type() == VACANT;
+        // return voxel_type() == VACANT;
+        return location() == NULL;
     }
 
     bool is_structure() const
