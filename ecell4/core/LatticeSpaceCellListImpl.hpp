@@ -8,7 +8,7 @@
 #include <sstream>
 
 #include "comparators.hpp"
-#include "LatticeSpaceBase.hpp"
+#include "LatticeSpace.hpp"
 
 namespace ecell4
 {
@@ -18,18 +18,16 @@ inline unsigned int ceilint(const unsigned int x, const unsigned int y)
     return x / y + (x % y != 0);
 }
 
-class LatticeSpaceCellListImpl
-    : public LatticeSpaceBase
+class LatticeSpaceCellListImpl : public LatticeSpace
 {
 public:
 
-    typedef LatticeSpaceBase base_type;
+    typedef LatticeSpace base_type;
 
     typedef base_type::coordinate_id_pair_type coordinate_id_pair_type;
     typedef base_type::coordinate_type coordinate_type;
 
-    typedef std::vector<std::pair<VoxelPool*, coordinate_type> >
-        cell_type;
+    typedef std::vector<std::pair<VoxelPool*, coordinate_type> > cell_type;
     typedef std::vector<cell_type> matrix_type;
     typedef std::map<Species, boost::shared_ptr<const Shape> > structure_container_type;
 
@@ -39,10 +37,6 @@ protected:
         Species, boost::shared_ptr<VoxelPool> >::type voxel_pool_map_type;
     typedef utils::get_mapper_mf<
         Species, boost::shared_ptr<MoleculePool> >::type molecule_pool_map_type;
-    // typedef std::map<
-    //     Species, boost::shared_ptr<VoxelPool> > voxel_pool_map_type;
-    // typedef std::map<
-    //     Species, boost::shared_ptr<MoleculePool> > molecule_pool_map_type;
 
 public:
 
@@ -57,7 +51,6 @@ public:
         cell_sizes_[1] = ceilint(row_size_, matrix_sizes_[1]);
         cell_sizes_[2] = ceilint(layer_size_, matrix_sizes_[2]);
 
-        vacant_ = StructureType::allocVacant("Vacant", Shape::THREE);
         std::stringstream ss;
         ss << voxel_radius_;
         border_ = new MolecularType(Species("Border", ss.str(), "0"), vacant_);
@@ -66,7 +59,6 @@ public:
 
     virtual ~LatticeSpaceCellListImpl()
     {
-        delete vacant_;
         delete border_;
         delete periodic_;
     }
@@ -546,6 +538,11 @@ public:
         return true;
     }
 
+    bool can_move(const coordinate_type& src, const coordinate_type& dest) const
+    {
+        return false;
+    }
+
     virtual bool move(
         const coordinate_type& src, const coordinate_type& dest,
         const std::size_t candidate=0)
@@ -674,16 +671,6 @@ public:
     /**
      */
 
-    virtual Real get_value(const Species& sp) const
-    {
-        return static_cast<Real>(num_molecules(sp));
-    }
-
-    virtual Real get_value_exact(const Species& sp) const
-    {
-        return static_cast<Real>(num_molecules_exact(sp));
-    }
-
     bool has_species(const Species& sp) const
     {
         return (voxel_pools_.find(sp) != voxel_pools_.end()
@@ -701,8 +688,6 @@ protected:
 
     bool make_molecular_type(
         const Species& sp, Real radius, Real D, const std::string loc);
-    bool make_structure_type(
-        const Species& sp, Shape::dimension_kind dimension, const std::string loc);
 
 protected:
 
@@ -711,7 +696,6 @@ protected:
     voxel_pool_map_type voxel_pools_;
     molecule_pool_map_type molecule_pools_;
 
-    VoxelPool* vacant_;
     VoxelPool* border_;
     VoxelPool* periodic_;
 

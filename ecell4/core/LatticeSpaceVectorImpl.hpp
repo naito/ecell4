@@ -1,16 +1,15 @@
 #ifndef __ECELL4_LATTICE_SPACE_VECTOR_IMPL_HPP
 #define __ECELL4_LATTICE_SPACE_VECTOR_IMPL_HPP
 
-#include "LatticeSpaceBase.hpp"
+#include "LatticeSpace.hpp"
 
 namespace ecell4 {
 
-class LatticeSpaceVectorImpl
-    : public LatticeSpaceBase
+class LatticeSpaceVectorImpl : public LatticeSpace
 {
 public:
 
-    typedef LatticeSpaceBase base_type;
+    typedef LatticeSpace base_type;
 
     typedef base_type::coordinate_id_pair_type coordinate_id_pair_type;
     typedef base_type::coordinate_type coordinate_type;
@@ -39,16 +38,6 @@ public:
 
     Integer num_species() const;
 
-    virtual Real get_value(const Species& sp) const
-    {
-        return static_cast<Real>(num_molecules(sp));
-    }
-
-    virtual Real get_value_exact(const Species& sp) const
-    {
-        return static_cast<Real>(num_molecules_exact(sp));
-    }
-
     bool has_species(const Species& sp) const;
     // bool has_species_exact(const Species& sp) const;
     virtual bool has_voxel(const ParticleID& pid) const;
@@ -63,12 +52,9 @@ public:
      *
      * using Species and coordinate_type
      */
-    std::vector<std::pair<ParticleID, Voxel> >
-        list_voxels() const;
-    std::vector<std::pair<ParticleID, Voxel> >
-        list_voxels(const Species& sp) const;
-    std::vector<std::pair<ParticleID, Voxel> >
-        list_voxels_exact(const Species& sp) const;
+    std::vector<std::pair<ParticleID, Voxel> > list_voxels() const;
+    std::vector<std::pair<ParticleID, Voxel> > list_voxels(const Species& sp) const;
+    std::vector<std::pair<ParticleID, Voxel> > list_voxels_exact(const Species& sp) const;
 
     virtual std::pair<ParticleID, Voxel> get_voxel(const ParticleID& pid) const;
     virtual std::pair<ParticleID, Voxel> get_voxel_at(const coordinate_type& coord) const;
@@ -162,10 +148,6 @@ public:
         return periodic_transpose(coord);
     }
 
-    virtual bool make_structure_type(const Species& sp,
-        Shape::dimension_kind dimension, const std::string loc);
-    virtual bool make_interface_type(const Species& sp,
-        Shape::dimension_kind dimension, const std::string loc);
     bool make_molecular_type(const Species& sp,
         Real radius, Real D, const std::string loc);
 
@@ -194,7 +176,6 @@ protected:
     molecule_pool_map_type molecule_pools_;
     voxel_container voxels_;
 
-    VoxelPool* vacant_;
     VoxelPool* border_;
     VoxelPool* periodic_;
 };

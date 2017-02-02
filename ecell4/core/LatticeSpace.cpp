@@ -3,84 +3,260 @@
 // #include <sstream>
 // #include <algorithm>
 
+#ifdef WIN32_MSC
+#include <boost/numeric/interval/detail/msvc_rounding_control.hpp>
+#endif
+
 namespace ecell4
 {
 
-bool LatticeSpace::can_move(const coordinate_type& src,
-        const coordinate_type& dest) const
+#ifdef WIN32_MSC
+double rint(const double x)
 {
-    return false;
+    return boost::numeric::interval_lib::detail::rint(x);
 }
 
-bool LatticeSpace::make_structure_type(const Species& sp,
-    Shape::dimension_kind dimension, const std::string loc)
+double round(const double x)
 {
-    return false;
+    return floor(x + 0.5);
+}
+#endif
+
+LatticeSpace::LatticeSpace(const Real3& edge_lengths,
+                           const Real& voxel_radius,
+                           const bool is_periodic)
+    : base_type(voxel_radius),
+      edge_lengths_(edge_lengths)
+{
+    set_lattice_properties(is_periodic);
 }
 
-bool LatticeSpace::make_interface_type(const Species& sp,
-    Shape::dimension_kind dimension, const std::string loc)
-{
-    return false;
-}
+LatticeSpace::~LatticeSpace() {}
 
-std::vector<std::pair<ParticleID, Particle> >
-LatticeSpace::list_particles() const
+void LatticeSpace::set_lattice_properties(const bool is_periodic)
 {
-    const std::vector<std::pair<ParticleID, Voxel> > voxels(list_voxels());
+    HCP_L = voxel_radius_ / sqrt(3.0);
+    HCP_X = voxel_radius_ * sqrt(8.0 / 3.0); // Lx
+    HCP_Y = voxel_radius_ * sqrt(3.0); // Ly
 
-    std::vector<std::pair<ParticleID, Particle> > retval;
-    retval.reserve(voxels.size());
-    for (std::vector<std::pair<ParticleID, Voxel> >::const_iterator
-        i(voxels.begin()); i != voxels.end(); ++i)
+    const Real lengthX = edge_lengths_[0];
+    const Real lengthY = edge_lengths_[1];
+    const Real lengthZ = edge_lengths_[2];
+
+    col_size_   = (Integer)rint(lengthX / HCP_X) + 1;
+    layer_size_ = (Integer)rint(lengthY / HCP_Y) + 1;
+    row_size_   = (Integer)rint((lengthZ / 2) / voxel_radius_) + 1;
+
+    if (is_periodic)
     {
-        const ParticleID& pid((*i).first);
-        const Particle p(particle_at((*i).second.coordinate()));
-        retval.push_back(std::make_pair(pid, p));
+        // The number of voxels in each axis must be even for a periodic boundary.
+        col_size_ = (col_size_ % 2 == 0 ? col_size_ : col_size_ + 1);
+        layer_size_ = (layer_size_ % 2 == 0 ? layer_size_ : layer_size_ + 1);
+        row_size_ = (row_size_ % 2 == 0 ? row_size_ : row_size_ + 1);
     }
+
+    row_size_ += 2;
+    layer_size_ += 2;
+    col_size_ += 2;
+}
+
+void LatticeSpace::reset(const Real3& edge_lengths,
+                         const Real& voxel_radius,
+                         const bool is_periodic)
+{
+    edge_lengths_ = edge_lengths;
+    voxel_radius_ = voxel_radius;
+
+    set_lattice_properties(is_periodic);
+}
+
+const Integer LatticeSpace::col_size() const
+{
+    return col_size_ - 2;
+}
+
+const Integer LatticeSpace::row_size() const
+{
+    return row_size_ - 2;
+}
+
+const Integer LatticeSpace::layer_size() const
+{
+    return layer_size_ - 2;
+}
+
+Integer3 LatticeSpace::coordinate2global(const coordinate_type& coord) const
+{
+    const Integer NUM_COLROW(row_size_ * col_size_);
+    const Integer LAYER(coord / NUM_COLROW);
+    const Integer SURPLUS(coord - LAYER * NUM_COLROW);
+    const Integer COL(SURPLUS / row_size_);
+    const Integer3 global(COL, SURPLUS - COL * row_size_, LAYER);
+    const Integer3 retval(
+        global.col - 1, global.row - 1, global.layer - 1);
     return retval;
 }
 
-std::vector<std::pair<ParticleID, Particle> >
-LatticeSpace::list_particles(const Species& sp) const
+LatticeSpace::coordinate_type
+LatticeSpace::global2coordinate(const Integer3& global) const
 {
-    const std::vector<std::pair<ParticleID, Voxel> > voxels(list_voxels(sp));
+    const Integer3 g(global.col + 1, global.row + 1, global.layer + 1);
+    return g.row + row_size_ * (g.col + col_size_ * g.layer);
+}
 
-    std::vector<std::pair<ParticleID, Particle> > retval;
-    retval.reserve(voxels.size());
-    for (std::vector<std::pair<ParticleID, Voxel> >::const_iterator
-        i(voxels.begin()); i != voxels.end(); ++i)
+Real3 LatticeSpace::global2position(const Integer3& global) const
+{
+    // the center point of a voxel
+    return Real3(global.col * HCP_X,
+                 (global.col % 2) * HCP_L + HCP_Y * global.layer,
+                 (global.row * 2 + (global.layer + global.col) % 2) * voxel_radius_);
+}
+
+Integer3 LatticeSpace::position2global(const Real3& pos) const
+{
+    const Integer col(round(pos[0] / HCP_X));
+    const Integer layer(round((pos[1] - (col % 2) * HCP_L) / HCP_Y));
+    const Integer row(round(
+        (pos[2] / voxel_radius_ - ((layer + col) % 2)) / 2));
+    const Integer3 global(col, row, layer);
+    return global;
+}
+
+LatticeSpace::coordinate_type
+LatticeSpace::periodic_transpose(const coordinate_type& coord) const
+{
+    Integer3 global(coordinate2global(coord));
+
+    global.col = global.col % col_size();
+    global.row = global.row % row_size();
+    global.layer = global.layer % layer_size();
+
+    global.col = global.col < 0 ? global.col + col_size() : global.col;
+    global.row = global.row < 0 ? global.row + row_size() : global.row;
+    global.layer = global.layer < 0 ? global.layer + layer_size() : global.layer;
+
+    return global2coordinate(global);
+}
+
+bool LatticeSpace::is_in_range(const coordinate_type& coord) const
+{
+    return coord >= 0 && coord < row_size_ * col_size_ * layer_size_;
+}
+
+bool LatticeSpace::is_inside(const coordinate_type& coord) const
+{
+    const Integer3 global(coordinate2global(coord));
+    return 0 <= global.col   && global.col   < col_size()
+        && 0 <= global.row   && global.row   < row_size()
+        && 0 <= global.layer && global.layer < layer_size();
+}
+
+/*
+ * for LatticeSpaceBase
+ */
+Real3 LatticeSpace::coordinate2position(const coordinate_type& coord) const
+{
+    return global2position(coordinate2global(coord));
+}
+
+LatticeSpace::coordinate_type
+LatticeSpace::position2coordinate(const Real3& pos) const
+{
+    return global2coordinate(position2global(pos));
+}
+
+Integer LatticeSpace::num_neighbors(const coordinate_type& coord) const
+{
+    if (!is_inside(coord)) return 0;
+    return 12;
+}
+
+LatticeSpace::coordinate_type
+LatticeSpace::get_neighbor(const coordinate_type& coord,
+                           const Integer& nrand) const
+{
+    const Integer NUM_COLROW(col_size_ * row_size_);
+    const Integer NUM_ROW(row_size_);
+    const bool odd_col(((coord % NUM_COLROW) / NUM_ROW) & 1);
+    const bool odd_lay((coord / NUM_COLROW) & 1);
+
+    if (!is_inside(coord))
+        throw NotFound("There is no neighbor voxel.");
+
+    switch (nrand)
     {
-        const ParticleID& pid((*i).first);
-        const Particle p(particle_at((*i).second.coordinate()));
-        retval.push_back(std::make_pair(pid, p));
+    case 0:
+        return coord - 1;
+    case 1:
+        return coord + 1;
+    case 2:
+        return coord + (odd_col ^ odd_lay) - NUM_ROW - 1;
+    case 3:
+        return coord + (odd_col ^ odd_lay) - NUM_ROW;
+    case 4:
+        return coord + (odd_col ^ odd_lay) + NUM_ROW - 1;
+    case 5:
+        return coord + (odd_col ^ odd_lay) + NUM_ROW;
+    case 6:
+        return coord - (2 * odd_col - 1) * NUM_COLROW - NUM_ROW;
+    case 7:
+        return coord - (2 * odd_col - 1) * NUM_COLROW + NUM_ROW;
+    case 8:
+        return coord + (odd_col ^ odd_lay) - NUM_COLROW - 1;
+    case 9:
+        return coord + (odd_col ^ odd_lay) - NUM_COLROW;
+    case 10:
+        return coord + (odd_col ^ odd_lay) + NUM_COLROW - 1;
+    case 11:
+        return coord + (odd_col ^ odd_lay) + NUM_COLROW;
     }
-    return retval;
+    throw NotFound("Invalid argument: nrand");
 }
 
-std::vector<std::pair<ParticleID, Particle> >
-LatticeSpace::list_particles_exact(const Species& sp) const
+Integer LatticeSpace::size() const
 {
-    const std::vector<std::pair<ParticleID, Voxel> >
-        voxels(list_voxels_exact(sp));
-
-    std::vector<std::pair<ParticleID, Particle> > retval;
-    retval.reserve(voxels.size());
-    for (std::vector<std::pair<ParticleID, Voxel> >::const_iterator
-        i(voxels.begin()); i != voxels.end(); ++i)
-    {
-        const ParticleID& pid((*i).first);
-        const Particle p(particle_at((*i).second.coordinate()));
-        retval.push_back(std::make_pair(pid, p));
-    }
-    return retval;
+    return row_size_ * col_size_ * layer_size_;
 }
 
-std::pair<ParticleID, Particle> LatticeSpace::get_particle(const ParticleID& pid) const
+Integer3 LatticeSpace::shape() const
 {
-    const Voxel v(get_voxel(pid).second);
-    return std::make_pair(pid, Particle(
-        v.species(), coordinate2position(v.coordinate()), v.radius(), v.D()));
+    return Integer3(col_size_, row_size_, layer_size_);
 }
+
+LatticeSpace::coordinate_type
+LatticeSpace::inner2coordinate(const coordinate_type inner) const {
+    const Integer num_row(row_size());
+    const Integer num_col(col_size());
+
+    const Integer NUM_COLROW(num_row * num_col);
+    const Integer LAYER(inner / NUM_COLROW);
+    const Integer SURPLUS(inner - LAYER * NUM_COLROW);
+    const Integer COL(SURPLUS / num_row);
+    const Integer3 g(COL, SURPLUS - COL * num_row, LAYER);
+
+    return global2coordinate(g);
+}
+
+Integer LatticeSpace::inner_size() const
+{
+    return col_size() * row_size() * layer_size();
+}
+
+const Real3& LatticeSpace::edge_lengths() const
+{
+    return edge_lengths_;
+}
+
+Real3 LatticeSpace::actual_lengths() const
+{
+    return Real3(col_size() * HCP_X,
+                 layer_size() * HCP_Y,
+                 row_size() * voxel_radius() * 2);
+}
+
+// const Real volume() const
+// {
+//     return edge_lengths_[0] * edge_lengths_[1] * edge_lengths_[2];
+// }
 
 } // ecell4

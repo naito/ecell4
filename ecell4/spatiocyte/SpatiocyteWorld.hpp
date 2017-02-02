@@ -28,8 +28,7 @@ struct MoleculeInfo
     const std::string loc;
 };
 
-class SpatiocyteWorld
-    : public Space
+class SpatiocyteWorld : public Space
 {
 public:
 
@@ -359,10 +358,10 @@ public:
         return (*space_).unit_area();
     }
 
-    Real get_volume() const
-    {
-        return (*space_).get_volume();
-    }
+    // Real get_volume() const
+    // {
+    //     return (*space_).get_volume();
+    // }
 
     Real3 actual_lengths() const
     {
