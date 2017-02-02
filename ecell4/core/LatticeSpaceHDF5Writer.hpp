@@ -18,7 +18,6 @@
 #include "VoxelPool.hpp"
 #include "MolecularType.hpp"
 #include "StructureType.hpp"
-#include "VacantType.hpp"
 
 
 namespace ecell4
@@ -89,10 +88,8 @@ struct LatticeSpaceHDF5Traits
         property.radius = mtb->radius();
         property.D = mtb->D();
         const VoxelPool* loc(mtb->location());
-        if (loc->is_vacant())
-            std::strcpy(property.location, "");
-        else
-            std::strcpy(property.location, loc->species().serial().c_str());
+        std::strcpy(property.location,
+                    loc->is_vacant() ? "" : loc->species().serial().c_str());
         property.is_structure = mtb->is_structure() ? 1 : 0;
         property.dimension = mtb->get_dimension();
 
@@ -168,7 +165,8 @@ void save_lattice_space(const Tspace_& space, H5::Group* root)
         Species location(mtb->location()->species());
         location_map.insert(std::make_pair(location, mtb));
     }
-    traits_type::save_voxel_pool_recursively(VacantType::getInstance().species(),
+    traits_type::save_voxel_pool_recursively(
+            Species("Vacant", "0", "0"), // XXX: should get from space
             location_map, space, spgroup.get());
 
     const hsize_t dims[] = {3};
@@ -233,7 +231,14 @@ void load_lattice_space(const H5::Group& root, Tspace_* space)
     for (hsize_t idx(0); idx < spgroup.getNumObjs(); ++idx)
     {
         memset(name_C, 0, 32 + 1);  // clear buffer
-        H5Lget_name_by_idx(spgroup.getLocId(), ".", H5_INDEX_NAME, H5_ITER_INC, idx, name_C, 32, H5P_DEFAULT);
+        H5Lget_name_by_idx(spgroup.getLocId(),
+                           ".",
+                           H5_INDEX_NAME,
+                           H5_ITER_INC,
+                           idx,
+                           name_C,
+                           32,
+                           H5P_DEFAULT);
         H5::Group group(spgroup.openGroup(name_C));
         const std::string name_S(name_C);
         Species species(name_S);
@@ -243,8 +248,7 @@ void load_lattice_space(const H5::Group& root, Tspace_* space)
         // Species species(std::string(serial.c_str()));
 
         traits_type::h5_species_struct property;
-        group.openAttribute("property").read(
-                traits_type::get_property_comp(), &property);
+        group.openAttribute("property").read(traits_type::get_property_comp(), &property);
         struct_map.insert(std::make_pair(species, property));
         location_map.insert(std::make_pair(property.location, species));
 
@@ -261,9 +265,9 @@ void load_lattice_space(const H5::Group& root, Tspace_* space)
         std::vector<std::pair<ParticleID, Integer> > voxels;
         for (unsigned int idx(0); idx < num_voxels; ++idx)
         {
-            voxels.push_back(std::make_pair(
-                        ParticleID(std::make_pair(h5_voxel_array[idx].lot, h5_voxel_array[idx].serial)),
-                        h5_voxel_array[idx].coordinate));
+            voxels.push_back(std::make_pair(ParticleID(std::make_pair(h5_voxel_array[idx].lot,
+                                                                      h5_voxel_array[idx].serial)),
+                                            h5_voxel_array[idx].coordinate));
         }
         voxels_map.insert(std::make_pair(species, voxels));
     }
@@ -271,10 +275,9 @@ void load_lattice_space(const H5::Group& root, Tspace_* space)
 
     std::vector<Species> sp_list;
     traits_type::sort_by_location(location_map, sp_list);
-    for (std::vector<Species>::iterator itr(sp_list.begin());
-            itr != sp_list.end(); ++itr)
+    for (std::vector<Species>::const_iterator itr(sp_list.begin()); itr != sp_list.end(); ++itr)
     {
-        Species species(*itr);
+        const Species& species(*itr);
         traits_type::h5_species_struct property((*struct_map.find(species)).second);
         std::vector<std::pair<ParticleID, Integer> > voxels((*voxels_map.find(species)).second);
         if (property.is_structure == 0)

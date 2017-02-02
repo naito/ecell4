@@ -32,18 +32,15 @@ public:
     static StructureType* allocVacant(const std::string& serial,
                                       const Shape::dimension_kind& dimension)
     {
-        return new StructureType(/* species   = */ Species(serial, "0", "0"),
-                                 /* location  = */ NULL,
-                                 /* radius    = */ 0,
-                                 /* dimension = */ dimension);
+        return new StructureType(serial, dimension);
     }
 
-    virtual ~StructureType()
+    ~StructureType()
     {
         ;
     }
 
-    virtual voxel_type_type const voxel_type() const
+    voxel_type_type const voxel_type() const
     {
         return STRUCTURE;
     }
@@ -52,6 +49,17 @@ public:
     {
         return dimension_;
     }
+
+private:
+
+    StructureType(const std::string& serial,
+                  const Shape::dimension_kind& dimension)
+        : base_type(/* species  = */ Species(serial, "0", "0"),
+                    /* location = */ NULL,
+                    /* radius   = */ 0,
+                    /* D        = */ 0),
+          dimension_(dimension)
+    {}
 
 private:
 

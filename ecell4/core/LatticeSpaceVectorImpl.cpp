@@ -1,6 +1,5 @@
 #include "Context.hpp"
 #include "MolecularType.hpp"
-#include "VacantType.hpp"
 #include "StructureType.hpp"
 #include "InterfaceType.hpp"
 #include "LatticeSpaceVectorImpl.hpp"
@@ -12,17 +11,18 @@ LatticeSpaceVectorImpl::LatticeSpaceVectorImpl(
     const bool is_periodic) :
     base_type(edge_lengths, voxel_radius, is_periodic), is_periodic_(is_periodic)
 {
-    vacant_ = &(VacantType::getInstance());
+    vacant_ = StructureType::allocVacant("Vacant", Shape::THREE);
     std::stringstream ss;
     ss << voxel_radius_;
-    border_ = new MolecularType(Species("Border", ss.str(), "0"));
-    periodic_ = new MolecularType(Species("Periodic", ss.str(), "0"));
+    border_ = new MolecularType(Species("Border", ss.str(), "0"), vacant_);
+    periodic_ = new MolecularType(Species("Periodic", ss.str(), "0"), vacant_);
 
     initialize_voxels(is_periodic_);
 }
 
 LatticeSpaceVectorImpl::~LatticeSpaceVectorImpl()
 {
+    delete vacant_;
     delete border_;
     delete periodic_;
 }

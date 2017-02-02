@@ -6,21 +6,13 @@ namespace ecell4 {
 
 OffLatticeSpace::OffLatticeSpace(const Real& voxel_radius)
     : base_type(voxel_radius), voxels_(), positions_(), adjoinings_(),
-    vacant_(&(VacantType::getInstance()))
+    vacant_(StructureType::allocVacant("Vacant", Shape::THREE))
 {
 }
 
-OffLatticeSpace::OffLatticeSpace(
-        const Real& voxel_radius,
-        const position_container& positions,
-        const coordinate_pair_list_type& adjoining_pairs)
-    : base_type(voxel_radius), voxels_(), positions_(), adjoinings_(),
-    vacant_(&(VacantType::getInstance()))
-{
-    reset(positions, adjoining_pairs);
+OffLatticeSpace::~OffLatticeSpace() {
+    delete vacant_;
 }
-
-OffLatticeSpace::~OffLatticeSpace() {}
 
 void OffLatticeSpace::reset(
         const position_container& positions,

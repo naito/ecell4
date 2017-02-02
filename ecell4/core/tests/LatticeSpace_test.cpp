@@ -10,7 +10,6 @@
 #include <boost/test/floating_point_comparison.hpp>
 
 #include <ecell4/core/MolecularType.hpp>
-#include <ecell4/core/VacantType.hpp>
 #include <ecell4/core/LatticeSpaceVectorImpl.hpp>
 #include <ecell4/core/SerialIDGenerator.hpp>
 
@@ -321,7 +320,6 @@ BOOST_FIXTURE_TEST_SUITE(periodic_suite, PeriodicFixture)
 
 BOOST_AUTO_TEST_CASE(LatticeSpace_test_periodic_col)
 {
-    std::cerr << " < periodic_col > ";
     const int col_size(space.col_size()),
               row_size(space.row_size()),
               layer_size(space.layer_size());

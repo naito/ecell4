@@ -20,10 +20,10 @@ public:
     typedef std::vector<coordinate_pair_type> coordinate_pair_list_type;
 
     OffLatticeSpace(const Real& voxel_radius);
-    OffLatticeSpace(const Real& voxel_radius,
-                    const position_container& positions,
-                    const coordinate_pair_list_type& adjoining_pairs);
     virtual ~OffLatticeSpace();
+
+    void reset(const position_container& positions,
+               const coordinate_pair_list_type& adjoining_pairs);
 
     virtual std::pair<ParticleID, Voxel> get_voxel_at(const coordinate_type& coord) const;
 
@@ -77,8 +77,6 @@ public:
 
 protected:
 
-    void reset(const position_container& positions,
-               const coordinate_pair_list_type& adjoining_pairs);
     bool is_in_range(const coordinate_type& coord) const;
     VoxelPool* get_voxel_pool(const Voxel& v);
     coordinate_type get_coord(const ParticleID& pid) const;

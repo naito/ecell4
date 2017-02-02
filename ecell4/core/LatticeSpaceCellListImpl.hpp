@@ -3,7 +3,7 @@
 
 #include "Context.hpp"
 #include "MolecularType.hpp"
-#include "VacantType.hpp"
+#include "StructureType.hpp"
 // #include <cmath>
 #include <sstream>
 
@@ -57,15 +57,16 @@ public:
         cell_sizes_[1] = ceilint(row_size_, matrix_sizes_[1]);
         cell_sizes_[2] = ceilint(layer_size_, matrix_sizes_[2]);
 
-        vacant_ = &(VacantType::getInstance());
+        vacant_ = StructureType::allocVacant("Vacant", Shape::THREE);
         std::stringstream ss;
         ss << voxel_radius_;
-        border_ = new MolecularType(Species("Border", ss.str(), "0"));
-        periodic_ = new MolecularType(Species("Periodic", ss.str(), "0"));
+        border_ = new MolecularType(Species("Border", ss.str(), "0"), vacant_);
+        periodic_ = new MolecularType(Species("Periodic", ss.str(), "0"), vacant_);
     }
 
     virtual ~LatticeSpaceCellListImpl()
     {
+        delete vacant_;
         delete border_;
         delete periodic_;
     }
