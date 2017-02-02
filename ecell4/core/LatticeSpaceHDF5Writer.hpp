@@ -2,9 +2,10 @@
 #define __ECELL4_LATTICE_SPACE_HDF5_WRITER_HPP
 
 #include <cstring>
-#include <iostream>
+// #include <iostream>
 #include <sstream>
 #include <map>
+#include <algorithm>
 #include <boost/scoped_ptr.hpp>
 #include <boost/scoped_array.hpp>
 #include <boost/lexical_cast.hpp>
@@ -156,18 +157,28 @@ void save_lattice_space(const Tspace_& space, H5::Group* root)
 
     boost::scoped_ptr<H5::Group> spgroup(new H5::Group(root->createGroup("species")));
 
+    std::vector<Species> vacants;
     const std::vector<Species> species(space.list_species());
     std::multimap<Species, const VoxelPool*> location_map;
     for (std::vector<Species>::const_iterator itr(species.begin());
-            itr != species.end(); ++itr)
+         itr != species.end(); ++itr)
     {
-        const VoxelPool *mtb(space.find_voxel_pool(*itr));
-        Species location(mtb->location()->species());
-        location_map.insert(std::make_pair(location, mtb));
+        const VoxelPool *vp(space.find_voxel_pool(*itr));
+        const VoxelPool *location(vp->location());
+        const Species loc_sp(location->species());
+        location_map.insert(std::make_pair(loc_sp, vp));
+
+        if (location->is_vacant() &&
+            find(vacants.begin(), vacants.end(), loc_sp) == vacants.end())
+        {
+            vacants.push_back(loc_sp);
+        }
     }
-    traits_type::save_voxel_pool_recursively(
-            Species("Vacant", "0", "0"), // XXX: should get from space
-            location_map, space, spgroup.get());
+    for (std::vector<Species>::const_iterator itr(vacants.begin());
+         itr != vacants.end(); ++itr)
+    {
+        traits_type::save_voxel_pool_recursively(*itr, location_map, space, spgroup.get());
+    }
 
     const hsize_t dims[] = {3};
     const H5::ArrayType lengths_type(H5::PredType::NATIVE_DOUBLE, 1, dims);
