@@ -373,40 +373,6 @@ LatticeSpaceVectorImpl::list_voxels(const Species& sp) const
     return retval;
 }
 
-VoxelPool* LatticeSpaceVectorImpl::get_voxel_pool(const Voxel& v)
-{
-    const Species& sp(v.species());
-
-    {
-        voxel_pool_map_type::iterator itr(voxel_pools_.find(sp));
-        if (itr != voxel_pools_.end())
-        {
-            return (*itr).second.get();
-        }
-    }
-
-    {
-        molecule_pool_map_type::iterator itr(molecule_pools_.find(sp));
-        if (itr != molecule_pools_.end())
-        {
-            return (*itr).second.get();  // upcast
-        }
-    }
-
-    const bool suc = make_molecular_type(sp, v.radius(), v.D(), v.loc());
-    if (!suc)
-    {
-        throw IllegalState("never reach here");
-    }
-
-    molecule_pool_map_type::iterator i = molecule_pools_.find(sp);
-    if (i == molecule_pools_.end())
-    {
-        throw IllegalState("never reach here");
-    }
-    return (*i).second.get();  // upcast
-}
-
 VoxelPool* LatticeSpaceVectorImpl::find_voxel_pool(const Species& sp)
 {
     voxel_pool_map_type::iterator itr(voxel_pools_.find(sp));
@@ -445,12 +411,6 @@ const MoleculePool* LatticeSpaceVectorImpl::find_molecule_pool(const Species& sp
         return (*itr).second.get();  // upcast
     }
     throw NotFound("MoleculePool not found.");
-}
-
-bool LatticeSpaceVectorImpl::on_structure(const Voxel& v)
-{
-    // return find_voxel_pool(v.coordinate()) != get_voxel_pool(v)->location();
-    return voxels_.at(v.coordinate()) != get_voxel_pool(v)->location();
 }
 
 /*
@@ -869,67 +829,6 @@ bool LatticeSpaceVectorImpl::update_voxel(const ParticleID& pid, const Voxel& v)
     voxel_container::iterator to_itr(voxels_.begin() + to_coord);
     (*to_itr) = new_vp;
     return true;
-}
-
-bool LatticeSpaceVectorImpl::make_molecular_type(
-        const Species& sp, Real radius, Real D, const std::string loc)
-{
-    molecule_pool_map_type::iterator itr(molecule_pools_.find(sp));
-    if (itr != molecule_pools_.end())
-    {
-        return false;
-    }
-    else if (voxel_pools_.find(sp) != voxel_pools_.end())
-    {
-        throw IllegalState(
-            "The given species is already assigned to the VoxelPool with no voxels.");
-    }
-
-    VoxelPool* location;
-    if (loc == "")
-    {
-        location = vacant_;
-    }
-    else
-    {
-        const Species locsp(loc);
-        try
-        {
-            location = find_voxel_pool(locsp);
-        }
-        catch (const NotFound& err)
-        {
-            // XXX: A VoxelPool for the structure (location) must be allocated
-            // XXX: before the allocation of a Species on the structure.
-            // XXX: The VoxelPool cannot be automatically allocated at the time
-            // XXX: because its MoleculeInfo is unknown.
-            // XXX: LatticeSpaceVectorImpl::load will raise a problem about this issue.
-            // XXX: In this implementation, the VoxelPool for a structure is
-            // XXX: created with default arguments.
-            boost::shared_ptr<MoleculePool>
-                locmt(new MolecularType(locsp, vacant_, voxel_radius_, 0));
-            std::pair<molecule_pool_map_type::iterator, bool>
-                locval(molecule_pools_.insert(
-                    molecule_pool_map_type::value_type(locsp, locmt)));
-            if (!locval.second)
-            {
-                throw AlreadyExists(
-                    "never reach here. find_voxel_pool seems wrong.");
-            }
-            location = (*locval.first).second.get();
-        }
-    }
-
-    boost::shared_ptr<MoleculePool>
-        vp(new MolecularType(sp, location, radius, D));
-    std::pair<molecule_pool_map_type::iterator, bool>
-        retval(molecule_pools_.insert(
-            molecule_pool_map_type::value_type(sp, vp)));
-    if (!retval.second)
-    {
-        throw AlreadyExists("never reach here.");
-    }
-    return retval.second;
 }
 
 bool LatticeSpaceVectorImpl::add_voxels(const Species sp, std::vector<std::pair<ParticleID, coordinate_type> > voxels)

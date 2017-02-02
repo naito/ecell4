@@ -292,7 +292,7 @@ void load_lattice_space(const H5::Group& root, Tspace_* space)
         traits_type::h5_species_struct property((*struct_map.find(species)).second);
         std::vector<std::pair<ParticleID, Integer> > voxels((*voxels_map.find(species)).second);
         if (property.is_structure == 0)
-            space->make_molecular_type(species, property.radius, property.D, property.location);
+            space->make_molecular_pool(species, property.radius, property.D, property.location);
         else
             space->make_structure_type(species, static_cast<Shape::dimension_kind>(property.dimension), property.location);
         space->add_voxels(species, voxels);

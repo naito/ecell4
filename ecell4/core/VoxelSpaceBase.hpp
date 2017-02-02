@@ -45,10 +45,8 @@ public:
      * for LatticeSpace
      */
 
-    virtual Real3
-        coordinate2position(const coordinate_type& coord) const = 0;
-    virtual coordinate_type
-        position2coordinate(const Real3& pos) const = 0;
+    virtual Real3 coordinate2position(const coordinate_type& coord) const = 0;
+    virtual coordinate_type position2coordinate(const Real3& pos) const = 0;
 
     virtual Integer num_neighbors(const coordinate_type& coord) const = 0;
     virtual coordinate_type
@@ -58,15 +56,6 @@ public:
 
     virtual Integer size() const = 0;
     virtual Integer3 shape() const = 0;
-
-    // For spaces having apis dealing with structure
-    virtual bool on_structure(const Voxel& v) = 0;
-    bool make_structure_type(const Species& sp,
-                             Shape::dimension_kind dimension,
-                             const std::string loc);
-    bool make_interface_type(const Species& sp,
-                             Shape::dimension_kind dimension,
-                             const std::string loc);
 
     // For spaces having the inner structure
     virtual coordinate_type inner2coordinate(const coordinate_type inner) const = 0;
@@ -101,6 +90,18 @@ public:
 
     bool remove_particle(const ParticleID& pid);
 
+    bool on_structure(const Voxel& v);
+    bool make_structure_type(const Species& sp,
+                             Shape::dimension_kind dimension,
+                             const std::string loc);
+    bool make_interface_type(const Species& sp,
+                             Shape::dimension_kind dimension,
+                             const std::string loc);
+    bool make_molecular_pool(const Species& sp,
+                             Real radius,
+                             Real D,
+                             const std::string loc);
+
     virtual pid_voxel_pair get_voxel_at(const coordinate_type& coord) const = 0;
     virtual VoxelPool* get_voxel_pool_at(const coordinate_type& coord) const = 0;
     virtual const Particle particle_at(const coordinate_type& coord) const = 0;
@@ -125,6 +126,7 @@ public:
 protected:
 
     virtual Integer count_voxels(const boost::shared_ptr<VoxelPool>& vp) const = 0;
+    VoxelPool* get_voxel_pool(const Voxel& voxel);
 
 private:
     std::string get_location_serial(const boost::shared_ptr<MoleculePool>& voxel_pool) const;

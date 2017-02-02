@@ -644,12 +644,6 @@ public:
 
     VoxelPool* get_voxel_pool_at(const coordinate_type& coord) const;
 
-    virtual bool on_structure(const Voxel& v)
-    {
-        return (get_voxel_pool_at(v.coordinate())
-                != get_voxel_pool(v)->location()); //XXX: == ???
-    }
-
     coordinate_type get_neighbor_boundary(
         const coordinate_type& coord, const Integer& nrand) const
     {
@@ -679,15 +673,10 @@ public:
 
 protected:
 
-    VoxelPool* get_voxel_pool(const Voxel& v);
-
     std::pair<VoxelPool*, coordinate_type>
         __get_coordinate(const ParticleID& pid);
     std::pair<const VoxelPool*, coordinate_type>
         __get_coordinate(const ParticleID& pid) const;
-
-    bool make_molecular_type(
-        const Species& sp, Real radius, Real D, const std::string loc);
 
 protected:
 

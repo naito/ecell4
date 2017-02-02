@@ -62,8 +62,6 @@ public:
     Integer size() const;
     Integer3 shape() const;
 
-    bool on_structure(const Voxel& v);
-
     coordinate_type inner2coordinate(const coordinate_type inner) const;
     Integer inner_size() const;
 
@@ -77,13 +75,9 @@ public:
 protected:
 
     Integer count_voxels(const boost::shared_ptr<VoxelPool>& vp) const;
+
     bool is_in_range(const coordinate_type& coord) const;
-    VoxelPool* get_voxel_pool(const Voxel& v);
     coordinate_type get_coord(const ParticleID& pid) const;
-    bool make_molecular_pool(const Species& sp,
-                             Real radius,
-                             Real D,
-                             const std::string loc);
 
 protected:
 
