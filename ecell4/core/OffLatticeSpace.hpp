@@ -25,7 +25,7 @@ public:
     void reset(const position_container& positions,
                const coordinate_pair_list_type& adjoining_pairs);
 
-    virtual std::pair<ParticleID, Voxel> get_voxel_at(const coordinate_type& coord) const;
+    virtual pid_voxel_pair get_voxel_at(const coordinate_type& coord) const;
 
     virtual const Particle particle_at(const coordinate_type& coord) const;
 

@@ -16,6 +16,8 @@ protected:
     typedef utils::get_mapper_mf<Species, boost::shared_ptr<MoleculePool> >::type
         molecule_pool_map_type;
 
+    typedef std::pair<ParticleID, Voxel> pid_voxel_pair;
+
 public:
 
     VoxelSpaceBase(const Real& voxel_radius);
@@ -28,24 +30,25 @@ public:
     Integer num_voxels() const;
     bool has_voxel(const ParticleID& pid) const;
 
-    std::vector<std::pair<ParticleID, Voxel> > list_voxels() const;
-    std::vector<std::pair<ParticleID, Voxel> > list_voxels(const Species& sp) const;
-    std::vector<std::pair<ParticleID, Voxel> > list_voxels_exact(const Species& sp) const;
+    std::vector<pid_voxel_pair> list_voxels() const;
+    std::vector<pid_voxel_pair> list_voxels(const Species& sp) const;
+    std::vector<pid_voxel_pair> list_voxels_exact(const Species& sp) const;
 
-    std::pair<ParticleID, Voxel> get_voxel(const ParticleID& pid) const;
-    VoxelPool* find_voxel_pool(const Species& sp);
+    pid_voxel_pair get_voxel(const ParticleID& pid) const;
+
+          VoxelPool* find_voxel_pool(const Species& sp);
     const VoxelPool* find_voxel_pool(const Species& sp) const;
-    bool has_molecule_pool(const Species& sp) const;
-    MoleculePool* find_molecule_pool(const Species& sp);
+          MoleculePool* find_molecule_pool(const Species& sp);
     const MoleculePool* find_molecule_pool(const Species& sp) const;
+    bool has_molecule_pool(const Species& sp) const;
 
     /*
-     * Virtual functions
+     * Pure virtual functions
      */
 
     virtual Real3 actual_lengths() const = 0;
 
-    virtual std::pair<ParticleID, Voxel> get_voxel_at(const coordinate_type& coord) const = 0;
+    virtual pid_voxel_pair get_voxel_at(const coordinate_type& coord) const = 0;
     virtual VoxelPool* get_voxel_pool_at(const coordinate_type& coord) const = 0;
     virtual const Particle particle_at(const coordinate_type& coord) const = 0;
 
@@ -70,9 +73,8 @@ protected:
 
     virtual Integer count_voxels(const boost::shared_ptr<VoxelPool>& vp) const = 0;
     std::string get_location_serial(const boost::shared_ptr<MoleculePool>& voxel_pool) const;
-    void push_voxels(std::vector<std::pair<ParticleID, Voxel> >& voxels,
-            const boost::shared_ptr<MoleculePool>& voxel_pool,
-            const Species& species) const;
+    void push_voxels(std::vector<pid_voxel_pair>& voxels,
+                     const boost::shared_ptr<MoleculePool>& voxel_pool) const;
 
 protected:
 

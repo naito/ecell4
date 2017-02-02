@@ -18,9 +18,17 @@ public:
         ;
     }
 
-    Voxel(const Species& sp, const coordinate_type& coord,
-        const Real& radius, const Real& D, const std::string& loc = "")
-        : species_(sp), coordinate_(coord), radius_(radius), D_(D), loc_(loc) {}
+    Voxel(const Species& sp,
+          const coordinate_type& coord,
+          const Real& radius,
+          const Real& D,
+          const std::string& loc = "")
+        : species_(sp),
+          coordinate_(coord),
+          radius_(radius),
+          D_(D),
+          loc_(loc)
+    {}
 
     const Species& species() const
     {
