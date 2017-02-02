@@ -10,18 +10,7 @@ class LatticeSpaceVectorImpl : public LatticeSpace
 public:
 
     typedef LatticeSpace base_type;
-
-    typedef base_type::coordinate_id_pair_type coordinate_id_pair_type;
-    typedef base_type::coordinate_type coordinate_type;
-
     typedef std::vector<VoxelPool*> voxel_container;
-
-protected:
-
-    typedef utils::get_mapper_mf<
-        Species, boost::shared_ptr<VoxelPool> >::type voxel_pool_map_type;
-    typedef utils::get_mapper_mf<
-        Species, boost::shared_ptr<MoleculePool> >::type molecule_pool_map_type;
 
 public:
 
@@ -36,12 +25,6 @@ public:
      * using ParticleID, Species and Posision3
      */
 
-    Integer num_species() const;
-
-    bool has_species(const Species& sp) const;
-    // bool has_species_exact(const Species& sp) const;
-    virtual bool has_voxel(const ParticleID& pid) const;
-
     virtual bool remove_voxel(const ParticleID& pid);
     virtual bool remove_voxel(const coordinate_type& coord);
 
@@ -52,40 +35,17 @@ public:
      *
      * using Species and coordinate_type
      */
-    std::vector<std::pair<ParticleID, Voxel> > list_voxels() const;
-    std::vector<std::pair<ParticleID, Voxel> > list_voxels(const Species& sp) const;
-    std::vector<std::pair<ParticleID, Voxel> > list_voxels_exact(const Species& sp) const;
-
-    virtual std::pair<ParticleID, Voxel> get_voxel(const ParticleID& pid) const;
     virtual std::pair<ParticleID, Voxel> get_voxel_at(const coordinate_type& coord) const;
-
-    virtual Integer num_voxels_exact(const Species& sp) const;
-    virtual Integer num_voxels(const Species& sp) const;
-    virtual Integer num_voxels() const;
-
-    virtual Integer num_molecules(const Species& sp) const; //XXX:
 
     // virtual void update_voxel(const Voxel& v);
     virtual bool update_voxel(const ParticleID& pid, const Voxel& v);
 
     bool add_voxels(const Species species, std::vector<std::pair<ParticleID, coordinate_type> > voxels);
 
-    std::vector<Species> list_species() const;
     const Species& find_species(std::string name) const;
     std::vector<coordinate_type> list_coords(const Species& sp) const;
     std::vector<coordinate_type> list_coords_exact(const Species& sp) const;
 
-    virtual bool has_molecule_pool(const Species& sp) const
-    {
-        molecule_pool_map_type::const_iterator itr(molecule_pools_.find(sp));
-        return (itr != molecule_pools_.end());
-    }
-
-    virtual VoxelPool* find_voxel_pool(const Species& sp);
-    virtual const VoxelPool* find_voxel_pool(const Species& sp) const;
-    virtual MoleculePool* find_molecule_pool(const Species& sp);
-    virtual const MoleculePool* find_molecule_pool(const Species& sp) const;
-    // VoxelPool* find_voxel_pool(const std::string name);
     virtual VoxelPool* get_voxel_pool_at(const coordinate_type& coord) const;
 
     // bool update_molecule(coordinate_type coord, const Species& species);
@@ -165,8 +125,6 @@ protected:
 
     bool is_periodic_;
 
-    voxel_pool_map_type voxel_pools_;
-    molecule_pool_map_type molecule_pools_;
     voxel_container voxels_;
 
     VoxelPool* border_;
