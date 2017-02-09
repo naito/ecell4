@@ -78,21 +78,21 @@ struct LatticeSpaceHDF5Traits
         return voxel_comp_type;
     }
 
-    static void save_voxel_pool(const VoxelPool* mtb,
+    static void save_voxel_pool(const VoxelPool* vp,
             std::vector<std::pair<ParticleID, Voxel> > voxels, H5::Group* group)
     {
-        const Species species(mtb->species());
+        const Species species(vp->species());
         boost::scoped_ptr<H5::Group> mtgroup(
                 new H5::Group(group->createGroup(species.serial().c_str())));
 
         h5_species_struct property;
-        property.radius = mtb->radius();
-        property.D = mtb->D();
-        const VoxelPool* loc(mtb->location());
+        property.radius = vp->radius();
+        property.D = vp->D();
+        const VoxelPool* loc(vp->location());
         std::strcpy(property.location,
                     loc->is_vacant() ? "" : loc->species().serial().c_str());
-        property.is_structure = mtb->is_structure() ? 1 : 0;
-        property.dimension = mtb->get_dimension();
+        property.is_structure = vp->is_structure() ? 1 : 0;
+        property.dimension = vp->get_dimension();
 
         H5::CompType property_comp_type(get_property_comp());
         mtgroup->createAttribute("property", property_comp_type,
@@ -127,9 +127,9 @@ struct LatticeSpaceHDF5Traits
         std::multimap<Species, const VoxelPool*>::iterator itr;
         while ((itr = location_map.find(location)) != location_map.end())
         {
-            const VoxelPool* mtb((*itr).second);
-            const Species species(mtb->species());
-            save_voxel_pool(mtb, space.list_voxels_exact(species), root);
+            const VoxelPool* vp((*itr).second);
+            const Species species(vp->species());
+            save_voxel_pool(vp, space.list_voxels_exact(species), root);
             save_voxel_pool_recursively(species, location_map, space, root);
             location_map.erase(itr);
         }

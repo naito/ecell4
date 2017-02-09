@@ -482,10 +482,10 @@ bool LatticeSpaceVectorImpl::update_voxel(const ParticleID& pid, const Voxel& v)
 bool LatticeSpaceVectorImpl::add_voxels(const Species sp, std::vector<std::pair<ParticleID, coordinate_type> > voxels)
 {
     // this function doesn't check location.
-    VoxelPool *mtb;
+    VoxelPool *vp;
     try
     {
-        mtb = find_voxel_pool(sp);
+        vp = find_voxel_pool(sp);
     }
     catch (NotFound &e)
     {
@@ -498,9 +498,9 @@ bool LatticeSpaceVectorImpl::add_voxels(const Species sp, std::vector<std::pair<
         const coordinate_type coord((*itr).second);
         VoxelPool* src_vp(get_voxel_pool_at(coord));
         src_vp->remove_voxel_if_exists(coord);
-        mtb->add_voxel(coordinate_id_pair_type(pid, coord));
+        vp->add_voxel(coordinate_id_pair_type(pid, coord));
         voxel_container::iterator vitr(voxels_.begin() + coord);
-        (*vitr) = mtb;
+        (*vitr) = vp;
     }
     return true;
 }
