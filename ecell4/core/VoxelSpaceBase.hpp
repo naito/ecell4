@@ -81,6 +81,7 @@ public:
 
     pid_voxel_pair get_voxel(const ParticleID& pid) const;
 
+    bool has_voxel_pool(const Species& sp) const;
     const VoxelPool* find_voxel_pool(const Species& sp) const;
           VoxelPool* find_voxel_pool(const Species& sp);
 
@@ -132,6 +133,12 @@ private:
     std::string get_location_serial(const boost::shared_ptr<MoleculePool>& voxel_pool) const;
     void push_voxels(std::vector<pid_voxel_pair>& voxels,
                      const boost::shared_ptr<MoleculePool>& voxel_pool) const;
+    VoxelPool* get_vp_from_serial(const std::string& serial);
+
+    template<typename T>
+    bool make_location_type(const Species& sp,
+                            Shape::dimension_kind dimension,
+                            const std::string loc);
 
 public:
 
