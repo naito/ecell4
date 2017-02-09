@@ -190,6 +190,10 @@ VoxelSpaceBase::list_voxels(const Species& species) const
             itr != molecule_pools_.end(); ++itr)
         if (spexp.match((*itr).first))
             push_voxels(retval, (*itr).second);
+    for (voxel_pool_map_type::const_iterator itr(voxel_pools_.begin());
+            itr != voxel_pools_.end(); ++itr)
+        if (spexp.match((*itr).first))
+            push_voxels(retval, (*itr).second);
 
     return retval;
 }
@@ -199,9 +203,22 @@ VoxelSpaceBase::list_voxels_exact(const Species& species) const
 {
     std::vector<pid_voxel_pair> retval;
 
-    molecule_pool_map_type::const_iterator itr(molecule_pools_.find(species));
-    if (itr != molecule_pools_.end())
-        push_voxels(retval, (*itr).second);
+    {
+        molecule_pool_map_type::const_iterator itr(molecule_pools_.find(species));
+        if (itr != molecule_pools_.end())
+        {
+            push_voxels(retval, (*itr).second);
+            return retval;
+        }
+    }
+    {
+        voxel_pool_map_type::const_iterator itr(voxel_pools_.find(species));
+        if (itr != voxel_pools_.end())
+        {
+            push_voxels(retval, (*itr).second);
+            return retval;
+        }
+    }
     return retval;
 }
 
@@ -489,7 +506,7 @@ VoxelPool* VoxelSpaceBase::get_voxel_pool(const Voxel& v)
  * private functions
  */
 std::string
-VoxelSpaceBase::get_location_serial(const boost::shared_ptr<MoleculePool>& voxel_pool) const
+VoxelSpaceBase::get_location_serial(const boost::shared_ptr<VoxelPool>& voxel_pool) const
 {
     return voxel_pool->location()->is_vacant() ?
         "" : voxel_pool->location()->species().serial();
@@ -506,6 +523,20 @@ void VoxelSpaceBase::push_voxels(std::vector<pid_voxel_pair>& voxels,
                                                voxel_pool->radius(),
                                                voxel_pool->D(),
                                                location_serial)));
+}
+
+void VoxelSpaceBase::push_voxels(std::vector<pid_voxel_pair>& voxels,
+                                 const boost::shared_ptr<VoxelPool>& voxel_pool) const
+{
+    const std::string location_serial(get_location_serial(voxel_pool));
+
+    for (coordinate_type coord(0); coord < size(); coord++)
+    {
+        if (get_voxel_pool_at(coord) != voxel_pool.get())
+            continue;
+
+        voxels.push_back(get_voxel_at(coord));
+    }
 }
 
 VoxelPool* VoxelSpaceBase::get_vp_from_serial(const std::string& serial)

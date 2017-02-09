@@ -130,9 +130,11 @@ protected:
     VoxelPool* get_voxel_pool(const Voxel& voxel);
 
 private:
-    std::string get_location_serial(const boost::shared_ptr<MoleculePool>& voxel_pool) const;
+    std::string get_location_serial(const boost::shared_ptr<VoxelPool>& voxel_pool) const;
     void push_voxels(std::vector<pid_voxel_pair>& voxels,
                      const boost::shared_ptr<MoleculePool>& voxel_pool) const;
+    void push_voxels(std::vector<pid_voxel_pair>& voxels,
+                     const boost::shared_ptr<VoxelPool>& voxel_pool) const;
     VoxelPool* get_vp_from_serial(const std::string& serial);
 
     template<typename T>
