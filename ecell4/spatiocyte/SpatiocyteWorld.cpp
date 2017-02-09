@@ -15,7 +15,8 @@ SpatiocyteWorld* create_spatiocyte_world_cell_list_impl(
     const boost::shared_ptr<RandomNumberGenerator>& rng)
 {
     return new SpatiocyteWorld(
-        new LatticeSpaceCellListImpl(edge_lengths, voxel_radius, matrix_sizes), rng);
+        new LatticeSpaceCellListImpl(edge_lengths, voxel_radius, matrix_sizes),
+        rng);
 }
 
 SpatiocyteWorld* create_spatiocyte_world_vector_impl(
@@ -174,7 +175,8 @@ SpatiocyteWorld::list_structure_particles() const
 std::vector<std::pair<ParticleID, Particle> >
 SpatiocyteWorld::list_non_structure_particles() const
 {
-    const std::vector<Species> non_structure_species(list_non_structure_species());
+    const std::vector<Species> non_structure_species(
+            list_non_structure_species());
 
     typedef std::vector<std::vector<std::pair<ParticleID, Particle> > > tmp_type;
     tmp_type tmp_vector(non_structure_species.size());
@@ -230,19 +232,20 @@ std::vector<Species> SpatiocyteWorld::list_structure_species() const
     return retval;
 }
 
-std::vector<std::pair<ParticleID, Voxel> > SpatiocyteWorld::list_voxels() const
+std::vector<std::pair<ParticleID, Voxel> >
+SpatiocyteWorld::list_voxels() const
 {
     return (*space_).list_voxels();
 }
 
 std::vector<std::pair<ParticleID, Voxel> >
-    SpatiocyteWorld::list_voxels(const Species& sp) const
+SpatiocyteWorld::list_voxels(const Species& sp) const
 {
     return (*space_).list_voxels(sp);
 }
 
 std::vector<std::pair<ParticleID, Voxel> >
-    SpatiocyteWorld::list_voxels_exact(const Species& sp) const
+SpatiocyteWorld::list_voxels_exact(const Species& sp) const
 {
     return (*space_).list_voxels_exact(sp);
 }
@@ -280,7 +283,8 @@ SpatiocyteWorld::new_voxel(const Voxel& v)
 }
 
 std::pair<std::pair<ParticleID, Voxel>, bool>
-SpatiocyteWorld::new_voxel_structure(const Species& sp, const coordinate_type& coord)
+SpatiocyteWorld::new_voxel_structure(const Species& sp,
+                                     const coordinate_type& coord)
 {
     const molecule_info_type minfo(get_molecule_info(sp));
     return new_voxel_structure(
@@ -295,7 +299,8 @@ SpatiocyteWorld::new_voxel_structure(const Voxel& v)
 }
 
 std::pair<std::pair<ParticleID, Voxel>, bool>
-SpatiocyteWorld::new_voxel_interface(const Species& sp, const coordinate_type& coord)
+SpatiocyteWorld::new_voxel_interface(const Species& sp,
+                                     const coordinate_type& coord)
 {
     const molecule_info_type minfo(get_molecule_info(sp));
     return new_voxel_interface(
@@ -321,7 +326,8 @@ bool SpatiocyteWorld::add_molecules(const Species& sp, const Integer& num)
     Integer count(0);
     while (count < num)
     {
-        const coordinate_type coord(inner2coordinate(rng()->uniform_int(0, inner_size() - 1)));
+        const coordinate_type coord(
+                inner2coordinate(rng()->uniform_int(0, inner_size() - 1)));
         //XXX: just for consistency. rather use below
         // const coordinate_type coord(rng()->uniform_int(0, size() - 1));
 
@@ -339,8 +345,9 @@ bool SpatiocyteWorld::add_molecules(const Species& sp, const Integer& num)
     return true;
 }
 
-bool SpatiocyteWorld::add_molecules(
-    const Species& sp, const Integer& num, const boost::shared_ptr<const Shape> shape)
+bool SpatiocyteWorld::add_molecules(const Species& sp,
+                                    const Integer& num,
+                                    const boost::shared_ptr<const Shape> shape)
 {
     if (num < 0)
     {
@@ -353,7 +360,11 @@ bool SpatiocyteWorld::add_molecules(
     while (count < num)
     {
         const Real3 pos(shape->draw_position(rng_));
-        const Voxel v(sp, position2coordinate(pos), info.radius, info.D, info.loc);
+        const Voxel v(sp,
+                      position2coordinate(pos),
+                      info.radius,
+                      info.D,
+                      info.loc);
 
         if (on_structure(v))
         {
@@ -387,7 +398,9 @@ Integer SpatiocyteWorld::add_structure(
     throw NotSupported("The dimension of a shape must be two or three.");
 }
 
-Integer SpatiocyteWorld::add_structure3(const Species& sp, const boost::shared_ptr<const Shape> shape)
+Integer
+SpatiocyteWorld::add_structure3(const Species& sp,
+                                const boost::shared_ptr<const Shape> shape)
 {
     const SpatiocyteWorld::molecule_info_type info(get_molecule_info(sp));
     Integer count(0);
@@ -404,7 +417,9 @@ Integer SpatiocyteWorld::add_structure3(const Species& sp, const boost::shared_p
     return count;
 }
 
-Integer SpatiocyteWorld::add_structure2(const Species& sp, const boost::shared_ptr<const Shape> shape)
+Integer
+SpatiocyteWorld::add_structure2(const Species& sp,
+                                const boost::shared_ptr<const Shape> shape)
 {
     const SpatiocyteWorld::molecule_info_type info(get_molecule_info(sp));
     Integer count(0);
@@ -423,7 +438,8 @@ Integer SpatiocyteWorld::add_structure2(const Species& sp, const boost::shared_p
 Integer SpatiocyteWorld::add_interface(const Species& sp)
 {
     const SpatiocyteWorld::molecule_info_type info(get_molecule_info(sp));
-    (*space_).make_interface_type(sp, Shape::UNDEF, info.loc);  //XXX: set the dimension properly
+    (*space_).make_interface_type(sp, Shape::UNDEF, info.loc);
+    //XXX: set the dimension properly
 }
 
 bool SpatiocyteWorld::is_surface_voxel(
@@ -506,8 +522,9 @@ bool SpatiocyteWorld::remove_voxel(const coordinate_type coord)
     return (*space_).remove_voxel(coord);
 }
 
-bool SpatiocyteWorld::move(
-    const coordinate_type& src, const coordinate_type& dest, const std::size_t candidate)
+bool SpatiocyteWorld::move(const coordinate_type& src,
+                           const coordinate_type& dest,
+                           const std::size_t candidate)
 {
     return (*space_).move(src, dest, candidate);
 }
@@ -527,8 +544,8 @@ SpatiocyteWorld::move_to_neighbor(
 }
 
 std::pair<SpatiocyteWorld::coordinate_type, bool>
-SpatiocyteWorld::check_neighbor(
-    const coordinate_type coord, const std::string& loc)
+SpatiocyteWorld::check_neighbor(const coordinate_type coord,
+                                const std::string& loc)
 {
     std::vector<coordinate_type> tmp;
     tmp.reserve(12);
