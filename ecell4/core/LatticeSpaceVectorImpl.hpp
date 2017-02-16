@@ -35,7 +35,7 @@ public:
      *
      * using Species and coordinate_type
      */
-    virtual std::pair<ParticleID, Voxel> get_voxel_at(const coordinate_type& coord) const;
+    virtual identified_voxel get_voxel_at(const coordinate_type& coord) const;
 
     // virtual void update_voxel(const Voxel& v);
     virtual bool update_voxel(const ParticleID& pid, const Voxel& v);

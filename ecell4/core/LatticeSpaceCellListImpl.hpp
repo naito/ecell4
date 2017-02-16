@@ -217,7 +217,7 @@ public:
 
     virtual bool update_voxel(const ParticleID& pid, const Voxel& v);
 
-    virtual std::pair<ParticleID, Voxel> get_voxel_at(const coordinate_type& coord) const
+    virtual identified_voxel get_voxel_at(const coordinate_type& coord) const
     {
         const VoxelPool* vp(get_voxel_pool_at(coord));
         const std::string loc((vp->location()->is_vacant())

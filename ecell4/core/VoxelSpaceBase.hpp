@@ -26,7 +26,8 @@ public:
 
     typedef Voxel::coordinate_type             coordinate_type;
     typedef VoxelPool::coordinate_id_pair_type coordinate_id_pair_type;
-    typedef std::pair<ParticleID, Voxel>       pid_voxel_pair;
+    typedef std::pair<ParticleID, Voxel>       identified_voxel;
+    typedef std::pair<ParticleID, Particle>    identified_particle;
 
 protected:
 
@@ -75,11 +76,11 @@ public:
     Integer num_voxels(const Species& sp) const;
     Integer num_voxels_exact(const Species& sp) const;
 
-    std::vector<pid_voxel_pair> list_voxels() const;
-    std::vector<pid_voxel_pair> list_voxels(const Species& sp) const;
-    std::vector<pid_voxel_pair> list_voxels_exact(const Species& sp) const;
+    std::vector<identified_voxel> list_voxels() const;
+    std::vector<identified_voxel> list_voxels(const Species& sp) const;
+    std::vector<identified_voxel> list_voxels_exact(const Species& sp) const;
 
-    pid_voxel_pair get_voxel(const ParticleID& pid) const;
+    identified_voxel get_voxel(const ParticleID& pid) const;
 
     bool has_voxel_pool(const Species& sp) const;
     const VoxelPool* find_voxel_pool(const Species& sp) const;
@@ -103,7 +104,7 @@ public:
                              Real D,
                              const std::string loc);
 
-    virtual pid_voxel_pair get_voxel_at(const coordinate_type& coord) const = 0;
+    virtual identified_voxel get_voxel_at(const coordinate_type& coord) const = 0;
     virtual VoxelPool* get_voxel_pool_at(const coordinate_type& coord) const = 0;
     virtual const Particle particle_at(const coordinate_type& coord) const = 0;
 
@@ -131,9 +132,9 @@ protected:
 
 private:
     std::string get_location_serial(const boost::shared_ptr<VoxelPool>& voxel_pool) const;
-    void push_voxels(std::vector<pid_voxel_pair>& voxels,
+    void push_voxels(std::vector<identified_voxel>& voxels,
                      const boost::shared_ptr<MoleculePool>& voxel_pool) const;
-    void push_voxels(std::vector<pid_voxel_pair>& voxels,
+    void push_voxels(std::vector<identified_voxel>& voxels,
                      const boost::shared_ptr<VoxelPool>& voxel_pool) const;
     VoxelPool* get_vp_from_serial(const std::string& serial);
 
@@ -196,10 +197,10 @@ public:
 
     bool has_particle(const ParticleID& pid) const;
 
-    std::pair<ParticleID, Particle> get_particle(const ParticleID& pid) const;
-    std::vector<std::pair<ParticleID, Particle> > list_particles() const;
-    std::vector<std::pair<ParticleID, Particle> > list_particles(const Species& sp) const;
-    std::vector<std::pair<ParticleID, Particle> > list_particles_exact(const Species& sp) const;
+    identified_particle get_particle(const ParticleID& pid) const;
+    std::vector<identified_particle> list_particles() const;
+    std::vector<identified_particle> list_particles(const Species& sp) const;
+    std::vector<identified_particle> list_particles_exact(const Species& sp) const;
 
 
 protected:

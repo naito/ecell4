@@ -396,7 +396,7 @@ const Particle LatticeSpaceVectorImpl::particle_at(
         vp->radius(), vp->D());
 }
 
-std::pair<ParticleID, Voxel>
+LatticeSpaceVectorImpl::identified_voxel
 LatticeSpaceVectorImpl::get_voxel_at(const coordinate_type& coord) const
 {
     const VoxelPool* vp(voxels_[coord]);
