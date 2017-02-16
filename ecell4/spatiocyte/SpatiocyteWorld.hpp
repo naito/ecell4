@@ -91,52 +91,32 @@ public:
         const bool with_radius(sp.has_attribute("radius"));
         const bool with_loc(sp.has_attribute("location"));
 
-        Real radius(voxel_radius()), D(0.0);
-        std::string loc("");
+        Real radius(with_radius ? std::atof(sp.get_attribute("radius").c_str())
+                                : voxel_radius());
+        Real D(with_D ? std::atof(sp.get_attribute("D").c_str())
+                      : 0.0);
+        std::string loc(with_loc ? sp.get_attribute("location")
+                                 : "");
 
-        if (with_D && with_radius)
+        if ((!with_D || !with_radius)
+                && boost::shared_ptr<Model> bound_model = lock_model())
         {
-            radius = std::atof(sp.get_attribute("radius").c_str());
-            D = std::atof(sp.get_attribute("D").c_str());
+            Species attributed(bound_model->apply_species_attributes(sp));
 
-            if (with_loc)
+            if (!with_D && attributed.has_attribute("D"))
             {
-                loc = sp.get_attribute("location");
-            }
-        }
-        else
-        {
-            if (with_D)
-            {
-                D = std::atof(sp.get_attribute("D").c_str());
+                D = std::atof(attributed.get_attribute("D").c_str());
             }
 
-            if (with_radius)
+            if (!with_radius && attributed.has_attribute("radius"))
             {
-                radius = std::atof(sp.get_attribute("radius").c_str());
+                radius = std::atof(
+                    attributed.get_attribute("radius").c_str());
             }
 
-            if (with_loc)
+            if (!with_loc && attributed.has_attribute("location"))
             {
-                loc = sp.get_attribute("location");
-            }
-
-            if (boost::shared_ptr<Model> bound_model = lock_model())
-            {
-                Species attributed(bound_model->apply_species_attributes(sp));
-                if (!with_D && attributed.has_attribute("D"))
-                {
-                    D = std::atof(attributed.get_attribute("D").c_str());
-                }
-                if (!with_radius && attributed.has_attribute("radius"))
-                {
-                    radius = std::atof(
-                        attributed.get_attribute("radius").c_str());
-                }
-                if (!with_loc && attributed.has_attribute("location"))
-                {
-                    loc = attributed.get_attribute("location");
-                }
+                loc = attributed.get_attribute("location");
             }
         }
 
