@@ -5,7 +5,6 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 
-// #include <ecell4/core/LatticeSpace.hpp>
 #include <ecell4/core/LatticeSpaceCellListImpl.hpp>
 #include <ecell4/core/LatticeSpaceVectorImpl.hpp>
 #include <ecell4/core/VoxelPool.hpp>
@@ -37,8 +36,8 @@ public:
 
     typedef MoleculeInfo molecule_info_type;
 
-    typedef LatticeSpace::coordinate_id_pair_type coordinate_id_pair_type;
-    typedef LatticeSpace::coordinate_type coordinate_type;
+    typedef VoxelSpaceBase::coordinate_id_pair_type coordinate_id_pair_type;
+    typedef VoxelSpaceBase::coordinate_type coordinate_type;
 
 public:
 
@@ -73,7 +72,7 @@ public:
         this->load(filename);
     }
 
-    SpatiocyteWorld(LatticeSpace* space,
+    SpatiocyteWorld(VoxelSpaceBase* space,
         const boost::shared_ptr<RandomNumberGenerator>& rng)
         : space_(space), rng_(rng)
     {
@@ -502,7 +501,7 @@ protected:
 
 protected:
 
-    boost::scoped_ptr<LatticeSpace> space_;
+    boost::scoped_ptr<VoxelSpaceBase> space_;
     boost::shared_ptr<RandomNumberGenerator> rng_;
     SerialIDGenerator<ParticleID> sidgen_;
 
