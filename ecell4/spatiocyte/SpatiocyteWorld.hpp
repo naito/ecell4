@@ -97,25 +97,27 @@ public:
         std::string loc(with_loc ? sp.get_attribute("location")
                                  : "");
 
-        if ((!with_D || !with_radius)
-                && boost::shared_ptr<Model> bound_model = lock_model())
+        if (!with_D || !with_radius)
         {
-            Species attributed(bound_model->apply_species_attributes(sp));
-
-            if (!with_D && attributed.has_attribute("D"))
+            if (boost::shared_ptr<Model> bound_model = lock_model())
             {
-                D = std::atof(attributed.get_attribute("D").c_str());
-            }
+                Species attributed(bound_model->apply_species_attributes(sp));
 
-            if (!with_radius && attributed.has_attribute("radius"))
-            {
-                radius = std::atof(
-                    attributed.get_attribute("radius").c_str());
-            }
+                if (!with_D && attributed.has_attribute("D"))
+                {
+                    D = std::atof(attributed.get_attribute("D").c_str());
+                }
 
-            if (!with_loc && attributed.has_attribute("location"))
-            {
-                loc = attributed.get_attribute("location");
+                if (!with_radius && attributed.has_attribute("radius"))
+                {
+                    radius = std::atof(
+                        attributed.get_attribute("radius").c_str());
+                }
+
+                if (!with_loc && attributed.has_attribute("location"))
+                {
+                    loc = attributed.get_attribute("location");
+                }
             }
         }
 
