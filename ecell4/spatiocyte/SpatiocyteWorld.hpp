@@ -324,50 +324,24 @@ public:
         return (*space_).update_voxel(pid, v);
     }
 
-    Real voxel_radius() const
-    {
-        return (*space_).voxel_radius();
-    }
-
-    Real voxel_volume() const
-    {
-        return (*space_).voxel_volume();
-    }
-
-    Real unit_area() const
-    {
-        return (*space_).unit_area();
-    }
-
+    Real voxel_radius() const;
+    Real voxel_volume() const;
+    Real unit_area() const;
     // Real get_volume() const
     // {
     //     return (*space_).get_volume();
     // }
 
-    Real3 actual_lengths() const
-    {
-        return (*space_).actual_lengths();
-    }
+    Real3 actual_lengths() const;
 
     boost::shared_ptr<RandomNumberGenerator> rng()
     {
         return rng_;
     }
 
-    const Integer size() const
-    {
-        return (*space_).size();
-    }
-
-    const Integer3 shape() const
-    {
-        return (*space_).shape();
-    }
-
-    const Integer inner_size() const
-    {
-        return (*space_).inner_size();
-    }
+    const Integer size() const;
+    const Integer inner_size() const;
+    const Integer3 shape() const;
 
     // TODO
     // const Integer3 inner_shape() const
