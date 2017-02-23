@@ -5,14 +5,13 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 
-#include <ecell4/core/LatticeSpaceCellListImpl.hpp>
-#include <ecell4/core/LatticeSpaceVectorImpl.hpp>
 #include <ecell4/core/VoxelPool.hpp>
+#include <ecell4/core/VoxelSpaceBase.hpp>
+#include <ecell4/core/LatticeSpaceVectorImpl.hpp>
 #include <ecell4/core/RandomNumberGenerator.hpp>
 #include <ecell4/core/SerialIDGenerator.hpp>
 #include <ecell4/core/Model.hpp>
 #include <ecell4/core/Shape.hpp>
-#include <ecell4/core/extras.hpp>
 
 namespace ecell4
 {
@@ -80,7 +79,9 @@ public:
         ; // do nothing
     }
 
-    void set_value(const Species& sp, const Real value);
+    /*
+     * Class functions
+     */
 
     /**
      * draw attributes of species and return it as a molecule info.
@@ -88,33 +89,6 @@ public:
      * @return info a molecule info
      */
     MoleculeInfo get_molecule_info(const Species& sp) const;
-
-    /**
-     * create and add a new particle
-     * @param p a particle
-     * @return a pair of a pair of pid (a particle id) and p (a particle)
-     * and bool (if it's succeeded or not)
-     */
-    std::pair<identified_particle, bool> new_particle(const Particle& p);
-
-    std::pair<identified_particle, bool>
-    new_particle(const Species& sp, const Real3& pos)
-    {
-        const MoleculeInfo info(get_molecule_info(sp));
-        return new_particle(Particle(sp, pos, info.radius, info.D));
-    }
-
-    std::vector<identified_particle> list_structure_particles() const;
-    std::vector<identified_particle> list_non_structure_particles() const;
-    std::vector<Species> list_non_structure_species() const;
-    std::vector<Species> list_structure_species() const;
-
-    bool update_particle(const ParticleID& pid, const Particle& p)
-    {
-        const molecule_info_type minfo(get_molecule_info(p.species()));
-        return update_voxel(pid, Voxel(p.species(),
-            position2coordinate(p.position()), p.radius(), p.D(), minfo.loc));
-    }
 
     std::pair<identified_voxel, bool> new_voxel(const Voxel& v)
     {
@@ -129,116 +103,37 @@ public:
         return new_voxel(Voxel(sp, coord, minfo.radius, minfo.D, minfo.loc));
     }
 
-    std::pair<identified_voxel, bool>
-    new_voxel_structure(const Species& sp, const coordinate_type& coord)
-    {
-        const molecule_info_type minfo(get_molecule_info(sp));
-        return new_voxel_structure(
-            Voxel(sp, coord, minfo.radius, minfo.D, minfo.loc));
-    }
-
-    std::pair<identified_voxel, bool> new_voxel_structure(const Voxel& v)
-    {
-        const bool is_succeeded(update_voxel(ParticleID(), v));
-        return std::make_pair(std::make_pair(ParticleID(), v), is_succeeded);
-    }
-
-    std::pair<identified_voxel, bool>
-    new_voxel_interface(const Species& sp, const coordinate_type& coord)
-    {
-        const molecule_info_type minfo(get_molecule_info(sp));
-        return new_voxel_interface(
-            Voxel(sp, coord, minfo.radius, minfo.D, minfo.loc));
-    }
-
-    std::pair<identified_voxel, bool> new_voxel_interface(const Voxel& v)
-    {
-        const bool is_succeeded(update_voxel(ParticleID(), v));
-        return std::make_pair(std::make_pair(ParticleID(), v), is_succeeded);
-    }
-
-    bool add_molecules(const Species& sp, const Integer& num);
-    bool add_molecules(const Species& sp, const Integer& num,
-                       const boost::shared_ptr<const Shape> shape);
-    Integer add_structure(const Species& sp, const boost::shared_ptr<const Shape> shape);
-    Integer add_interface(const Species& sp)
-    {
-        return space_->make_interface_type(sp, Shape::UNDEF, get_molecule_info(sp).loc);
-    }
-
-    Integer add_neighbors(const Species& sp, const coordinate_type center); // TODO
-
-    void remove_molecules(const Species& sp, const Integer& num);
-
-
-    std::pair<coordinate_type, bool> check_neighbor(
-            const coordinate_type coord, const std::string& loc);
-    // bool update_molecule(coordinate_type at, Species species);
-
-    // XXX: Not implemented
-    const Species& draw_species(const Species& pttrn) const;
-
-    // std::pair<std::pair<ParticleID, Voxel>, bool> place_voxel(
-    //     const Species& sp, const coordinate_type& coord)
-    // {
-    //     const molecule_info_type& info(get_molecule_info(sp));
-    //     return new_voxel(ecell4::Voxel(sp, coord, info.radius, info.D));
-    // }
+    std::pair<coordinate_type, bool>
+    check_neighbor(const coordinate_type coord, const std::string& loc);
 
     boost::shared_ptr<RandomNumberGenerator> rng()
     {
         return rng_;
     }
 
-    /**
-     * temp
-     */
-
-    const molecule_info_type get_molecule_info(const VoxelPool* mt) const
+    identified_voxel
+    make_pid_voxel_pair(const VoxelPool* vpool, const coordinate_id_pair_type& info) const
     {
-        const std::string loc(
-            mt->location()->is_vacant() ? "" : mt->location()->species().serial());
-        molecule_info_type info = {mt->radius(), mt->D(), loc};
-        return info;
-    }
-
-    identified_voxel make_pid_voxel_pair(
-        const VoxelPool* mt, const coordinate_type& coord) const
-    {
-        const ParticleID pid(mt->get_particle_id(coord));
-        const coordinate_id_pair_type info(pid, coord);
-        return make_pid_voxel_pair(mt, info);
-    }
-
-    identified_voxel make_pid_voxel_pair(
-        const VoxelPool* mt, const coordinate_id_pair_type& info) const
-    {
-        const std::string loc(mt->location()->is_vacant() ? "" : mt->location()->species().serial());
+        const std::string loc(vpool->location()->is_vacant() ?
+                "" : vpool->location()->species().serial());
         return identified_voxel(
             ParticleID(info.pid),
-            Voxel(mt->species(), info.coordinate, mt->radius(), mt->D(), loc));
+            Voxel(vpool->species(), info.coordinate, vpool->radius(), vpool->D(), loc));
+    }
+
+    identified_voxel
+    make_pid_voxel_pair(const VoxelPool* vpool, const coordinate_type& coord) const
+    {
+        const ParticleID pid(vpool->get_particle_id(coord));
+        const coordinate_id_pair_type info(pid, coord);
+        return make_pid_voxel_pair(vpool, info);
     }
 
     identified_voxel choice(const Species& sp)
     {
-        const MoleculePool* mt(find_molecule_pool(sp));
-        const Integer i(rng_->uniform_int(0, mt->size() - 1));
-        const coordinate_id_pair_type& info(mt->at(i));
-        return make_pid_voxel_pair(mt, info);
-    }
-
-    void bind_to(boost::shared_ptr<Model> model)
-    {
-        if (boost::shared_ptr<Model> bound_model = lock_model())
-        {
-            if (bound_model.get() != model.get())
-            {
-                std::cerr << "Warning: Model already bound to SpatiocyteWorld"
-                          << std::endl;
-            }
-        }
-
-        model_ = model;
+        const MoleculePool* mpool(find_molecule_pool(sp));
+        const Integer i(rng_->uniform_int(0, mpool->size()-1));
+        return make_pid_voxel_pair(mpool, mpool->at(i));
     }
 
     boost::shared_ptr<Model> lock_model() const
@@ -246,8 +141,62 @@ public:
         return model_.lock();
     }
 
+    // XXX: Not implemented
+    const Species& draw_species(const Species& pttrn) const;
+
+    // XXX: Never called
+    Integer add_neighbors(const Species& sp, const coordinate_type center);
+
+
+public:
+
+    /*
+     * Python API
+     */
+
+    void set_value(const Species& sp, const Real value);
+
+    /**
+     * create and add a new particle
+     * @param p a particle
+     * @return a pair of a pair of pid (a particle id) and p (a particle)
+     * and bool (if it's succeeded or not)
+     */
+    std::pair<identified_particle, bool> new_particle(const Particle& p);
+    std::pair<identified_particle, bool> new_particle(const Species& sp, const Real3& pos)
+    {
+        const MoleculeInfo info(get_molecule_info(sp));
+        return new_particle(Particle(sp, pos, info.radius, info.D));
+    }
+
+    bool update_particle(const ParticleID& pid, const Particle& p);
+
+    std::vector<identified_particle> list_structure_particles() const;
+    std::vector<identified_particle> list_non_structure_particles() const;
+
+    std::pair<identified_voxel, bool>
+    new_voxel_structure(const Species& sp, const coordinate_type& coord);
+
+    std::pair<identified_voxel, bool>
+    new_voxel_interface(const Species& sp, const coordinate_type& coord);
+
+    Integer add_structure(const Species& sp, const boost::shared_ptr<const Shape> shape);
+    Integer add_interface(const Species& sp);
+
+    std::vector<Species> list_structure_species() const;
+    std::vector<Species> list_non_structure_species() const;
+
+    bool add_molecules(const Species& sp, const Integer& num);
+    bool add_molecules(const Species& sp, const Integer& num,
+                       const boost::shared_ptr<const Shape> shape);
+    void remove_molecules(const Species& sp, const Integer& num);
+
+    void bind_to(boost::shared_ptr<Model> model);
+
+
 protected:
 
+    std::pair<identified_voxel, bool> new_voxel_structure(const Voxel& v);
     Integer add_structure3(const Species& sp, const boost::shared_ptr<const Shape> shape);
     Integer add_structure2(const Species& sp, const boost::shared_ptr<const Shape> shape);
     bool is_surface_voxel(const coordinate_type coord,
@@ -255,14 +204,25 @@ protected:
 
 public:
 
-#define wrap_getter(rettype, fn)\
-    rettype fn()            const { return space_->fn(); }
-#define wrap_getter_with_arg(rettype, fn, argtype)\
+    /*
+     * Wrapped functions
+     */
+
+#define\
+    wrap_getter(rettype, fn)\
+    rettype fn() const { return space_->fn(); }
+
+#define\
+    wrap_getter_with_arg(rettype, fn, argtype)\
     rettype fn(argtype arg) const { return space_->fn(arg); }
-#define wrap_setter(fn, argtype)\
-    void    fn(argtype arg)       { space_->fn(arg); }
-#define wrap_mutable(rettype, fn, argtype)\
-    rettype fn(argtype arg)       { return space_->fn(arg); }
+
+#define\
+    wrap_setter(fn, argtype)\
+    void fn(argtype arg) { space_->fn(arg); }
+
+#define\
+    wrap_mutable(rettype, fn, argtype)\
+    rettype fn(argtype arg) { return space_->fn(arg); }
 
     /*
      * SpaceTraits
@@ -304,7 +264,9 @@ public:
     wrap_getter_with_arg(std::vector<identified_particle>, list_particles_exact, const Species&)
 
     /*
-     * LatticeSpaceTraits */ wrap_getter_with_arg(const Real3, coordinate2position, const coordinate_type&)
+     * LatticeSpaceTraits
+     */
+    wrap_getter_with_arg(const Real3, coordinate2position, const coordinate_type&)
     wrap_getter_with_arg(coordinate_type, position2coordinate, const Real3&)
     wrap_getter_with_arg(Integer, num_neighbors, const coordinate_type&)
 
@@ -378,7 +340,7 @@ public:
         return space_->get_voxel_pool_at(coord);
     }
 
-    /* Not wrapped functions
+    /* Not wrapped function
     virtual const Particle particle_at(const coordinate_type& coord) const;
     */
 
