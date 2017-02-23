@@ -80,9 +80,9 @@ void StepEvent::walk_in_space_(const MoleculePool* mtype, const Real& alpha)
             // when reaction has occured before, a voxel can be changed.
             continue;
         }
-        const Integer rnd(rng->uniform_int(0, world_->num_destinations(source)-1));
+        const Integer rnd(rng->uniform_int(0, world_->num_neighbors(source)-1));
         const SpatiocyteWorld::coordinate_type destination(
-                world_->get_destination_boundary(source, rnd));
+                world_->get_neighbor_boundary(source, rnd));
         if (world_->can_move(source, destination))
         {
             if (rng->uniform(0,1) <= alpha)
@@ -114,9 +114,9 @@ void StepEvent::walk_on_surface_(const MoleculePool* mtype, const Real& alpha)
             continue;
         }
 
-        const Integer num_destinations(world_->num_destinations(source));
+        const Integer num_neighbors(world_->num_neighbors(source));
         std::vector<unsigned int> nids;
-        for (unsigned int i(0); i < num_destinations; ++i)
+        for (unsigned int i(0); i < num_neighbors; ++i)
             nids.push_back(i);
         ecell4::shuffle(*(rng.get()), nids);
 
@@ -124,7 +124,7 @@ void StepEvent::walk_on_surface_(const MoleculePool* mtype, const Real& alpha)
              nitr != nids.end(); ++nitr)
         {
             const SpatiocyteWorld::coordinate_type destination(
-                    world_->get_destination_boundary(source, *nitr));
+                    world_->get_neighbor_boundary(source, *nitr));
             const VoxelPool* target(world_->get_voxel_pool_at(destination));
 
             if (target->get_dimension() > mtype->get_dimension())

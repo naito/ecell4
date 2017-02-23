@@ -4,6 +4,7 @@
 #include <ecell4/core/ReactionRule.hpp>
 #include <ecell4/core/EventScheduler.hpp>
 #include <ecell4/core/Model.hpp>
+#include "ReactionInfo.hpp"
 #include "SpatiocyteWorld.hpp"
 
 namespace ecell4
