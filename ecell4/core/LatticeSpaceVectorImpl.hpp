@@ -46,7 +46,8 @@ public:
     std::vector<coordinate_type> list_coords(const Species& sp) const;
     std::vector<coordinate_type> list_coords_exact(const Species& sp) const;
 
-    virtual VoxelPool* get_voxel_pool_at(const coordinate_type& coord) const;
+    virtual const VoxelPool* get_voxel_pool_at(const coordinate_type& coord) const;
+    virtual       VoxelPool* get_voxel_pool_at(const coordinate_type& coord);
 
     // bool update_molecule(coordinate_type coord, const Species& species);
     // bool add_molecule(const Species& sp, coordinate_type coord, const ParticleID& pid);

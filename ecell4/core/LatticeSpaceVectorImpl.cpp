@@ -154,7 +154,12 @@ LatticeSpaceVectorImpl::coordinate_type LatticeSpaceVectorImpl::get_coord(
     return -1; //XXX: a bit dirty way
 }
 
-VoxelPool* LatticeSpaceVectorImpl::get_voxel_pool_at(const coordinate_type& coord) const
+const VoxelPool* LatticeSpaceVectorImpl::get_voxel_pool_at(const coordinate_type& coord) const
+{
+    return voxels_.at(coord);
+}
+
+VoxelPool* LatticeSpaceVectorImpl::get_voxel_pool_at(const coordinate_type& coord)
 {
     return voxels_.at(coord);
 }

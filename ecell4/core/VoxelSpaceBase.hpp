@@ -102,7 +102,8 @@ public:
                              const std::string loc);
 
     virtual identified_voxel get_voxel_at(const coordinate_type& coord) const = 0;
-    virtual VoxelPool* get_voxel_pool_at(const coordinate_type& coord) const = 0;
+    virtual const VoxelPool* get_voxel_pool_at(const coordinate_type& coord) const = 0;
+    virtual       VoxelPool* get_voxel_pool_at(const coordinate_type& coord)       = 0;
     virtual const Particle particle_at(const coordinate_type& coord) const = 0;
 
     virtual bool update_voxel(const ParticleID& pid, const Voxel& v) = 0;

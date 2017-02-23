@@ -59,7 +59,12 @@ OffLatticeSpace::get_voxel_at(const coordinate_type& coord) const
 }
 
 // Same as LatticeSpaceVectorImpl
-VoxelPool* OffLatticeSpace::get_voxel_pool_at(const coordinate_type& coord) const
+const VoxelPool* OffLatticeSpace::get_voxel_pool_at(const coordinate_type& coord) const
+{
+    return voxels_.at(coord);
+}
+
+VoxelPool* OffLatticeSpace::get_voxel_pool_at(const coordinate_type& coord)
 {
     return voxels_.at(coord);
 }

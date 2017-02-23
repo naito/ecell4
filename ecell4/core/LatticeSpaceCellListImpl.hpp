@@ -322,7 +322,8 @@ public:
             vp->species(), coordinate2position(coord), vp->radius(), vp->D());
     }
 
-    VoxelPool* get_voxel_pool_at(const coordinate_type& coord) const;
+    const VoxelPool* get_voxel_pool_at(const coordinate_type& coord) const;
+          VoxelPool* get_voxel_pool_at(const coordinate_type& coord);
 
     coordinate_type get_neighbor_boundary(
         const coordinate_type& coord, const Integer& nrand) const

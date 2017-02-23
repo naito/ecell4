@@ -31,7 +31,8 @@ public:
      * VoxelSpaceBaseTraits
      */
     identified_voxel get_voxel_at(const coordinate_type& coord) const;
-    VoxelPool* get_voxel_pool_at(const coordinate_type& coord) const;
+    const VoxelPool* get_voxel_pool_at(const coordinate_type& coord) const;
+          VoxelPool* get_voxel_pool_at(const coordinate_type& coord);
     const Particle particle_at(const coordinate_type& coord) const;
 
     bool update_voxel(const ParticleID& pid, const Voxel& v);

@@ -126,8 +126,62 @@ std::pair<const VoxelPool*, LatticeSpaceCellListImpl::coordinate_type>
     return std::make_pair<const VoxelPool*, coordinate_type>(NULL, -1); //XXX: a bit dirty way
 }
 
-VoxelPool* LatticeSpaceCellListImpl::get_voxel_pool_at(
+const VoxelPool* LatticeSpaceCellListImpl::get_voxel_pool_at(
     const LatticeSpaceCellListImpl::coordinate_type& coord) const
+{
+    /**
+     XXX: This may not work
+     */
+    if (!is_in_range(coord))
+    {
+        throw NotSupported("Out of bounds");
+    }
+
+    if (!is_inside(coord))
+    {
+        if (is_periodic_)
+        {
+            return periodic_;
+        }
+        else
+        {
+            return border_;
+        }
+    }
+
+    // for (spmap::iterator itr(spmap_.begin());
+    //     itr != spmap_.end(); ++itr)
+    // {
+    //     VoxelPool& vp((*itr).second);
+    //     if (vp.is_vacant())
+    //     {
+    //         continue;
+    //     }
+
+    //     VoxelPool::container_type::const_iterator j(vp.find(coord));
+    //     if (j != vp.end())
+    //     {
+    //         return (&vp);
+    //     }
+    // }
+
+    const cell_type& cell(matrix_[coordinate2index(coord)]);
+    if (cell.size() == 0)
+    {
+        return vacant_;
+    }
+
+    cell_type::const_iterator i(find_from_cell(coord, cell));
+    if (i != cell.end())
+    {
+        return (*i).first;
+    }
+
+    return vacant_;
+}
+
+VoxelPool* LatticeSpaceCellListImpl::get_voxel_pool_at(
+    const LatticeSpaceCellListImpl::coordinate_type& coord)
 {
     /**
      XXX: This may not work
