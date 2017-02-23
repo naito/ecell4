@@ -15,6 +15,7 @@ StepEvent::StepEvent(boost::shared_ptr<Model> model, boost::shared_ptr<Spatiocyt
         minfo(world_->get_molecule_info(species));
     const Real R(minfo.radius);
     const Real D(minfo.D);
+    const Real sqRperD(pow(R, 2.0)/D);
     const VoxelPool* mtype(world_->find_voxel_pool(species));
     // const Real R(world_->voxel_radius());
     // Real D = boost::lexical_cast<Real>(species.get_attribute("D"));
@@ -22,14 +23,14 @@ StepEvent::StepEvent(boost::shared_ptr<Model> model, boost::shared_ptr<Spatiocyt
     {
         dt_ = inf;
     } else if(mtype->get_dimension() == Shape::THREE) {
-        dt_ = 2 * R * R / 3 / D * alpha_;
+        dt_ = 2 * sqRperD / 3 * alpha_;
     } else if(mtype->get_dimension() == Shape::TWO) {
         // TODO: Regular Lattice
         // dt_  = pow((2*sqrt(2.0)+4*sqrt(3.0)+3*sqrt(6.0)+sqrt(22.0))/
-        //           (6*sqrt(2.0)+4*sqrt(3.0)+3*sqrt(6.0)), 2) * R * R / D * alpha_;
-        dt_ = R * R / D * alpha_;
+        //           (6*sqrt(2.0)+4*sqrt(3.0)+3*sqrt(6.0)), 2) * sqRperD * alpha_;
+        dt_ = sqRperD * alpha_;
     } else if(mtype->get_dimension() == Shape::ONE) {
-        dt_ = 2 * R * R / D * alpha_;
+        dt_ = 2 * sqRperD * alpha_;
     }
     else
     {
@@ -38,11 +39,6 @@ StepEvent::StepEvent(boost::shared_ptr<Model> model, boost::shared_ptr<Spatiocyt
     }
 
     time_ = t + dt_;
-    // time_ = t;
-
-    nids_.clear();
-    for (unsigned int i(0); i < 12; ++i)
-        nids_.push_back(i);
 }
 
 void StepEvent::fire_()
@@ -69,100 +65,100 @@ void StepEvent::walk(const Real& alpha)
 
 void StepEvent::walk_in_space_(const MoleculePool* mtype, const Real& alpha)
 {
-    const boost::shared_ptr<RandomNumberGenerator>& rng(world_->rng());
-    MoleculePool::container_type voxels;
-    copy(mtype->begin(), mtype->end(), back_inserter(voxels));
+    const boost::shared_ptr<RandomNumberGenerator> rng(world_->rng());
+    MoleculePool::container_type targets;
+    copy(mtype->begin(), mtype->end(), back_inserter(targets));
 
     std::size_t idx(0);
-    for (MoleculePool::container_type::iterator itr(voxels.begin());
-         itr != voxels.end(); ++itr)
+    for (MoleculePool::container_type::iterator itr(targets.begin());
+         itr != targets.end(); ++itr, ++idx)
     {
-        const Integer rnd(rng->uniform_int(0, 11));
-        const SpatiocyteWorld::coordinate_id_pair_type& info(*itr);
-        if (world_->get_voxel_pool_at(info.coordinate) != mtype)
+        const SpatiocyteWorld::coordinate_type source((*itr).coordinate);
+        if (world_->get_voxel_pool_at(source) != mtype)
         {
             // should skip if a voxel is not the target species.
             // when reaction has occured before, a voxel can be changed.
             continue;
         }
-        const SpatiocyteWorld::coordinate_type neighbor(
-                world_->get_neighbor_boundary(info.coordinate, rnd));
-        if (world_->can_move(info.coordinate, neighbor))
+        const Integer rnd(rng->uniform_int(0, world_->num_destinations(source)-1));
+        const SpatiocyteWorld::coordinate_type destination(
+                world_->get_destination_boundary(source, rnd));
+        if (world_->can_move(source, destination))
         {
             if (rng->uniform(0,1) <= alpha)
-                world_->move(info.coordinate, neighbor, /*candidate=*/idx);
+                world_->move(source, destination, /*candidate=*/idx);
         }
         else
         {
-            attempt_reaction_(info, neighbor, alpha);
+            attempt_reaction_(*itr, destination, alpha);
         }
-        ++idx;
     }
 }
 
 void StepEvent::walk_on_surface_(const MoleculePool* mtype, const Real& alpha)
 {
     const boost::shared_ptr<RandomNumberGenerator>& rng(world_->rng());
-    MoleculePool::container_type voxels;
-    copy(mtype->begin(), mtype->end(), back_inserter(voxels));
+    MoleculePool::container_type targets;
+    copy(mtype->begin(), mtype->end(), back_inserter(targets));
 
     const VoxelPool* location(mtype->location());
     std::size_t idx(0);
-    for (MoleculePool::container_type::iterator itr(voxels.begin());
-         itr != voxels.end(); ++itr)
+    for (MoleculePool::container_type::iterator itr(targets.begin());
+         itr != targets.end(); ++itr, ++idx)
     {
-        const SpatiocyteWorld::coordinate_id_pair_type& info(*itr);
-        if (world_->get_voxel_pool_at(info.coordinate) != mtype)
+        const SpatiocyteWorld::coordinate_type source((*itr).coordinate);
+        if (world_->get_voxel_pool_at(source) != mtype)
         {
             // should skip if a voxel is not the target species.
             // when reaction has occured before, a voxel can be changed.
             continue;
         }
 
-        ecell4::shuffle(*(rng.get()), nids_);
-        for (std::vector<unsigned int>::const_iterator itr(nids_.begin());
-             itr != nids_.end(); ++itr)
+        const Integer num_destinations(world_->num_destinations(source));
+        std::vector<unsigned int> nids;
+        for (unsigned int i(0); i < num_destinations; ++i)
+            nids.push_back(i);
+        ecell4::shuffle(*(rng.get()), nids);
+
+        for (std::vector<unsigned int>::const_iterator nitr(nids.begin());
+             nitr != nids.end(); ++nitr)
         {
-            const SpatiocyteWorld::coordinate_type neighbor(
-                    world_->get_neighbor_boundary(info.coordinate, *itr));
-            const VoxelPool* target(world_->get_voxel_pool_at(neighbor));
+            const SpatiocyteWorld::coordinate_type destination(
+                    world_->get_destination_boundary(source, *nitr));
+            const VoxelPool* target(world_->get_voxel_pool_at(destination));
 
             if (target->get_dimension() > mtype->get_dimension())
                 continue;
 
-            if (world_->can_move(info.coordinate, neighbor))
+            if (world_->can_move(source, destination))
             {
                 if (rng->uniform(0,1) <= alpha)
-                    world_->move(info.coordinate, neighbor, /*candidate=*/idx);
+                    world_->move(source, destination, /*candidate=*/idx);
             }
             else
             {
-                attempt_reaction_(info, neighbor, alpha);
+                attempt_reaction_(*itr, destination, alpha);
             }
             break;
         }
-        ++idx;
     }
 }
 
 std::pair<StepEvent::attempt_reaction_result_type, StepEvent::reaction_type>
-StepEvent::attempt_reaction_(
-    const SpatiocyteWorld::coordinate_id_pair_type& info,
-    const SpatiocyteWorld::coordinate_type to_coord,
-    const Real& alpha)
+StepEvent::attempt_reaction_(const SpatiocyteWorld::coordinate_id_pair_type& info,
+                             const SpatiocyteWorld::coordinate_type to_coord,
+                             const Real& alpha)
 {
-    const VoxelPool* from_mt(
-        world_->get_voxel_pool_at(info.coordinate));
-    const VoxelPool* to_mt(
-        world_->get_voxel_pool_at(to_coord));
+    const VoxelPool* src_vp(world_->get_voxel_pool_at(info.coordinate));
+    const VoxelPool* dst_vp(world_->get_voxel_pool_at(to_coord));
 
-    if (to_mt->is_vacant())
+    if (dst_vp->is_vacant())
     {
         return std::make_pair(NO_REACTION, reaction_type());
     }
 
-    const Species& speciesA(from_mt->species());
-    const Species& speciesB(to_mt->species());
+    const Species& speciesA(src_vp->species());
+    const Species& speciesB(dst_vp->species());
 
     const std::vector<ReactionRule> rules(
         model_->query_reaction_rules(speciesA, speciesB));
@@ -172,16 +168,15 @@ StepEvent::attempt_reaction_(
         return std::make_pair(NO_REACTION, reaction_type());
     }
 
-    const Real factor(calculate_dimensional_factor(from_mt, to_mt,
+    const Real factor(calculate_dimensional_factor(src_vp, dst_vp,
                 boost::const_pointer_cast<const SpatiocyteWorld>(world_)));
 
     const Real rnd(world_->rng()->uniform(0,1));
     Real accp(0.0);
-    for (std::vector<ReactionRule>::const_iterator itr(rules.begin()); itr != rules.end(); ++itr)
+    for (std::vector<ReactionRule>::const_iterator itr(rules.begin());
+         itr != rules.end(); ++itr)
     {
-        const Real k((*itr).k());
-        const Real P(k * factor * alpha);
-        accp += P;
+        accp += (*itr).k() * factor * alpha;
         if (accp > 1)
         {
             std::cerr << "The total acceptance probability [" << accp
@@ -192,8 +187,8 @@ StepEvent::attempt_reaction_(
         {
             ReactionInfo rinfo(apply_second_order_reaction(
                         world_, *itr,
-                        world_->make_pid_voxel_pair(from_mt, info),
-                        world_->make_pid_voxel_pair(to_mt, to_coord)));
+                        world_->make_pid_voxel_pair(src_vp, info),
+                        world_->make_pid_voxel_pair(dst_vp, to_coord)));
             if (rinfo.has_occurred())
             {
                 reaction_type reaction(std::make_pair(*itr, rinfo));

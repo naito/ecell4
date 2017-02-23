@@ -81,7 +81,6 @@ protected:
     Species species_;
     VoxelPool* mt_;
     const Real alpha_;
-    std::vector<unsigned int> nids_; // neighbor indexes
 };
 
 struct ZerothOrderReactionEvent : SpatiocyteEvent
