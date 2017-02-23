@@ -41,6 +41,64 @@ void SpatiocyteWorld::set_value(const Species& sp, const Real value)
     }
 }
 
+MoleculeInfo SpatiocyteWorld::get_molecule_info(const Species& sp) const
+{
+    const bool with_D(sp.has_attribute("D"));
+    const bool with_radius(sp.has_attribute("radius"));
+    const bool with_loc(sp.has_attribute("location"));
+
+    Real radius(with_radius ? std::atof(sp.get_attribute("radius").c_str())
+                            : voxel_radius());
+    Real D(with_D ? std::atof(sp.get_attribute("D").c_str())
+                  : 0.0);
+    std::string loc(with_loc ? sp.get_attribute("location")
+                             : "");
+
+    if (!with_D || !with_radius)
+    {
+        if (boost::shared_ptr<Model> bound_model = lock_model())
+        {
+            Species attributed(bound_model->apply_species_attributes(sp));
+
+            if (!with_D && attributed.has_attribute("D"))
+            {
+                D = std::atof(attributed.get_attribute("D").c_str());
+            }
+
+            if (!with_radius && attributed.has_attribute("radius"))
+            {
+                radius = std::atof(
+                    attributed.get_attribute("radius").c_str());
+            }
+
+            if (!with_loc && attributed.has_attribute("location"))
+            {
+                loc = attributed.get_attribute("location");
+            }
+        }
+    }
+
+    MoleculeInfo info = {radius, D, loc};
+    return info;
+}
+
+std::pair<SpatiocyteWorld::identified_particle, bool>
+SpatiocyteWorld::new_particle(const Particle& p)
+{
+    // ParticleID pid(sidgen_());
+    // const bool is_succeeded(update_particle(pid, p));
+    // return std::make_pair(get_particle(pid), is_succeeded);
+    const molecule_info_type minfo(get_molecule_info(p.species()));
+    const Voxel v(
+        p.species(), position2coordinate(p.position()), p.radius(), p.D(), minfo.loc);
+    if (space_->on_structure(v))
+    {
+        return std::make_pair(std::make_pair(ParticleID(), p), false);
+    }
+    const std::pair<identified_voxel, bool> retval = new_voxel(v);
+    return std::make_pair(std::make_pair(retval.first.first, p), retval.second);
+}
+
 std::vector<std::pair<ParticleID, Particle> >
 SpatiocyteWorld::list_structure_particles() const
 {
@@ -124,55 +182,6 @@ std::vector<Species> SpatiocyteWorld::list_structure_species() const
     return retval;
 }
 
-std::pair<std::pair<ParticleID, Voxel>, bool>
-SpatiocyteWorld::new_voxel(
-        const Species& sp, const coordinate_type& coord)
-{
-    const molecule_info_type minfo(get_molecule_info(sp));
-    return new_voxel(
-        Voxel(sp, coord, minfo.radius, minfo.D, minfo.loc));
-}
-
-std::pair<std::pair<ParticleID, Voxel>, bool>
-SpatiocyteWorld::new_voxel(const Voxel& v)
-{
-    ParticleID pid(sidgen_());
-    const bool is_succeeded(update_voxel(pid, v));
-    return std::make_pair(std::make_pair(pid, v), is_succeeded);
-}
-
-std::pair<std::pair<ParticleID, Voxel>, bool>
-SpatiocyteWorld::new_voxel_structure(const Species& sp,
-                                     const coordinate_type& coord)
-{
-    const molecule_info_type minfo(get_molecule_info(sp));
-    return new_voxel_structure(
-        Voxel(sp, coord, minfo.radius, minfo.D, minfo.loc));
-}
-
-std::pair<std::pair<ParticleID, Voxel>, bool>
-SpatiocyteWorld::new_voxel_structure(const Voxel& v)
-{
-    const bool is_succeeded(update_voxel(ParticleID(), v));
-    return std::make_pair(std::make_pair(ParticleID(), v), is_succeeded);
-}
-
-std::pair<std::pair<ParticleID, Voxel>, bool>
-SpatiocyteWorld::new_voxel_interface(const Species& sp,
-                                     const coordinate_type& coord)
-{
-    const molecule_info_type minfo(get_molecule_info(sp));
-    return new_voxel_interface(
-        Voxel(sp, coord, minfo.radius, minfo.D, minfo.loc));
-}
-
-std::pair<std::pair<ParticleID, Voxel>, bool>
-SpatiocyteWorld::new_voxel_interface(const Voxel& v)
-{
-    const bool is_succeeded(update_voxel(ParticleID(), v));
-    return std::make_pair(std::make_pair(ParticleID(), v), is_succeeded);
-}
-
 bool SpatiocyteWorld::add_molecules(const Species& sp, const Integer& num)
 {
     if (num < 0)
@@ -204,8 +213,7 @@ bool SpatiocyteWorld::add_molecules(const Species& sp, const Integer& num)
     return true;
 }
 
-bool SpatiocyteWorld::add_molecules(const Species& sp,
-                                    const Integer& num,
+bool SpatiocyteWorld::add_molecules(const Species& sp, const Integer& num,
                                     const boost::shared_ptr<const Shape> shape)
 {
     if (num < 0)
@@ -237,11 +245,10 @@ bool SpatiocyteWorld::add_molecules(const Species& sp,
     return true;
 }
 
-Integer SpatiocyteWorld::add_structure(
-    const Species& sp, const boost::shared_ptr<const Shape> shape)
+Integer SpatiocyteWorld::add_structure(const Species& sp, const boost::shared_ptr<const Shape> shape)
 {
     const SpatiocyteWorld::molecule_info_type info(get_molecule_info(sp));
-    (*space_).make_structure_type(sp, shape->dimension(), info.loc);
+    space_->make_structure_type(sp, shape->dimension(), info.loc);
 
     switch (shape->dimension())
     {
@@ -258,8 +265,7 @@ Integer SpatiocyteWorld::add_structure(
 }
 
 Integer
-SpatiocyteWorld::add_structure3(const Species& sp,
-                                const boost::shared_ptr<const Shape> shape)
+SpatiocyteWorld::add_structure3(const Species& sp, const boost::shared_ptr<const Shape> shape)
 {
     const SpatiocyteWorld::molecule_info_type info(get_molecule_info(sp));
     Integer count(0);
@@ -277,8 +283,7 @@ SpatiocyteWorld::add_structure3(const Species& sp,
 }
 
 Integer
-SpatiocyteWorld::add_structure2(const Species& sp,
-                                const boost::shared_ptr<const Shape> shape)
+SpatiocyteWorld::add_structure2(const Species& sp, const boost::shared_ptr<const Shape> shape)
 {
     const SpatiocyteWorld::molecule_info_type info(get_molecule_info(sp));
     Integer count(0);
@@ -292,13 +297,6 @@ SpatiocyteWorld::add_structure2(const Species& sp,
             ++count;
     }
     return count;
-}
-
-Integer SpatiocyteWorld::add_interface(const Species& sp)
-{
-    const SpatiocyteWorld::molecule_info_type info(get_molecule_info(sp));
-    (*space_).make_interface_type(sp, Shape::UNDEF, info.loc);
-    //XXX: set the dimension properly
 }
 
 bool SpatiocyteWorld::is_surface_voxel(
@@ -315,7 +313,9 @@ bool SpatiocyteWorld::is_surface_voxel(
     return false;
 }
 
-// TODO
+/*
+ * TODO
+ */
 Integer SpatiocyteWorld::add_neighbors(const Species& sp,
     const SpatiocyteWorld::coordinate_type center)
 {
@@ -325,13 +325,9 @@ Integer SpatiocyteWorld::add_neighbors(const Species& sp,
     {
         const coordinate_type n(get_neighbor(center, i));
         if (new_voxel(Voxel(sp, n, info.radius, info.D, info.loc)).second)
-        {
             ++count;
-        }
         else
-        {
             throw "Error in add_neighbors()";
-        }
     }
     return count;
 
@@ -349,7 +345,6 @@ Integer SpatiocyteWorld::add_neighbors(const Species& sp,
     // }
     // return count;
 }
-// TODO
 
 void SpatiocyteWorld::remove_molecules(const Species& sp, const Integer& num)
 {
@@ -408,136 +403,34 @@ SpatiocyteWorld::check_neighbor(const coordinate_type coord,
     // return std::make_pair(neighbor, flg);
 }
 
-
-#ifndef wrap_const_getter
-
-#define wrap_const_getter(rettype, fn) \
-rettype SpatiocyteWorld::fn() const { return space_->fn(); }
-
-wrap_const_getter(Integer, num_voxels)
-wrap_const_getter(Integer, num_species)
-wrap_const_getter(Integer, num_particles)
-
-wrap_const_getter(const Integer,  size)
-wrap_const_getter(const Integer,  inner_size)
-wrap_const_getter(const Integer3, shape)
-
-wrap_const_getter(Real, voxel_radius)
-wrap_const_getter(Real, voxel_volume)
-wrap_const_getter(Real, unit_area)
-
-wrap_const_getter(Real3,        actual_lengths)
-wrap_const_getter(const Real3&, edge_lengths)
-wrap_const_getter(const Real,   t)
-wrap_const_getter(const Real,   volume)
-
-wrap_const_getter(std::vector<Species>, list_species)
-
-#undef wrap_const_getter
+void SpatiocyteWorld::save(const std::string& filename) const
+{
+#ifdef WITH_HDF5
+    boost::scoped_ptr<H5::H5File>
+        fout(new H5::H5File(filename.c_str(), H5F_ACC_TRUNC));
+    rng_->save(fout.get());
+    sidgen_.save(fout.get());
+    boost::scoped_ptr<H5::Group>
+        group(new H5::Group(fout->createGroup("LatticeSpace")));
+    space_->save_hdf5(group.get());
+    extras::save_version_information(fout.get(), "ecell4-spatiocyte-0.0-1");
+#else
+    throw NotSupported("This method requires HDF5. The HDF5 support is turned off.");
 #endif
+}
 
-
-#ifndef wrap_getter_with_arg
-
-#define wrap_getter_with_arg(rettype, fn, argtype) \
-rettype SpatiocyteWorld::fn(argtype arg) const { return space_->fn(arg); }
-
-// wrap_getter_with_arg(bool, has_species_exact, const Species&)
-wrap_getter_with_arg(bool, has_voxel,    const ParticleID&)
-wrap_getter_with_arg(bool, has_species,  const Species&)
-wrap_getter_with_arg(bool, has_particle, const ParticleID&)
-
-wrap_getter_with_arg(Integer, num_voxels,          const Species&)
-wrap_getter_with_arg(Integer, num_voxels_exact,    const Species&)
-wrap_getter_with_arg(Integer, num_molecules,       const Species&)
-wrap_getter_with_arg(Integer, num_molecules_exact, const Species&)
-wrap_getter_with_arg(Integer, num_particles,       const Species&)
-wrap_getter_with_arg(Integer, num_particles_exact, const Species&)
-
-#undef wrap_getter_with_arg
+void SpatiocyteWorld::load(const std::string& filename)
+{
+#ifdef WITH_HDF5
+    boost::scoped_ptr<H5::H5File>
+        fin(new H5::H5File(filename.c_str(), H5F_ACC_RDONLY));
+    const H5::Group group(fin->openGroup("LatticeSpace"));
+    space_->load_hdf5(group);
+    sidgen_.load(*fin);
+    rng_->load(*fin);
+#else
+    throw NotSupported("This method requires HDF5. The HDF5 support is turned off.");
 #endif
-
-
-std::vector<std::pair<ParticleID, Particle> >
-SpatiocyteWorld::list_particles() const
-{
-    return (*space_).list_particles();
-}
-
-std::vector<std::pair<ParticleID, Particle> >
-SpatiocyteWorld::list_particles(const Species& sp) const
-{
-    return (*space_).list_particles(sp);
-}
-
-std::vector<std::pair<ParticleID, Particle> >
-SpatiocyteWorld::list_particles_exact(const Species& sp) const
-{
-    return (*space_).list_particles_exact(sp);
-}
-
-std::vector<std::pair<ParticleID, Voxel> >
-SpatiocyteWorld::list_voxels() const
-{
-    return (*space_).list_voxels();
-}
-
-std::vector<std::pair<ParticleID, Voxel> >
-SpatiocyteWorld::list_voxels(const Species& sp) const
-{
-    return (*space_).list_voxels(sp);
-}
-
-std::vector<std::pair<ParticleID, Voxel> >
-SpatiocyteWorld::list_voxels_exact(const Species& sp) const
-{
-    return (*space_).list_voxels_exact(sp);
-}
-
-VoxelPool* SpatiocyteWorld::find_voxel_pool(const Species& species)
-{
-    return (*space_).find_voxel_pool(species);
-}
-
-const VoxelPool* SpatiocyteWorld::find_voxel_pool(const Species& species) const
-{
-    return (*space_).find_voxel_pool(species);
-}
-
-VoxelPool* SpatiocyteWorld::get_voxel_pool_at(const coordinate_type& coord) const
-{
-    return (*space_).get_voxel_pool_at(coord);
-}
-
-bool SpatiocyteWorld::remove_voxel(const coordinate_type coord)
-{
-    return (*space_).remove_voxel(coord);
-}
-
-bool SpatiocyteWorld::move(const coordinate_type& src,
-                           const coordinate_type& dest,
-                           const std::size_t candidate)
-{
-    return (*space_).move(src, dest, candidate);
-}
-
-bool SpatiocyteWorld::can_move(const coordinate_type& src,
-        const coordinate_type& dest) const
-{
-    return (*space_).can_move(src, dest);
-}
-
-std::pair<SpatiocyteWorld::coordinate_type, bool>
-SpatiocyteWorld::move_to_neighbor(
-    VoxelPool* const& from_mt, VoxelPool* const& loc,
-    coordinate_id_pair_type& info, const Integer nrand)
-{
-    return (*space_).move_to_neighbor(from_mt, loc, info, nrand);
-}
-
-void SpatiocyteWorld::set_t(const Real& t)
-{
-    space_->set_t(t);
 }
 
 } // spatiocyte
