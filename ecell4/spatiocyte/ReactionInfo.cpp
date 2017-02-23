@@ -1,4 +1,4 @@
-#include "SpatiocyteReactions.hpp"
+#include "ReactionInfo.hpp"
 #include "SpatiocyteWorld.hpp"
 
 namespace ecell4
