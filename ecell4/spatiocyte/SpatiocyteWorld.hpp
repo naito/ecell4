@@ -330,15 +330,8 @@ public:
                              const std::string loc);
      */
 
-    wrap_getter_with_arg(identified_voxel, get_voxel_at, const coordinate_type&)
-
-    /*
-     * ??? should not be const or return a pointer of "const VoxelPool"
-     */
-    VoxelPool* get_voxel_pool_at(const coordinate_type& coord) const
-    {
-        return space_->get_voxel_pool_at(coord);
-    }
+    wrap_getter_with_arg(identified_voxel, get_voxel_at,      const coordinate_type&)
+    wrap_getter_with_arg(const VoxelPool*, get_voxel_pool_at, const coordinate_type&)
 
     /* Not wrapped function
     virtual const Particle particle_at(const coordinate_type& coord) const;
