@@ -27,6 +27,8 @@ public:
         SUBVOLUME
     } space_kind;
 
+    typedef std::pair<ParticleID, Particle> identified_particle;
+
 public:
 
     Space()
@@ -201,7 +203,7 @@ public:
             " by this space class");
     }
 
-    virtual std::pair<ParticleID, Particle> get_particle(const ParticleID& pid) const
+    virtual identified_particle get_particle(const ParticleID& pid) const
     {
         throw NotSupported(
             "get_particle(const ParticleID&) is not supported"
@@ -213,8 +215,7 @@ public:
      * this function is a part of the trait of ParticleSpace.
      * @return a list of particles
      */
-    virtual std::vector<std::pair<ParticleID, Particle> >
-    list_particles() const
+    virtual std::vector<identified_particle> list_particles() const
     {
         throw NotSupported(
             "list_particles() is not supported by this space class.");
@@ -226,7 +227,7 @@ public:
      * @param sp a species
      * @return a list of particles
      */
-    virtual std::vector<std::pair<ParticleID, Particle> >
+    virtual std::vector<identified_particle>
     list_particles(const Species& sp) const
     {
         throw NotSupported(
@@ -234,7 +235,7 @@ public:
             " by this space class");
     }
 
-    virtual std::vector<std::pair<ParticleID, Particle> >
+    virtual std::vector<identified_particle>
     list_particles_exact(const Species& sp) const
     {
         throw NotSupported(

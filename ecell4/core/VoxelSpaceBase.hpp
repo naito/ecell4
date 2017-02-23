@@ -27,7 +27,6 @@ public:
     typedef Voxel::coordinate_type             coordinate_type;
     typedef VoxelPool::coordinate_id_pair_type coordinate_id_pair_type;
     typedef std::pair<ParticleID, Voxel>       identified_voxel;
-    typedef std::pair<ParticleID, Particle>    identified_particle;
 
 protected:
 
@@ -71,16 +70,14 @@ public:
 
     std::vector<Species> list_species() const;
 
-    bool has_voxel(const ParticleID& pid) const;
     Integer num_voxels() const;
     Integer num_voxels(const Species& sp) const;
     Integer num_voxels_exact(const Species& sp) const;
-
+    bool has_voxel(const ParticleID& pid) const;
+    identified_voxel get_voxel(const ParticleID& pid) const;
     std::vector<identified_voxel> list_voxels() const;
     std::vector<identified_voxel> list_voxels(const Species& sp) const;
     std::vector<identified_voxel> list_voxels_exact(const Species& sp) const;
-
-    identified_voxel get_voxel(const ParticleID& pid) const;
 
     bool has_voxel_pool(const Species& sp) const;
     const VoxelPool* find_voxel_pool(const Species& sp) const;
