@@ -69,54 +69,6 @@ protected:
     container_type reactants_, products_;
 };
 
-// Application of reactions
-
-class SpatiocyteWorld;
-
-ReactionInfo apply_a2b(
-        boost::shared_ptr<SpatiocyteWorld> world,
-        const ReactionInfo::particle_id_pair_type& p,
-        const Species& product_species);
-
-ReactionInfo apply_a2bc(
-        boost::shared_ptr<SpatiocyteWorld> world,
-        const ReactionInfo::particle_id_pair_type& p,
-        const Species& product_species0,
-        const Species& product_species1);
-
-ReactionInfo apply_second_order_reaction(
-        boost::shared_ptr<SpatiocyteWorld> world,
-        const ReactionRule& reaction_rule,
-        const ReactionInfo::particle_id_pair_type& p0,
-        const ReactionInfo::particle_id_pair_type& p1);
-
-ReactionInfo apply_vanishment(
-        boost::shared_ptr<SpatiocyteWorld> world,
-        const ReactionInfo::particle_id_pair_type& p0,
-        const ReactionInfo::particle_id_pair_type& p1);
-
-ReactionInfo apply_ab2c(
-        boost::shared_ptr<SpatiocyteWorld> world,
-        const ReactionInfo::particle_id_pair_type& p0,
-        const ReactionInfo::particle_id_pair_type& p1,
-        const Species& product_species);
-
-// ReactionInfo apply_ab2cd_in_order(
-//         boost::shared_ptr<SpatiocyteWorld> world,
-//         const ReactionInfo::particle_id_pair_type& p0,
-//         const ReactionInfo::particle_id_pair_type& p1,
-//         const Species& product_species0,
-//         const Species& product_species1,
-//         const SpatiocyteWorld::coordinate_type coord0,
-//         const SpatiocyteWorld::coordinate_type coord1);
-
-ReactionInfo apply_ab2cd(
-        boost::shared_ptr<SpatiocyteWorld> world,
-        const ReactionInfo::particle_id_pair_type& p0,
-        const ReactionInfo::particle_id_pair_type& p1,
-        const Species& product_species0,
-        const Species& product_species1);
-
 } // spatiocyte
 
 } // ecell4

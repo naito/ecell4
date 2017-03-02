@@ -124,6 +124,23 @@ protected:
     ReactionRule rule_;
 };
 
+inline const std::string
+get_serial(boost::shared_ptr<SpatiocyteWorld> world, const Integer coord)
+{
+    const VoxelPool* mtype(world->get_voxel_pool_at(coord));
+    return mtype->is_vacant() ? "" : mtype->species().serial();
+}
+
+inline const std::string
+get_location(boost::shared_ptr<SpatiocyteWorld> world, const Integer coord)
+{
+    const VoxelPool* mtype(world->get_voxel_pool_at(coord));
+    if (mtype->is_vacant())
+        return "";
+    const VoxelPool* ltype(mtype->location());
+    return ltype->is_vacant() ? "" : ltype->species().serial();
+}
+
 } // spatiocyte
 
 } // ecell4

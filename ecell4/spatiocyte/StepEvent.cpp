@@ -7,8 +7,262 @@ namespace ecell4
 namespace spatiocyte
 {
 
-StepEvent::StepEvent(boost::shared_ptr<Model> model, boost::shared_ptr<SpatiocyteWorld> world,
-        const Species& species, const Real& t, const Real alpha)
+inline ReactionInfo
+apply_vanishment(boost::shared_ptr<SpatiocyteWorld> world,
+                 const ReactionInfo::particle_id_pair_type& p0,
+                 const ReactionInfo::particle_id_pair_type& p1)
+{
+    ReactionInfo rinfo(world->t());
+    rinfo.add_reactant(p0);
+    rinfo.add_reactant(p1);
+
+    world->remove_voxel(p0.second.coordinate());
+    world->remove_voxel(p1.second.coordinate());
+
+    return rinfo;
+}
+
+inline ReactionInfo
+apply_ab2c(boost::shared_ptr<SpatiocyteWorld> world,
+           const ReactionInfo::particle_id_pair_type& p0,
+           const ReactionInfo::particle_id_pair_type& p1,
+           const Species& product_species)
+{
+    // A and B (from_info and to_info) become C (product_species)
+    const std::string location(world->get_molecule_info(product_species).loc);
+    const std::string fserial(get_serial(world, p0.second.coordinate()));
+    const std::string floc(get_location(world, p0.second.coordinate()));
+    const std::string tserial(get_serial(world, p1.second.coordinate()));
+    const std::string tloc(get_location(world, p1.second.coordinate()));
+
+    ReactionInfo rinfo(world->t());
+
+    if (tserial == location || tloc == location)
+    {
+        // B is on the location of C, or the location itself.
+        // Place C at the coordinate of B, and remove A.
+        rinfo.add_reactant(p0);
+        rinfo.add_reactant(p1);
+
+        if (tserial != location)
+        {
+            world->remove_voxel(p1.second.coordinate());
+        }
+
+        world->remove_voxel(p0.second.coordinate());
+        std::pair<std::pair<ParticleID, Voxel>, bool> new_mol(
+            world->new_voxel(product_species, p1.second.coordinate()));
+
+        rinfo.add_product(new_mol.first);
+    }
+    else if (fserial == location || floc == location)
+    {
+        // A is on the location of C, or the location itself.
+        // Place C at the coordinate of A, and remove B.
+        rinfo.add_reactant(p0);
+        rinfo.add_reactant(p1);
+
+        if (fserial != location)
+        {
+            world->remove_voxel(p0.second.coordinate());
+        }
+
+        world->remove_voxel(p1.second.coordinate());
+        std::pair<std::pair<ParticleID, Voxel>, bool> new_mol(
+            world->new_voxel(product_species, p0.second.coordinate()));
+
+        rinfo.add_product(new_mol.first);
+    }
+    return rinfo;
+}
+
+inline ReactionInfo
+apply_ab2cd_in_order(boost::shared_ptr<SpatiocyteWorld> world,
+                     const ReactionInfo::particle_id_pair_type& p0,
+                     const ReactionInfo::particle_id_pair_type& p1,
+                     const Species& product_species0,
+                     const Species& product_species1,
+                     const SpatiocyteWorld::coordinate_type coord0,
+                     const SpatiocyteWorld::coordinate_type coord1)
+{
+    ReactionInfo rinfo(world->t());
+    rinfo.add_reactant(p0);
+    rinfo.add_reactant(p1);
+
+    std::pair<std::pair<ParticleID, Voxel>, bool> new_mol0(
+        world->new_voxel(product_species0, coord0));
+    if (!new_mol0.second)
+    {
+        throw IllegalState("no place for " + product_species0.serial());
+    }
+    std::pair<std::pair<ParticleID, Voxel>, bool> new_mol1(
+        world->new_voxel(product_species1, coord1));
+    if (!new_mol1.second)
+    {
+        throw IllegalState("no place for " + product_species1.serial());
+    }
+
+    rinfo.add_product(new_mol0.first);
+    rinfo.add_product(new_mol1.first);
+
+    return rinfo;
+}
+
+inline ReactionInfo
+apply_ab2cd(boost::shared_ptr<SpatiocyteWorld> world,
+            const ReactionInfo::particle_id_pair_type& p0,
+            const ReactionInfo::particle_id_pair_type& p1,
+            const Species& product_species0,
+            const Species& product_species1)
+{
+    const SpatiocyteWorld::coordinate_type from_coord(p0.second.coordinate());
+    const SpatiocyteWorld::coordinate_type to_coord(p1.second.coordinate());
+    const std::string aserial(get_serial(world, from_coord));
+    const std::string aloc(get_location(world, from_coord));
+    const std::string bserial(get_serial(world, to_coord));
+    const std::string bloc(get_location(world, to_coord));
+    const std::string cloc(world->get_molecule_info(product_species0).loc);
+    const std::string dloc(world->get_molecule_info(product_species1).loc);
+
+    if (aserial == cloc || aloc == cloc)
+    {
+        if (bserial == dloc || bloc == dloc)
+        {
+            if (aserial != cloc)
+            {
+                // Remove A once if A is not the location of C
+                world->remove_voxel(p0.second.coordinate());
+            }
+            if (bserial != dloc)
+            {
+                // Remove B once if B is not the location of D
+                world->remove_voxel(p1.second.coordinate());
+            }
+            return apply_ab2cd_in_order(
+                world, p0, p1, product_species0, product_species1,
+                from_coord, to_coord);
+        }
+        else
+        {
+            std::pair<SpatiocyteWorld::coordinate_type, bool>
+                neighbor(world->check_neighbor(to_coord, dloc));
+
+            if (neighbor.second)
+            {
+                world->remove_voxel(p1.second.coordinate());
+                if (aserial != cloc)
+                {
+                    // Remove A once if A is not the location of C
+                    world->remove_voxel(p0.second.coordinate());
+                }
+                return apply_ab2cd_in_order(
+                    world, p0, p1, product_species0, product_species1,
+                    from_coord, neighbor.first);
+            }
+        }
+    }
+    else if (aserial == dloc || aloc == dloc)
+    {
+        if (bserial == cloc || bloc == dloc)
+        {
+            if (aserial != dloc)
+            {
+                // Remove A once if A is not the location of D
+                world->remove_voxel(p0.second.coordinate());
+            }
+            if (bserial != cloc)
+            {
+                // Remove B once if B is not the location of C
+                world->remove_voxel(p1.second.coordinate());
+            }
+            return apply_ab2cd_in_order(
+                world, p0, p1, product_species0, product_species1,
+                to_coord, from_coord);
+        }
+        else
+        {
+            std::pair<SpatiocyteWorld::coordinate_type, bool>
+                neighbor(world->check_neighbor(to_coord, cloc));
+
+            if (neighbor.second)
+            {
+                world->remove_voxel(p1.second.coordinate());
+                if (aserial != dloc)
+                {
+                    // Remove A once if A is not the location of D
+                    world->remove_voxel(p0.second.coordinate());
+                }
+                return apply_ab2cd_in_order(
+                    world, p0, p1, product_species0, product_species1,
+                    neighbor.first, from_coord);
+            }
+        }
+    }
+    else if (bserial == cloc || bloc == cloc)
+    {
+        std::pair<SpatiocyteWorld::coordinate_type, bool>
+            neighbor(world->check_neighbor(to_coord, dloc));
+
+        if (neighbor.second)
+        {
+            world->remove_voxel(p0.second.coordinate());
+            if (bserial != cloc)
+            {
+                // Remove B once if B is not the location of C
+                world->remove_voxel(p1.second.coordinate());
+            }
+            return apply_ab2cd_in_order(
+                world, p0, p1, product_species0, product_species1,
+                to_coord, neighbor.first);
+        }
+    }
+    else if (bserial == dloc || bloc == dloc)
+    {
+        std::pair<SpatiocyteWorld::coordinate_type, bool>
+            neighbor(world->check_neighbor(to_coord, dloc));
+
+        if (neighbor.second)
+        {
+            world->remove_voxel(p0.second.coordinate());
+            if (bserial != dloc)
+            {
+                // Remove B once if B is not the location of D
+                world->remove_voxel(p1.second.coordinate());
+            }
+            return apply_ab2cd_in_order(
+                world, p0, p1, product_species0, product_species1,
+                neighbor.first, to_coord);
+        }
+    }
+
+    return ReactionInfo(world->t());
+}
+
+inline ReactionInfo
+apply_second_order_reaction(boost::shared_ptr<SpatiocyteWorld> world,
+                            const ReactionRule& reaction_rule,
+                            const ReactionInfo::particle_id_pair_type& p0,
+                            const ReactionInfo::particle_id_pair_type& p1)
+{
+    const ReactionRule::product_container_type& products(reaction_rule.products());
+
+    switch (products.size())
+    {
+        case 0:
+            return apply_vanishment(world, p0, p1);
+        case 1:
+            return apply_ab2c(world, p0, p1, *(products.begin()));
+        case 2:
+            return apply_ab2cd(world, p0, p1,
+                            *(products.begin()), *(++(products.begin())));
+        default:
+            return ReactionInfo(world->t());
+    }
+}
+
+StepEvent::StepEvent(boost::shared_ptr<Model> model,
+                     boost::shared_ptr<SpatiocyteWorld> world,
+                     const Species& species, const Real& t, const Real alpha)
     : SpatiocyteEvent(t), model_(model), world_(world), species_(species), alpha_(alpha)
 {
     const SpatiocyteWorld::molecule_info_type
