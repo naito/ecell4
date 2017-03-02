@@ -15,8 +15,8 @@ class ReactionInfo
 {
 public:
 
-    typedef std::pair<ParticleID, Voxel> particle_id_pair_type;
-    typedef std::vector<particle_id_pair_type> container_type;
+    typedef std::pair<ParticleID, Voxel> identified_voxel;
+    typedef std::vector<identified_voxel> container_type;
 
 public:
 
@@ -48,7 +48,7 @@ public:
         return reactants_;
     }
 
-    void add_reactant(const particle_id_pair_type& pid_pair)
+    void add_reactant(const identified_voxel& pid_pair)
     {
         reactants_.push_back(pid_pair);
     }
@@ -58,7 +58,7 @@ public:
         return products_;
     }
 
-    void add_product(const particle_id_pair_type& pid_pair)
+    void add_product(const identified_voxel& pid_pair)
     {
         products_.push_back(pid_pair);
     }

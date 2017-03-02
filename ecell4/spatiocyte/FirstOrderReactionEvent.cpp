@@ -6,7 +6,7 @@ namespace spatiocyte {
 
 inline ReactionInfo
 apply_a2b(boost::shared_ptr<SpatiocyteWorld> world,
-          const ReactionInfo::particle_id_pair_type& p,
+          const ReactionInfo::identified_voxel& p,
           const Species& product_species)
 {
     const SpatiocyteWorld::coordinate_type coord(p.second.coordinate());
@@ -68,7 +68,7 @@ apply_a2b(boost::shared_ptr<SpatiocyteWorld> world,
 
 inline ReactionInfo
 apply_a2bc(boost::shared_ptr<SpatiocyteWorld> world,
-           const ReactionInfo::particle_id_pair_type& p,
+           const ReactionInfo::identified_voxel& p,
            const Species& product_species0,
            const Species& product_species1)
 {
@@ -190,7 +190,7 @@ FirstOrderReactionEvent::FirstOrderReactionEvent(
 
 void FirstOrderReactionEvent::fire_()
 {
-    const ReactionInfo::particle_id_pair_type& p(
+    const ReactionInfo::identified_voxel& p(
             world_->choice(*(rule_.reactants().begin())));
     const ReactionRule::product_container_type& products(rule_.products());
 

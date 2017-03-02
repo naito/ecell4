@@ -9,8 +9,8 @@ namespace spatiocyte
 
 inline ReactionInfo
 apply_vanishment(boost::shared_ptr<SpatiocyteWorld> world,
-                 const ReactionInfo::particle_id_pair_type& p0,
-                 const ReactionInfo::particle_id_pair_type& p1)
+                 const ReactionInfo::identified_voxel& p0,
+                 const ReactionInfo::identified_voxel& p1)
 {
     ReactionInfo rinfo(world->t());
     rinfo.add_reactant(p0);
@@ -24,16 +24,16 @@ apply_vanishment(boost::shared_ptr<SpatiocyteWorld> world,
 
 inline ReactionInfo
 apply_ab2c(boost::shared_ptr<SpatiocyteWorld> world,
-           const ReactionInfo::particle_id_pair_type& p0,
-           const ReactionInfo::particle_id_pair_type& p1,
+           const ReactionInfo::identified_voxel& p0,
+           const ReactionInfo::identified_voxel& p1,
            const Species& product_species)
 {
     // A and B (from_info and to_info) become C (product_species)
-    const std::string location(world->get_molecule_info(product_species).loc);
-    const std::string fserial(get_serial(world, p0.second.coordinate()));
-    const std::string floc(get_location(world, p0.second.coordinate()));
-    const std::string tserial(get_serial(world, p1.second.coordinate()));
-    const std::string tloc(get_location(world, p1.second.coordinate()));
+    const std::string& location(world->get_molecule_info(product_species).loc);
+    const std::string& fserial(get_serial(world, p0.second.coordinate()));
+    const std::string& floc(get_location(world, p0.second.coordinate()));
+    const std::string& tserial(get_serial(world, p1.second.coordinate()));
+    const std::string& tloc(get_location(world, p1.second.coordinate()));
 
     ReactionInfo rinfo(world->t());
 
@@ -78,8 +78,8 @@ apply_ab2c(boost::shared_ptr<SpatiocyteWorld> world,
 
 inline ReactionInfo
 apply_ab2cd_in_order(boost::shared_ptr<SpatiocyteWorld> world,
-                     const ReactionInfo::particle_id_pair_type& p0,
-                     const ReactionInfo::particle_id_pair_type& p1,
+                     const ReactionInfo::identified_voxel& p0,
+                     const ReactionInfo::identified_voxel& p1,
                      const Species& product_species0,
                      const Species& product_species1,
                      const SpatiocyteWorld::coordinate_type coord0,
@@ -110,8 +110,8 @@ apply_ab2cd_in_order(boost::shared_ptr<SpatiocyteWorld> world,
 
 inline ReactionInfo
 apply_ab2cd(boost::shared_ptr<SpatiocyteWorld> world,
-            const ReactionInfo::particle_id_pair_type& p0,
-            const ReactionInfo::particle_id_pair_type& p1,
+            const ReactionInfo::identified_voxel& p0,
+            const ReactionInfo::identified_voxel& p1,
             const Species& product_species0,
             const Species& product_species1)
 {
@@ -241,8 +241,8 @@ apply_ab2cd(boost::shared_ptr<SpatiocyteWorld> world,
 inline ReactionInfo
 apply_second_order_reaction(boost::shared_ptr<SpatiocyteWorld> world,
                             const ReactionRule& reaction_rule,
-                            const ReactionInfo::particle_id_pair_type& p0,
-                            const ReactionInfo::particle_id_pair_type& p1)
+                            const ReactionInfo::identified_voxel& p0,
+                            const ReactionInfo::identified_voxel& p1)
 {
     const ReactionRule::product_container_type& products(reaction_rule.products());
 
