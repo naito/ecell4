@@ -16,6 +16,10 @@ react_a2b(boost::shared_ptr<SpatiocyteWorld>& world,
     rinfo.add_product(world->new_voxel(speciesB, coordA).first);
 }
 
+/* Deprecated function
+ *
+ * If this function is needed, the reaction is invalid.
+ */
 inline void
 vanish(boost::shared_ptr<SpatiocyteWorld>& world,
        ReactionInfo& rinfo,
@@ -42,9 +46,21 @@ apply_a2b(boost::shared_ptr<SpatiocyteWorld> world,
     if (serialLocationA == serialLocationB)
         react_a2b(world, rinfo, coordA, speciesB);
     else if (serialA == serialLocationB)
+    {
+        /* XXX: deprecated
+         *
+         * have to use the 0th order reaction not the 1st order reaction
+         */
         rinfo.add_product(world->new_voxel(speciesB, coordA).first);
+    }
     else if (serialLocationA == serialB)
+    {
+        /* XXX: deprecated
+         *
+         * have to use the vanishment reaction not the a2b reaction.
+         */
         vanish(world, rinfo, coordA);
+    }
     else
     {
         std::pair<coord_type, bool> neighbor(world->check_neighbor(coordA, serialLocationB));
@@ -118,6 +134,10 @@ apply_a2bc(boost::shared_ptr<SpatiocyteWorld> world,
     }
     else if (serialLocationA == serialB)
     {
+        /* XXX: deprecated
+         *
+         * have to use the a2b reaction not the a2bc reaction.
+         */
         std::pair<coord_type, bool> neighbor(world->check_neighbor(coordA, serialLocationC));
         if (neighbor.second)
         {
@@ -128,6 +148,10 @@ apply_a2bc(boost::shared_ptr<SpatiocyteWorld> world,
     }
     else if (serialLocationA == serialC)
     {
+        /* XXX: deprecated
+         *
+         * have to use the a2b reaction not the a2bc reaction.
+         */
         std::pair<coord_type, bool> neighbor(world->check_neighbor(coordA, serialLocationB));
         if (neighbor.second)
         {
@@ -138,6 +162,10 @@ apply_a2bc(boost::shared_ptr<SpatiocyteWorld> world,
     }
     else if (serialA == serialLocationB)
     {
+        /* XXX: deprecated
+         *
+         * B and C arise simultaneously. This is invalid reaction.
+         */
         std::pair<coord_type, bool> neighbor(world->check_neighbor(coordA, serialLocationC));
         if (neighbor.second)
         {
@@ -148,6 +176,10 @@ apply_a2bc(boost::shared_ptr<SpatiocyteWorld> world,
     }
     else if (serialA == serialLocationC)
     {
+        /* XXX: deprecated
+         *
+         * B and C arise simultaneously. This is invalid reaction.
+         */
         std::pair<coord_type, bool> neighbor(world->check_neighbor(coordA, serialLocationB));
         if (neighbor.second)
         {
