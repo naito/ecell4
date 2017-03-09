@@ -69,14 +69,29 @@ public:
 
 protected:
 
+    inline
     boost::shared_ptr<SpatiocyteEvent>
-    create_step_event(const Species& species, const Real& t, const Real& alpha);
+    create_step_event(const Species& species, const Real& t, const Real& alpha)
+    {
+        return boost::shared_ptr<SpatiocyteEvent>(
+                new StepEvent(model_, world_, species, t, alpha));
+    }
 
+    inline
     boost::shared_ptr<SpatiocyteEvent>
-    create_zeroth_order_reaction_event(const ReactionRule& reaction_rule, const Real& t);
+    create_zeroth_order_reaction_event(const ReactionRule& reaction_rule, const Real& t)
+    {
+        return boost::shared_ptr<SpatiocyteEvent>(
+                new ZerothOrderReactionEvent(world_, reaction_rule, t));
+    }
 
+    inline
     boost::shared_ptr<SpatiocyteEvent>
-    create_first_order_reaction_event(const ReactionRule& reaction_rule, const Real& t);
+    create_first_order_reaction_event(const ReactionRule& reaction_rule, const Real& t)
+    {
+        return boost::shared_ptr<SpatiocyteEvent>(
+                new FirstOrderReactionEvent(world_, reaction_rule, t));
+    }
 
     void step_();
     void register_events(const Species& species);
