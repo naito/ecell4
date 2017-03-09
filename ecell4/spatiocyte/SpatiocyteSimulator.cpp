@@ -76,60 +76,52 @@ void SpatiocyteSimulator::register_events(const Species& sp)
         //TODO: Call steps only if sp is assigned not to StructureType.
         alpha_map_type::const_iterator itr(alpha_map_.find(sp));
         const Real alpha(itr != alpha_map_.end() ? itr->second : 1.0);
-        const boost::shared_ptr<SpatiocyteEvent> step_event(
-                create_step_event(sp, world_->t(), alpha));
-        scheduler_.add(step_event);
+        scheduler_.add(create_step_event(sp, world_->t(), alpha));
     }
 
     std::vector<ReactionRule> reaction_rules(model_->query_reaction_rules(sp));
-    for (std::vector<ReactionRule>::const_iterator i(reaction_rules.begin());
-        i != reaction_rules.end(); ++i)
+    for (std::vector<ReactionRule>::const_iterator rr(reaction_rules.begin());
+        rr != reaction_rules.end(); ++rr)
     {
-        const ReactionRule& rr(*i);
-        const boost::shared_ptr<SpatiocyteEvent>
-            first_order_reaction_event(
-                create_first_order_reaction_event(rr, world_->t()));
-        scheduler_.add(first_order_reaction_event);
+        scheduler_.add(create_first_order_reaction_event(*rr, world_->t()));
     }
 }
 
-boost::shared_ptr<SpatiocyteEvent> SpatiocyteSimulator::create_step_event(
-        const Species& species, const Real& t, const Real& alpha)
+boost::shared_ptr<SpatiocyteEvent>
+SpatiocyteSimulator::create_step_event(
+    const Species& species, const Real& t, const Real& alpha)
 {
-    boost::shared_ptr<SpatiocyteEvent> event(
+    return boost::shared_ptr<SpatiocyteEvent>(
             new StepEvent(model_, world_, species, t, alpha));
-    return event;
 }
 
 boost::shared_ptr<SpatiocyteEvent>
 SpatiocyteSimulator::create_zeroth_order_reaction_event(
     const ReactionRule& reaction_rule, const Real& t)
 {
-    boost::shared_ptr<SpatiocyteEvent> event(
+    return boost::shared_ptr<SpatiocyteEvent>(
             new ZerothOrderReactionEvent(world_, reaction_rule, t));
-    return event;
 }
 
 boost::shared_ptr<SpatiocyteEvent>
 SpatiocyteSimulator::create_first_order_reaction_event(
     const ReactionRule& reaction_rule, const Real& t)
 {
-    boost::shared_ptr<SpatiocyteEvent> event(new FirstOrderReactionEvent(
-                world_, reaction_rule, t));
-    return event;
+    return boost::shared_ptr<SpatiocyteEvent>(
+            new FirstOrderReactionEvent(world_, reaction_rule, t));
 }
 
 void SpatiocyteSimulator::finalize()
 {
     scheduler_type::events_range events(scheduler_.events());
-    for (scheduler_type::events_range::iterator itr(events.begin());
-            itr != events.end(); ++itr)
+    for (scheduler_type::events_range::iterator event(events.begin());
+            event != events.end(); ++event)
     {
-        const Real queued_time((*itr).second->time() - (*itr).second->dt());
-        StepEvent* step_event(dynamic_cast<StepEvent*>((*itr).second.get()));
+        const Real queued_time((*event).second->time() - (*event).second->dt());
+        StepEvent* step_event(dynamic_cast<StepEvent*>((*event).second.get()));
         if (step_event != NULL && queued_time < t())
         {
-            const Real alpha((t() - queued_time) / (*itr).second->dt());
+            const Real alpha((t() - queued_time) / (*event).second->dt());
             step_event->walk(alpha);
         }
     }
@@ -169,36 +161,36 @@ void SpatiocyteSimulator::step_()
     const Real time(top.second->time());
     world_->set_t(time);
     top.second->fire(); // top.second->time_ is updated in fire()
-    set_last_event_(boost::const_pointer_cast<const SpatiocyteEvent>(top.second));
-
-    last_reactions_ = last_event_->reactions();
+    last_reactions_ = top.second->reactions();
 
     std::vector<Species> new_species;
-    for (std::vector<reaction_type>::const_iterator itr(last_reactions().begin());
-            itr != last_reactions().end(); ++itr)
-        for (ReactionInfo::container_type::const_iterator
-                product((*itr).second.products().begin());
-                product != (*itr).second.products().end(); ++product)
+    for (std::vector<reaction_type>::const_iterator reaction(last_reactions().begin());
+            reaction != last_reactions().end(); ++reaction)
+    {
+        ReactionInfo::container_type products = (*reaction).second.products();
+        for (ReactionInfo::container_type::const_iterator product(products.begin());
+                product != products.end(); ++product)
         {
             const Species& species((*product).second.species());
             if (!world_->has_species(species))
                 new_species.push_back(species);
         }
+    }
 
     scheduler_type::events_range events(scheduler_.events());
-    for (scheduler_type::events_range::iterator itr(events.begin());
-        itr != events.end(); ++itr)
+    for (scheduler_type::events_range::iterator event(events.begin());
+        event != events.end(); ++event)
     {
-        (*itr).second->interrupt(time);
-        scheduler_.update(*itr);
+        (*event).second->interrupt(time);
+        scheduler_.update(*event);
     }
     scheduler_.add(top.second);
 
     // update_alpha_map(); // may be performance cost
-    for (std::vector<Species>::const_iterator itr(new_species.begin());
-        itr != new_species.end(); ++itr)
+    for (std::vector<Species>::const_iterator species(new_species.begin());
+        species != new_species.end(); ++species)
     {
-        register_events(*itr);
+        register_events(*species);
     }
 
     num_steps_++;

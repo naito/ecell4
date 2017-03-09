@@ -34,16 +34,14 @@ public:
 
 public:
 
-    SpatiocyteSimulator(
-            boost::shared_ptr<Model> model,
-            boost::shared_ptr<SpatiocyteWorld> world)
+    SpatiocyteSimulator(boost::shared_ptr<Model> model,
+                        boost::shared_ptr<SpatiocyteWorld> world)
         : base_type(model, world)
     {
         initialize();
     }
 
-    SpatiocyteSimulator(
-            boost::shared_ptr<SpatiocyteWorld> world)
+    SpatiocyteSimulator(boost::shared_ptr<SpatiocyteWorld> world)
         : base_type(world)
     {
         initialize();
@@ -66,31 +64,27 @@ public:
 
     const std::vector<SpatiocyteEvent::reaction_type>& last_reactions() const
     {
-        // return last_event_->reactions();
         return last_reactions_;
     }
 
 protected:
 
-    boost::shared_ptr<SpatiocyteEvent> create_step_event(
-        const Species& species, const Real& t, const Real& alpha);
-    boost::shared_ptr<SpatiocyteEvent> create_zeroth_order_reaction_event(
-        const ReactionRule& reaction_rule, const Real& t);
-    boost::shared_ptr<SpatiocyteEvent> create_first_order_reaction_event(
-        const ReactionRule& reaction_rule, const Real& t);
+    boost::shared_ptr<SpatiocyteEvent>
+    create_step_event(const Species& species, const Real& t, const Real& alpha);
+
+    boost::shared_ptr<SpatiocyteEvent>
+    create_zeroth_order_reaction_event(const ReactionRule& reaction_rule, const Real& t);
+
+    boost::shared_ptr<SpatiocyteEvent>
+    create_first_order_reaction_event(const ReactionRule& reaction_rule, const Real& t);
 
     void step_();
     void register_events(const Species& species);
     void update_alpha_map();
 
-    void set_last_event_(boost::shared_ptr<const SpatiocyteEvent> event)
-    {
-        last_event_ = event;
-    }
-
 protected:
 
-    scheduler_type scheduler_; boost::shared_ptr<const SpatiocyteEvent> last_event_;
+    scheduler_type scheduler_;
     alpha_map_type alpha_map_;
 
     std::vector<reaction_type> last_reactions_;
