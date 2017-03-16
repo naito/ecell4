@@ -21,8 +21,6 @@
 using namespace ecell4;
 using namespace ecell4::spatiocyte;
 
-const Real DEFAULT_VOXEL_RADIUS = 1e-8;
-
 struct VectorImplFixture
 {
     const Real VOXEL_RADIUS;
@@ -36,7 +34,8 @@ struct VectorImplFixture
           model(new NetworkModel()),
           rng(new GSLRandomNumberGenerator()),
           world(new SpatiocyteWorld(
-                      new LatticeSpaceVectorImpl( /* edge_lengths = */ Real3(1e-6, 1e-6, 1e-6),
+                      new LatticeSpaceVectorImpl(
+                          /* edge_lengths = */ Real3(1e-6, 1e-6, 1e-6),
                           /* voxel_radius = */ VOXEL_RADIUS),
                       rng)),
           simulator(model, world)
@@ -104,7 +103,7 @@ BOOST_AUTO_TEST_CASE(UnimolecularReaction)
     BOOST_CHECK_EQUAL( 0, world->num_voxels(speciesB));
 
     simulator.initialize();
-    for (int i(0); i < 10; ++i)
+    while (!simulator.check_reaction())
     {
         BOOST_CHECK_NO_THROW(simulator.step());
     }
@@ -128,7 +127,7 @@ BOOST_AUTO_TEST_CASE(BindingReaction)
             create_binding_reaction_rule(
                 /* reactant[0] = */ speciesA,
                 /* reactant[1] = */ speciesB,
-                /*  product    = */ speciesC,
+                /*     product = */ speciesC,
                 /* coefficient = */ 1e-20));
 
     BOOST_ASSERT(world->add_molecules(speciesA, 25));
@@ -162,7 +161,7 @@ BOOST_AUTO_TEST_CASE(UnbindingReaction)
 
     model->add_reaction_rule(
             create_unbinding_reaction_rule(
-                /* reactant    = */ speciesA,
+                /*    reactant = */ speciesA,
                 /*  product[0] = */ speciesB,
                 /*  product[1] = */ speciesC,
                 /* coefficient = */ 1e5));
