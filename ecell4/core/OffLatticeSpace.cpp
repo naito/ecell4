@@ -8,7 +8,8 @@ OffLatticeSpace::OffLatticeSpace(const Real& voxel_radius)
     : base_type(voxel_radius),
       voxels_(),
       positions_(),
-      adjoinings_()
+      adjoinings_(),
+      unit_voxel_volume_(4.0 * sqrt(2.0))
 {}
 
 OffLatticeSpace::~OffLatticeSpace() {}
@@ -45,6 +46,11 @@ void OffLatticeSpace::reset(
             throw IllegalState("A given pair is invalid.");
         }
     }
+}
+
+Real OffLatticeSpace::unit_voxel_volume() const
+{
+    return unit_voxel_volume_;
 }
 
 // Same as LatticeSpaceVectorImpl

@@ -70,21 +70,6 @@ bool VoxelSpaceBase::make_molecular_pool(const Species& sp,
  * VoxelSpaceBaseTraits
  */
 
-Real VoxelSpaceBase::voxel_radius() const
-{
-    return voxel_radius_;
-}
-
-Real VoxelSpaceBase::voxel_volume() const
-{
-    return 4.0 * sqrt(2.0) * pow(voxel_radius_, 3);
-}
-
-Real VoxelSpaceBase::unit_area() const
-{
-    return 2.0 * sqrt(3.0) * pow(voxel_radius_, 2);
-}
-
 std::vector<Species> VoxelSpaceBase::list_species() const
 {
     std::vector<Species> keys;

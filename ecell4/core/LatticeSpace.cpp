@@ -116,8 +116,7 @@ Integer3 LatticeSpace::position2global(const Real3& pos) const
 {
     const Integer col(round(pos[0] / HCP_X));
     const Integer layer(round((pos[1] - (col % 2) * HCP_L) / HCP_Y));
-    const Integer row(round(
-        (pos[2] / voxel_radius_ - ((layer + col) % 2)) / 2));
+    const Integer row(round((pos[2] / voxel_radius_ - ((layer + col) % 2)) / 2));
     const Integer3 global(col, row, layer);
     return global;
 }
@@ -240,6 +239,11 @@ LatticeSpace::inner2coordinate(const coordinate_type inner) const {
 Integer LatticeSpace::inner_size() const
 {
     return col_size() * row_size() * layer_size();
+}
+
+Real LatticeSpace::unit_voxel_volume() const
+{
+    return 4.0 * sqrt(2.0);
 }
 
 const Real3& LatticeSpace::edge_lengths() const

@@ -64,9 +64,20 @@ public:
     /*
      * VoxelSpaceTraits
      */
-    Real voxel_radius() const;
-    Real voxel_volume() const;
-    Real unit_area() const;
+    inline Real voxel_radius() const
+    {
+        return voxel_radius_;
+    }
+
+    inline Real voxel_volume() const
+    {
+        return unit_voxel_volume() * pow(voxel_radius_, 3);
+    }
+
+    inline Real unit_area() const
+    {
+        return 2.0 * sqrt(3.0) * pow(voxel_radius_, 2);
+    }
 
     std::vector<Species> list_species() const;
 
@@ -100,6 +111,8 @@ public:
                              Real radius,
                              Real D,
                              const std::string loc);
+
+    virtual Real unit_voxel_volume() const = 0;
 
     virtual identified_voxel get_voxel_at(const coordinate_type& coord) const = 0;
     virtual const VoxelPool* get_voxel_pool_at(const coordinate_type& coord) const = 0;

@@ -23,7 +23,6 @@ public:
     void reset(const Real3& edge_lengths,
                const Real& voxel_radius,
                const bool is_periodic);
-
     const Integer col_size() const;
     const Integer row_size() const;
     const Integer layer_size() const;
@@ -62,6 +61,8 @@ public:
     /*
      * VoxelSpaceBaseTraits
      */
+
+    Real unit_voxel_volume() const;
 
     /*
      * ParticleSpaceTraits

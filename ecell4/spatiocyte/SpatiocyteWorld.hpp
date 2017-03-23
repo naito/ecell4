@@ -210,19 +210,19 @@ public:
 
 #define\
     wrap_getter(rettype, fn)\
-    rettype fn() const { return space_->fn(); }
+    inline rettype fn() const { return space_->fn(); }
 
 #define\
     wrap_getter_with_arg(rettype, fn, argtype)\
-    rettype fn(argtype arg) const { return space_->fn(arg); }
+    inline rettype fn(argtype arg) const { return space_->fn(arg); }
 
 #define\
     wrap_setter(fn, argtype)\
-    void fn(argtype arg) { space_->fn(arg); }
+    inline void fn(argtype arg) { space_->fn(arg); }
 
 #define\
     wrap_mutable(rettype, fn, argtype)\
-    rettype fn(argtype arg) { return space_->fn(arg); }
+    inline rettype fn(argtype arg) { return space_->fn(arg); }
 
     /*
      * SpaceTraits
@@ -289,6 +289,7 @@ public:
      * VoxelSpaceTraits
      */
     wrap_getter(Real, voxel_radius)
+    wrap_getter(Real, unit_voxel_volume)
     wrap_getter(Real, voxel_volume)
     wrap_getter(Real, unit_area)
 
@@ -343,7 +344,7 @@ public:
     }
 
     wrap_mutable(bool, remove_voxel, const ParticleID&)
-    wrap_mutable(bool, remove_voxel, const coordinate_type)
+    wrap_mutable(bool, remove_voxel, const coordinate_type&)
 
     bool can_move(const coordinate_type& src, const coordinate_type& dest) const
     {
