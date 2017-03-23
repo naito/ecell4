@@ -1,27 +1,8 @@
 #include "LatticeSpace.hpp"
 #include "hcp_lattice.hpp"
-// #include <cmath>
-// #include <sstream>
-// #include <algorithm>
-
-#ifdef WIN32_MSC
-#include <boost/numeric/interval/detail/msvc_rounding_control.hpp>
-#endif
 
 namespace ecell4
 {
-
-#ifdef WIN32_MSC
-double rint(const double x)
-{
-    return boost::numeric::interval_lib::detail::rint(x);
-}
-
-double round(const double x)
-{
-    return floor(x + 0.5);
-}
-#endif
 
 LatticeSpace::LatticeSpace(const Real3& edge_lengths,
                            const Real& voxel_radius,
