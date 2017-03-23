@@ -1,4 +1,5 @@
 #include "LatticeSpace.hpp"
+#include "hcp_lattice.hpp"
 // #include <cmath>
 // #include <sstream>
 // #include <algorithm>
@@ -106,10 +107,7 @@ LatticeSpace::global2coordinate(const Integer3& global) const
 
 Real3 LatticeSpace::global2position(const Integer3& global) const
 {
-    // the center point of a voxel
-    return Real3(global.col * HCP_X,
-                 (global.col % 2) * HCP_L + HCP_Y * global.layer,
-                 (global.row * 2 + (global.layer + global.col) % 2) * voxel_radius_);
+    return calc_lattice_position(voxel_radius_, global);
 }
 
 Integer3 LatticeSpace::position2global(const Real3& pos) const
@@ -174,42 +172,10 @@ LatticeSpace::coordinate_type
 LatticeSpace::get_neighbor(const coordinate_type& coord,
                            const Integer& nrand) const
 {
-    const Integer NUM_COLROW(col_size_ * row_size_);
-    const Integer NUM_ROW(row_size_);
-    const bool odd_col(((coord % NUM_COLROW) / NUM_ROW) & 1);
-    const bool odd_lay((coord / NUM_COLROW) & 1);
-
     if (!is_inside(coord))
         throw NotFound("There is no neighbor voxel.");
 
-    switch (nrand)
-    {
-    case 0:
-        return coord - 1;
-    case 1:
-        return coord + 1;
-    case 2:
-        return coord + (odd_col ^ odd_lay) - NUM_ROW - 1;
-    case 3:
-        return coord + (odd_col ^ odd_lay) - NUM_ROW;
-    case 4:
-        return coord + (odd_col ^ odd_lay) + NUM_ROW - 1;
-    case 5:
-        return coord + (odd_col ^ odd_lay) + NUM_ROW;
-    case 6:
-        return coord - (2 * odd_col - 1) * NUM_COLROW - NUM_ROW;
-    case 7:
-        return coord - (2 * odd_col - 1) * NUM_COLROW + NUM_ROW;
-    case 8:
-        return coord + (odd_col ^ odd_lay) - NUM_COLROW - 1;
-    case 9:
-        return coord + (odd_col ^ odd_lay) - NUM_COLROW;
-    case 10:
-        return coord + (odd_col ^ odd_lay) + NUM_COLROW - 1;
-    case 11:
-        return coord + (odd_col ^ odd_lay) + NUM_COLROW;
-    }
-    throw NotFound("Invalid argument: nrand");
+    return calc_neighbor(Integer3(col_size_, row_size_, layer_size_), coord, nrand);
 }
 
 Integer LatticeSpace::size() const
