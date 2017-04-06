@@ -177,3 +177,70 @@ BOOST_AUTO_TEST_CASE(OffLatticeSpace_test_neighbor)
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+
+struct HCPOffLatticeSpaceTestFixture {
+    const Real voxel_radius;
+    boost::shared_ptr<OffLatticeSpace> space;
+    SerialIDGenerator<ParticleID> sidgen;
+
+    HCPOffLatticeSpaceTestFixture() :
+        voxel_radius(2.5e-9),
+        space(create_hcp_offlattice_space(voxel_radius, Integer3(10,10,10)))
+    {}
+};
+
+BOOST_FIXTURE_TEST_SUITE(HCPOffLatticeSpaceTest, HCPOffLatticeSpaceTestFixture)
+
+BOOST_AUTO_TEST_CASE(Size)
+{
+    BOOST_CHECK_EQUAL(space->size(), 1000);
+}
+
+BOOST_AUTO_TEST_CASE(NeighborList)
+{
+    for (Integer i(0); i < space->size(); ++i)
+    {
+        BOOST_CHECK_EQUAL(space->num_neighbors(i), 12);
+
+        for (Integer j(1); j < space->num_neighbors(i); ++j)
+            for (Integer k(0); k < j; ++k)
+                BOOST_CHECK(space->get_neighbor(i, j) != space->get_neighbor(i, k));
+
+    }
+}
+
+BOOST_AUTO_TEST_CASE(NeighborDistance)
+{
+    const Real voxel_x(voxel_radius * 2.0 * sqrt(6.0) / 3.0),
+               voxel_y(voxel_radius * sqrt(3.0)),
+               voxel_z(voxel_radius * 2.0);
+
+    for (Integer i(0); i < space->size(); ++i)
+    {
+        const Real3 position(space->coordinate2position(i));
+        for (Integer j(0); j < space->num_neighbors(i); ++j)
+        {
+            const Real3 neighbor(space->coordinate2position(space->get_neighbor(i, j)));
+            Real3 direction(neighbor-position);
+            if (direction[0] > 5 * voxel_x)
+                direction[0] -= 10 * voxel_x;
+            else if (direction[0] < -5 * voxel_x)
+                direction[0] += 10 * voxel_x;
+
+            if (direction[1] > 5 * voxel_y)
+                direction[1] -= 10 * voxel_y;
+            else if (direction[1] < -5 * voxel_y)
+                direction[1] += 10 * voxel_y;
+
+            if (direction[2] > 5 * voxel_z)
+                direction[2] -= 10 * voxel_z;
+            else if (direction[2] < -5 * voxel_z)
+                direction[2] += 10 * voxel_z;
+
+            BOOST_CHECK(length(direction) < voxel_radius*2.1);
+        }
+    }
+}
+
+BOOST_AUTO_TEST_SUITE_END()

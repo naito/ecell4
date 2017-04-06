@@ -27,6 +27,8 @@ public:
     void reset(const position_container& positions,
                const coordinate_pair_list_type& adjoining_pairs);
 
+    void set_unit_voxel_volume(const Real& volume);
+
     /*
      * VoxelSpaceBaseTraits
      */
@@ -89,6 +91,12 @@ protected:
     adjoining_container adjoinings_;
     Real unit_voxel_volume_;
 };
+
+boost::shared_ptr<OffLatticeSpace>
+create_cubic_offlattice_space(const Real voxel_radius, const Integer3& lattice_size);
+
+boost::shared_ptr<OffLatticeSpace>
+create_hcp_offlattice_space(const Real voxel_radius, const Integer3& lattice_size);
 
 } // ecell4
 

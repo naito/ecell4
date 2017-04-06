@@ -1,6 +1,7 @@
 #include <algorithm>
 #include "Context.hpp"
 #include "OffLatticeSpace.hpp"
+#include "hcp_lattice.hpp"
 
 namespace ecell4 {
 
@@ -329,6 +330,112 @@ OffLatticeSpace::get_coord(const ParticleID& pid) const
     }
     // throw NotFound("A corresponding particle is not found");
     return -1;
+}
+
+inline Integer
+calc_coordinate(const Integer3& lattice_size, Integer col, Integer row, Integer layer)
+throw ()
+{
+    if (col < 0)
+        col += lattice_size.col;
+    else if (col >= lattice_size.col)
+        col -= lattice_size.col;
+
+    if (row < 0)
+        row += lattice_size.row;
+    else if (row >= lattice_size.row)
+        row -= lattice_size.row;
+
+    if (layer < 0)
+        layer += lattice_size.layer;
+    else if (layer >= lattice_size.layer)
+        layer -= lattice_size.layer;
+
+    return (layer * lattice_size.col + col) * lattice_size.row + row;
+}
+
+boost::shared_ptr<OffLatticeSpace>
+create_cubic_offlattice_space(const Real voxel_radius, const Integer3& lattice_size)
+{
+    OffLatticeSpace::position_container positions;
+    OffLatticeSpace::coordinate_pair_list_type adjoining_pairs;
+
+    for (Integer layer(0); layer < lattice_size.layer; ++layer)
+        for (Integer col(0); col < lattice_size.col; ++col)
+            for (Integer row(0); row < lattice_size.row; ++row)
+            {
+                positions.push_back(calc_lattice_position(voxel_radius, Integer3(col, row, layer)));
+
+                const Integer coordinate(calc_coordinate(lattice_size, col, row, layer));
+
+                adjoining_pairs.push_back(
+                        std::make_pair(coordinate,
+                                       calc_coordinate(lattice_size, col+1, row, layer)));
+                adjoining_pairs.push_back(
+                        std::make_pair(coordinate,
+                                       calc_coordinate(lattice_size, col, row+1, layer)));
+                adjoining_pairs.push_back(
+                        std::make_pair(coordinate,
+                                       calc_coordinate(lattice_size, col, row, layer+1)));
+            }
+
+    boost::shared_ptr<OffLatticeSpace> space(new OffLatticeSpace(voxel_radius));
+    space->reset(positions, adjoining_pairs);
+    return space;
+}
+
+boost::shared_ptr<OffLatticeSpace>
+create_hcp_offlattice_space(const Real voxel_radius, const Integer3& lattice_size)
+{
+    OffLatticeSpace::position_container positions;
+    OffLatticeSpace::coordinate_pair_list_type adjoining_pairs;
+
+    for (Integer layer(0); layer < lattice_size.layer; ++layer)
+        for (Integer col(0); col < lattice_size.col; ++col)
+            for (Integer row(0); row < lattice_size.row; ++row)
+            {
+                const Integer odd_col(col & 1),
+                              odd_layer(layer & 1);
+                const Integer offset(odd_col ^ odd_layer);
+
+                positions.push_back(calc_lattice_position(voxel_radius, Integer3(col, row, layer)));
+
+                const Integer coordinate(calc_coordinate(lattice_size, col, row, layer));
+
+                // case 1
+                adjoining_pairs.push_back(
+                        std::make_pair(coordinate,
+                                       calc_coordinate(lattice_size, col, row+1, layer)));
+
+                // case 4
+                adjoining_pairs.push_back(
+                        std::make_pair(coordinate,
+                                       calc_coordinate(lattice_size, col+1, row+offset-1, layer)));
+
+                // case 5
+                adjoining_pairs.push_back(
+                        std::make_pair(coordinate,
+                                       calc_coordinate(lattice_size, col+1, row+offset, layer)));
+
+                // case 7
+                adjoining_pairs.push_back(
+                        std::make_pair(coordinate,
+                                       calc_coordinate(lattice_size, col+1, row, layer-1+2*odd_col)));
+
+                // case 10
+                adjoining_pairs.push_back(
+                        std::make_pair(coordinate,
+                                       calc_coordinate(lattice_size, col, row+offset-1, layer+1)));
+
+                // case 11
+                adjoining_pairs.push_back(
+                        std::make_pair(coordinate,
+                                       calc_coordinate(lattice_size, col, row+offset, layer+1)));
+            }
+
+    boost::shared_ptr<OffLatticeSpace> space(new OffLatticeSpace(voxel_radius));
+    space->reset(positions, adjoining_pairs);
+    return space;
 }
 
 } // ecell4
