@@ -1,7 +1,6 @@
 #ifndef __ECELL4_VOXELSPACEBASE_HPP
 #define __ECELL4_VOXELSPACEBASE_HPP
 
-// #include "LatticeSpace.hpp"
 #include <vector>
 #include <set>
 #include <map>
