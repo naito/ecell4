@@ -8,6 +8,7 @@
 #include <ecell4/core/VoxelPool.hpp>
 #include <ecell4/core/VoxelSpaceBase.hpp>
 #include <ecell4/core/LatticeSpaceVectorImpl.hpp>
+#include <ecell4/core/OffLatticeSpace.hpp>
 #include <ecell4/core/RandomNumberGenerator.hpp>
 #include <ecell4/core/SerialIDGenerator.hpp>
 #include <ecell4/core/Model.hpp>
@@ -384,6 +385,9 @@ SpatiocyteWorld* create_spatiocyte_world_cell_list_impl(
 SpatiocyteWorld* create_spatiocyte_world_vector_impl(
     const Real3& edge_lengths, const Real& voxel_radius,
     const boost::shared_ptr<RandomNumberGenerator>& rng);
+SpatiocyteWorld* create_spatiocyte_world_offlattice_impl(
+    const Real3& edge_lengths, const Real& voxel_radius,
+    const boost::shared_ptr<RandomNumberGenerator>& rng);
 
 /**
  * Alias functions for Cython
@@ -403,6 +407,13 @@ inline SpatiocyteWorld* create_spatiocyte_world_vector_impl_alias(
     const boost::shared_ptr<RandomNumberGenerator>& rng)
 {
     return create_spatiocyte_world_vector_impl(edge_lengths, voxel_radius, rng);
+}
+
+inline SpatiocyteWorld* create_spatiocyte_world_offlattice_impl_alias(
+    const Real3& edge_lengths, const Real& voxel_radius,
+    const boost::shared_ptr<RandomNumberGenerator>& rng)
+{
+    return create_spatiocyte_world_offlattice_impl(edge_lengths, voxel_radius, rng);
 }
 
 } // spatiocyte

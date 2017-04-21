@@ -25,9 +25,19 @@ SpatiocyteWorld* create_spatiocyte_world_vector_impl(
     const Real3& edge_lengths, const Real& voxel_radius,
     const boost::shared_ptr<RandomNumberGenerator>& rng)
 {
-    return new SpatiocyteWorld(
-        new LatticeSpaceVectorImpl(edge_lengths, voxel_radius), rng);
+    return new SpatiocyteWorld(new LatticeSpaceVectorImpl(edge_lengths, voxel_radius), rng);
 }
+
+SpatiocyteWorld* create_spatiocyte_world_offlattice_impl(
+    const Real3& edge_lengths, const Real& voxel_radius,
+    const boost::shared_ptr<RandomNumberGenerator>& rng)
+{
+    const Integer3 lattice_size(Integer(edge_lengths[0]/(2.0*voxel_radius)),
+                                Integer(edge_lengths[1]/(2.0*voxel_radius)),
+                                Integer(edge_lengths[2]/(2.0*voxel_radius)));
+    return new SpatiocyteWorld(create_hcp_offlattice_space(voxel_radius, lattice_size), rng);
+}
+
 
 MoleculeInfo SpatiocyteWorld::get_molecule_info(const Species& sp) const
 {
