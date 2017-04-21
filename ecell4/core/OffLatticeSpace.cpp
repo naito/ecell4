@@ -29,7 +29,18 @@ void OffLatticeSpace::reset(
     positions_.resize(size);
     adjoinings_.resize(size);
 
+    Real3 edge_lengths(0.0, 0.0, 0.0);
+
     std::copy(positions.begin(), positions.end(), positions_.begin());
+
+    for (position_container::const_iterator itr(positions_.begin());
+         itr != positions_.end(); ++itr)
+    {
+        for (std::size_t i(0); i < 3; ++i)
+            if ((*itr)[i] > edge_lengths[i])
+                edge_lengths[i] = (*itr)[i];
+    }
+    edge_lengths_ = edge_lengths;
 
     for (coordinate_pair_list_type::const_iterator itr(adjoining_pairs.begin());
             itr != adjoining_pairs.end(); ++itr)
@@ -331,6 +342,12 @@ OffLatticeSpace::get_coord(const ParticleID& pid) const
     }
     // throw NotFound("A corresponding particle is not found");
     return -1;
+}
+
+const Real3&
+OffLatticeSpace::edge_lengths() const
+{
+    return edge_lengths_;
 }
 
 inline Integer

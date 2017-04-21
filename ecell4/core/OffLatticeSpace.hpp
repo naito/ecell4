@@ -31,8 +31,7 @@ public:
 
     /*
      * VoxelSpaceBaseTraits
-     */
-    Real unit_voxel_volume() const;
+     */ Real unit_voxel_volume() const;
 
     identified_voxel get_voxel_at(const coordinate_type& coord) const;
     const VoxelPool* get_voxel_pool_at(const coordinate_type& coord) const;
@@ -70,6 +69,10 @@ public:
     coordinate_type inner2coordinate(const coordinate_type inner) const;
     Integer inner_size() const;
 
+    /*
+     * ParticleSpaceTraits
+     */
+    const Real3& edge_lengths() const;
     // Real3 actual_lengths() const;
 
 // #ifdef WITH_HDF5
@@ -89,6 +92,7 @@ protected:
     voxel_container voxels_;
     position_container positions_;
     adjoining_container adjoinings_;
+    Real3 edge_lengths_;
     Real unit_voxel_volume_;
 };
 
