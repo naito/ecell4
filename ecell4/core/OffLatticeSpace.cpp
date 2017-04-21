@@ -289,7 +289,8 @@ Integer3 OffLatticeSpace::shape() const
 
 OffLatticeSpace::coordinate_type OffLatticeSpace::inner2coordinate(const coordinate_type inner) const
 {
-    throw NotSupported("OffLatticeSpace::inner2coordinate() is not supported.");
+    return inner;
+    // throw NotSupported("OffLatticeSpace::inner2coordinate() is not supported.");
 }
 
 Integer OffLatticeSpace::inner_size() const
@@ -354,7 +355,7 @@ throw ()
     return (layer * lattice_size.col + col) * lattice_size.row + row;
 }
 
-boost::shared_ptr<OffLatticeSpace>
+OffLatticeSpace*
 create_cubic_offlattice_space(const Real voxel_radius, const Integer3& lattice_size)
 {
     OffLatticeSpace::position_container positions;
@@ -379,12 +380,12 @@ create_cubic_offlattice_space(const Real voxel_radius, const Integer3& lattice_s
                                        calc_coordinate(lattice_size, col, row, layer+1)));
             }
 
-    boost::shared_ptr<OffLatticeSpace> space(new OffLatticeSpace(voxel_radius));
+    OffLatticeSpace* space(new OffLatticeSpace(voxel_radius));
     space->reset(positions, adjoining_pairs);
     return space;
 }
 
-boost::shared_ptr<OffLatticeSpace>
+OffLatticeSpace*
 create_hcp_offlattice_space(const Real voxel_radius, const Integer3& lattice_size)
 {
     OffLatticeSpace::position_container positions;
@@ -433,7 +434,7 @@ create_hcp_offlattice_space(const Real voxel_radius, const Integer3& lattice_siz
                                        calc_coordinate(lattice_size, col, row+offset, layer+1)));
             }
 
-    boost::shared_ptr<OffLatticeSpace> space(new OffLatticeSpace(voxel_radius));
+    OffLatticeSpace* space(new OffLatticeSpace(voxel_radius));
     space->reset(positions, adjoining_pairs);
     return space;
 }
