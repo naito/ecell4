@@ -39,6 +39,11 @@ SpatiocyteWorld* create_spatiocyte_world_offlattice_impl(
 }
 
 
+void SpatiocyteWorld::add_space(VoxelSpaceBase *space)
+{
+    spaces_.push_back((struct SpaceItem){ boost::shared_ptr<VoxelSpaceBase>(space) });
+}
+
 MoleculeInfo SpatiocyteWorld::get_molecule_info(const Species& sp) const
 {
     const bool with_D(sp.has_attribute("D"));
@@ -170,7 +175,7 @@ SpatiocyteWorld::new_particle(const Particle& p)
     const MoleculeInfo minfo(get_molecule_info(p.species()));
     const Voxel v(
         p.species(), position2coordinate(p.position()), p.radius(), p.D(), minfo.loc);
-    if (space_->on_structure(v))
+    if (spaces_.at(0).space->on_structure(v))
     {
         return std::make_pair(std::make_pair(ParticleID(), p), false);
     }
@@ -268,7 +273,7 @@ SpatiocyteWorld::new_voxel_interface(const Species& sp, const coordinate_type& c
 Integer SpatiocyteWorld::add_structure(const Species& sp, const boost::shared_ptr<const Shape> shape)
 {
     const MoleculeInfo info(get_molecule_info(sp));
-    space_->make_structure_type(sp, shape->dimension(), info.loc);
+    spaces_.at(0).space->make_structure_type(sp, shape->dimension(), info.loc);
 
     switch (shape->dimension())
     {
@@ -336,7 +341,7 @@ bool SpatiocyteWorld::is_surface_voxel(const coordinate_type coord,
 
 Integer SpatiocyteWorld::add_interface(const Species& sp)
 {
-    return space_->make_interface_type(sp, Shape::UNDEF, get_molecule_info(sp).loc);
+    return spaces_.at(0).space->make_interface_type(sp, Shape::UNDEF, get_molecule_info(sp).loc);
 }
 
 std::vector<Species> SpatiocyteWorld::list_structure_species() const
@@ -481,7 +486,7 @@ void SpatiocyteWorld::save(const std::string& filename) const
     sidgen_.save(fout.get());
     boost::scoped_ptr<H5::Group>
         group(new H5::Group(fout->createGroup("LatticeSpace")));
-    space_->save_hdf5(group.get());
+    spaces_.at(0).space->save_hdf5(group.get());
     extras::save_version_information(fout.get(), "ecell4-spatiocyte-0.0-1");
 #else
     throw NotSupported("This method requires HDF5. The HDF5 support is turned off.");
@@ -494,7 +499,7 @@ void SpatiocyteWorld::load(const std::string& filename)
     boost::scoped_ptr<H5::H5File>
         fin(new H5::H5File(filename.c_str(), H5F_ACC_RDONLY));
     const H5::Group group(fin->openGroup("LatticeSpace"));
-    space_->load_hdf5(group);
+    spaces_.at(0).space->load_hdf5(group);
     sidgen_.load(*fin);
     rng_->load(*fin);
 #else

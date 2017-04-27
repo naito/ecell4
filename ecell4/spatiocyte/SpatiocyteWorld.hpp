@@ -38,44 +38,45 @@ public:
 
     typedef VoxelSpaceBase::identified_voxel identified_voxel;
 
+    struct SpaceItem
+    {
+        boost::shared_ptr<VoxelSpaceBase> space;
+    };
+
 public:
 
     SpatiocyteWorld(const Real3& edge_lengths, const Real& voxel_radius,
         const boost::shared_ptr<RandomNumberGenerator>& rng)
-        : space_(new default_space_type(edge_lengths, voxel_radius)), rng_(rng)
+        : rng_(rng)
     {
-        ; // do nothing
+        add_space(new default_space_type(edge_lengths, voxel_radius));
     }
 
     SpatiocyteWorld(const Real3& edge_lengths, const Real& voxel_radius)
-        : space_(new default_space_type(edge_lengths, voxel_radius))
     {
-        rng_ = boost::shared_ptr<RandomNumberGenerator>(
-            new GSLRandomNumberGenerator());
+        add_space(new default_space_type(edge_lengths, voxel_radius));
+        rng_ = boost::shared_ptr<RandomNumberGenerator>(new GSLRandomNumberGenerator());
         (*rng_).seed();
     }
 
     SpatiocyteWorld(const Real3& edge_lengths = Real3(1, 1, 1))
-        : space_(new default_space_type(edge_lengths, edge_lengths[0] / 100)) //XXX: sloppy default
     {
-        rng_ = boost::shared_ptr<RandomNumberGenerator>(
-            new GSLRandomNumberGenerator());
+        add_space(new default_space_type(edge_lengths, edge_lengths[0] / 100.0));
+        rng_ = boost::shared_ptr<RandomNumberGenerator>(new GSLRandomNumberGenerator());
         (*rng_).seed();
     }
 
     SpatiocyteWorld(const std::string filename)
-        : space_(new default_space_type(Real3(1, 1, 1), 1 / 100)) //XXX: sloppy default
     {
-        rng_ = boost::shared_ptr<RandomNumberGenerator>(
-            new GSLRandomNumberGenerator());
+        add_space(new default_space_type(Real3(1, 1, 1), 0.01));
+        rng_ = boost::shared_ptr<RandomNumberGenerator>(new GSLRandomNumberGenerator());
         this->load(filename);
     }
 
-    SpatiocyteWorld(VoxelSpaceBase* space,
-        const boost::shared_ptr<RandomNumberGenerator>& rng)
-        : space_(space), rng_(rng)
+    SpatiocyteWorld(VoxelSpaceBase* space, const boost::shared_ptr<RandomNumberGenerator>& rng)
+        : rng_(rng)
     {
-        ; // do nothing
+        add_space(space);
     }
 
     /*
@@ -195,6 +196,7 @@ public:
 
 protected:
 
+    void add_space(VoxelSpaceBase *space);
     std::pair<identified_voxel, bool> new_voxel_structure(const Voxel& v);
     Integer add_structure3(const Species& sp, const boost::shared_ptr<const Shape> shape);
     Integer add_structure2(const Species& sp, const boost::shared_ptr<const Shape> shape);
@@ -209,19 +211,19 @@ public:
 
 #define\
     wrap_getter(rettype, fn)\
-    inline rettype fn() const { return space_->fn(); }
+    inline rettype fn() const { return spaces_.at(0).space->fn(); }
 
 #define\
     wrap_getter_with_arg(rettype, fn, argtype)\
-    inline rettype fn(argtype arg) const { return space_->fn(arg); }
+    inline rettype fn(argtype arg) const { return spaces_.at(0).space->fn(arg); }
 
 #define\
     wrap_setter(fn, argtype)\
-    inline void fn(argtype arg) { space_->fn(arg); }
+    inline void fn(argtype arg) { spaces_.at(0).space->fn(arg); }
 
 #define\
     wrap_mutable(rettype, fn, argtype)\
-    inline rettype fn(argtype arg) { return space_->fn(arg); }
+    inline rettype fn(argtype arg) { return spaces_.at(0).space->fn(arg); }
 
     /*
      * SpaceTraits
@@ -271,12 +273,12 @@ public:
 
     coordinate_type get_neighbor(coordinate_type coord, Integer nrand) const
     {
-        return space_->get_neighbor(coord, nrand);
+        return spaces_.at(0).space->get_neighbor(coord, nrand);
     }
 
     coordinate_type get_neighbor_boundary(coordinate_type coord, Integer nrand) const
     {
-        return space_->get_neighbor_boundary(coord, nrand);
+        return spaces_.at(0).space->get_neighbor_boundary(coord, nrand);
     }
 
     wrap_getter(const Integer,  size)
@@ -339,7 +341,7 @@ public:
 
     bool update_voxel(const ParticleID& pid, const Voxel& v)
     {
-        return space_->update_voxel(pid, v);
+        return spaces_.at(0).space->update_voxel(pid, v);
     }
 
     wrap_mutable(bool, remove_voxel, const ParticleID&)
@@ -347,20 +349,20 @@ public:
 
     bool can_move(const coordinate_type& src, const coordinate_type& dest) const
     {
-        return (*space_).can_move(src, dest);
+        return (*spaces_.at(0).space).can_move(src, dest);
     }
 
     bool move(const coordinate_type& src, const coordinate_type& dest,
               const std::size_t candidate=0)
     {
-        return space_->move(src, dest, candidate);
+        return spaces_.at(0).space->move(src, dest, candidate);
     }
 
     std::pair<coordinate_type, bool>
     move_to_neighbor(VoxelPool* const& from_mt, VoxelPool* const& loc,
                      coordinate_id_pair_type& info, const Integer nrand)
     {
-        return space_->move_to_neighbor(from_mt, loc, info, nrand);
+        return spaces_.at(0).space->move_to_neighbor(from_mt, loc, info, nrand);
     }
 
 #undef wrap_getter
@@ -369,7 +371,7 @@ public:
 
 protected:
 
-    boost::scoped_ptr<VoxelSpaceBase> space_;
+    std::vector<SpaceItem> spaces_;
     boost::shared_ptr<RandomNumberGenerator> rng_;
     SerialIDGenerator<ParticleID> sidgen_;
 
