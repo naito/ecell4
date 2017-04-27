@@ -265,8 +265,7 @@ StepEvent::StepEvent(boost::shared_ptr<Model> model,
                      const Species& species, const Real& t, const Real alpha)
     : SpatiocyteEvent(t), model_(model), world_(world), species_(species), alpha_(alpha)
 {
-    const SpatiocyteWorld::molecule_info_type
-        minfo(world_->get_molecule_info(species));
+    const MoleculeInfo minfo(world_->get_molecule_info(species));
     const Real R(world_->voxel_radius());
     const Real D(minfo.D);
     const Real sqRperD(pow(R, 2.0)/D);

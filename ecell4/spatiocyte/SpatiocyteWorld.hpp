@@ -33,8 +33,6 @@ public:
 
     typedef LatticeSpaceVectorImpl default_space_type;
 
-    typedef MoleculeInfo molecule_info_type;
-
     typedef VoxelSpaceBase::coordinate_id_pair_type coordinate_id_pair_type;
     typedef VoxelSpaceBase::coordinate_type coordinate_type;
 
@@ -100,7 +98,7 @@ public:
 
     std::pair<identified_voxel, bool> new_voxel(const Species& sp, const coordinate_type& coord)
     {
-        const molecule_info_type minfo(get_molecule_info(sp));
+        const MoleculeInfo minfo(get_molecule_info(sp));
         return new_voxel(Voxel(sp, coord, minfo.radius, minfo.D, minfo.loc));
     }
 

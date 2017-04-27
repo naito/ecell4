@@ -85,7 +85,7 @@ Integer SpatiocyteWorld::add_neighbors(const Species& sp,
     const SpatiocyteWorld::coordinate_type center)
 {
     Integer count(0);
-    const SpatiocyteWorld::molecule_info_type info(get_molecule_info(sp));
+    const MoleculeInfo info(get_molecule_info(sp));
     for (Integer i(0); i < 12; ++i)
     {
         const coordinate_type n(get_neighbor(center, i));
@@ -97,7 +97,7 @@ Integer SpatiocyteWorld::add_neighbors(const Species& sp,
     return count;
 
     // Integer count(0);
-    // const SpatiocyteWorld::molecule_info_type info(get_molecule_info(sp));
+    // const MoleculeInfo info(get_molecule_info(sp));
     // std::vector<SpatiocyteWorld::coordinate_type> neighbors(
     //         get_neighbors(center));
     // for (std::vector<SpatiocyteWorld::coordinate_type>::iterator itr(
@@ -167,7 +167,7 @@ SpatiocyteWorld::new_particle(const Particle& p)
     // ParticleID pid(sidgen_());
     // const bool is_succeeded(update_particle(pid, p));
     // return std::make_pair(get_particle(pid), is_succeeded);
-    const molecule_info_type minfo(get_molecule_info(p.species()));
+    const MoleculeInfo minfo(get_molecule_info(p.species()));
     const Voxel v(
         p.species(), position2coordinate(p.position()), p.radius(), p.D(), minfo.loc);
     if (space_->on_structure(v))
@@ -180,7 +180,7 @@ SpatiocyteWorld::new_particle(const Particle& p)
 
 bool SpatiocyteWorld::update_particle(const ParticleID& pid, const Particle& p)
 {
-    const molecule_info_type minfo(get_molecule_info(p.species()));
+    const MoleculeInfo minfo(get_molecule_info(p.species()));
     return update_voxel(pid, Voxel(p.species(),
         position2coordinate(p.position()), p.radius(), p.D(), minfo.loc));
 }
@@ -245,7 +245,7 @@ SpatiocyteWorld::list_non_structure_particles() const
 std::pair<SpatiocyteWorld::identified_voxel, bool>
 SpatiocyteWorld::new_voxel_structure(const Species& sp, const coordinate_type& coord)
 {
-    const molecule_info_type minfo(get_molecule_info(sp));
+    const MoleculeInfo minfo(get_molecule_info(sp));
     return new_voxel_structure(Voxel(sp, coord, minfo.radius, minfo.D, minfo.loc));
 }
 
@@ -259,7 +259,7 @@ SpatiocyteWorld::new_voxel_structure(const Voxel& v)
 std::pair<SpatiocyteWorld::identified_voxel, bool>
 SpatiocyteWorld::new_voxel_interface(const Species& sp, const coordinate_type& coord)
 {
-    const molecule_info_type minfo(get_molecule_info(sp));
+    const MoleculeInfo minfo(get_molecule_info(sp));
     const Voxel voxel(sp, coord, minfo.radius, minfo.D, minfo.loc);
     const ParticleID pid;
     return std::make_pair(std::make_pair(pid, voxel), update_voxel(pid, voxel));
@@ -267,7 +267,7 @@ SpatiocyteWorld::new_voxel_interface(const Species& sp, const coordinate_type& c
 
 Integer SpatiocyteWorld::add_structure(const Species& sp, const boost::shared_ptr<const Shape> shape)
 {
-    const SpatiocyteWorld::molecule_info_type info(get_molecule_info(sp));
+    const MoleculeInfo info(get_molecule_info(sp));
     space_->make_structure_type(sp, shape->dimension(), info.loc);
 
     switch (shape->dimension())
@@ -287,7 +287,7 @@ Integer SpatiocyteWorld::add_structure(const Species& sp, const boost::shared_pt
 Integer
 SpatiocyteWorld::add_structure3(const Species& sp, const boost::shared_ptr<const Shape> shape)
 {
-    const SpatiocyteWorld::molecule_info_type info(get_molecule_info(sp));
+    const MoleculeInfo info(get_molecule_info(sp));
     Integer count(0);
     for (coordinate_type inner(0); inner < inner_size(); ++inner) {
         const coordinate_type coord(inner2coordinate(inner));
@@ -305,7 +305,7 @@ SpatiocyteWorld::add_structure3(const Species& sp, const boost::shared_ptr<const
 Integer
 SpatiocyteWorld::add_structure2(const Species& sp, const boost::shared_ptr<const Shape> shape)
 {
-    const SpatiocyteWorld::molecule_info_type info(get_molecule_info(sp));
+    const MoleculeInfo info(get_molecule_info(sp));
     Integer count(0);
     for (coordinate_type inner(0); inner < inner_size(); ++inner) {
         const coordinate_type coord(inner2coordinate(inner));
@@ -372,7 +372,7 @@ bool SpatiocyteWorld::add_molecules(const Species& sp, const Integer& num)
         throw std::invalid_argument("The number of molecules must be positive.");
     }
 
-    const SpatiocyteWorld::molecule_info_type info(get_molecule_info(sp));
+    const MoleculeInfo info(get_molecule_info(sp));
 
     Integer count(0);
     while (count < num)
@@ -404,7 +404,7 @@ bool SpatiocyteWorld::add_molecules(const Species& sp, const Integer& num,
         throw std::invalid_argument("The number of molecules must be positive.");
     }
 
-    const SpatiocyteWorld::molecule_info_type info(get_molecule_info(sp));
+    const MoleculeInfo info(get_molecule_info(sp));
 
     Integer count(0);
     while (count < num)
