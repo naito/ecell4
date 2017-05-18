@@ -41,7 +41,11 @@ SpatiocyteWorld* create_spatiocyte_world_offlattice_impl(
 
 void SpatiocyteWorld::add_space(VoxelSpaceBase *space)
 {
-    spaces_.push_back((struct SpaceItem){ boost::shared_ptr<VoxelSpaceBase>(space) });
+    spaces_.push_back((struct SpaceItem){
+        boost::shared_ptr<VoxelSpaceBase>(space),
+        num_voxels_
+    });
+    num_voxels_ += space->num_voxels();
 }
 
 MoleculeInfo SpatiocyteWorld::get_molecule_info(const Species& sp) const

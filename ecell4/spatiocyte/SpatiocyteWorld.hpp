@@ -41,32 +41,33 @@ public:
     struct SpaceItem
     {
         boost::shared_ptr<VoxelSpaceBase> space;
+        coordinate_type                   offset;
     };
 
 public:
 
     SpatiocyteWorld(const Real3& edge_lengths, const Real& voxel_radius,
         const boost::shared_ptr<RandomNumberGenerator>& rng)
-        : rng_(rng)
+        : num_voxels_(0), rng_(rng)
     {
         add_space(new default_space_type(edge_lengths, voxel_radius));
     }
 
-    SpatiocyteWorld(const Real3& edge_lengths, const Real& voxel_radius)
+    SpatiocyteWorld(const Real3& edge_lengths, const Real& voxel_radius) : num_voxels_(0)
     {
         add_space(new default_space_type(edge_lengths, voxel_radius));
         rng_ = boost::shared_ptr<RandomNumberGenerator>(new GSLRandomNumberGenerator());
         (*rng_).seed();
     }
 
-    SpatiocyteWorld(const Real3& edge_lengths = Real3(1, 1, 1))
+    SpatiocyteWorld(const Real3& edge_lengths = Real3(1, 1, 1)) : num_voxels_(0)
     {
         add_space(new default_space_type(edge_lengths, edge_lengths[0] / 100.0));
         rng_ = boost::shared_ptr<RandomNumberGenerator>(new GSLRandomNumberGenerator());
         (*rng_).seed();
     }
 
-    SpatiocyteWorld(const std::string filename)
+    SpatiocyteWorld(const std::string filename) : num_voxels_(0)
     {
         add_space(new default_space_type(Real3(1, 1, 1), 0.01));
         rng_ = boost::shared_ptr<RandomNumberGenerator>(new GSLRandomNumberGenerator());
@@ -74,7 +75,7 @@ public:
     }
 
     SpatiocyteWorld(VoxelSpaceBase* space, const boost::shared_ptr<RandomNumberGenerator>& rng)
-        : rng_(rng)
+        : num_voxels_(0), rng_(rng)
     {
         add_space(space);
     }
@@ -296,7 +297,10 @@ public:
 
     wrap_getter(std::vector<Species>, list_species)
 
-    wrap_getter         (Integer, num_voxels)
+    Integer num_voxels() const
+    {
+        return num_voxels_;
+    }
     wrap_getter_with_arg(Integer, num_voxels,       const Species&)
     wrap_getter_with_arg(Integer, num_voxels_exact, const Species&)
     wrap_getter_with_arg(bool,    has_voxel,        const ParticleID&)
@@ -371,7 +375,9 @@ public:
 
 protected:
 
+    Integer num_voxels_;
     std::vector<SpaceItem> spaces_;
+
     boost::shared_ptr<RandomNumberGenerator> rng_;
     SerialIDGenerator<ParticleID> sidgen_;
 
