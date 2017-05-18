@@ -48,26 +48,26 @@ public:
 
     SpatiocyteWorld(const Real3& edge_lengths, const Real& voxel_radius,
         const boost::shared_ptr<RandomNumberGenerator>& rng)
-        : num_voxels_(0), rng_(rng)
+        : size_(0), rng_(rng)
     {
         add_space(new default_space_type(edge_lengths, voxel_radius));
     }
 
-    SpatiocyteWorld(const Real3& edge_lengths, const Real& voxel_radius) : num_voxels_(0)
+    SpatiocyteWorld(const Real3& edge_lengths, const Real& voxel_radius) : size_(0)
     {
         add_space(new default_space_type(edge_lengths, voxel_radius));
         rng_ = boost::shared_ptr<RandomNumberGenerator>(new GSLRandomNumberGenerator());
         (*rng_).seed();
     }
 
-    SpatiocyteWorld(const Real3& edge_lengths = Real3(1, 1, 1)) : num_voxels_(0)
+    SpatiocyteWorld(const Real3& edge_lengths = Real3(1, 1, 1)) : size_(0)
     {
         add_space(new default_space_type(edge_lengths, edge_lengths[0] / 100.0));
         rng_ = boost::shared_ptr<RandomNumberGenerator>(new GSLRandomNumberGenerator());
         (*rng_).seed();
     }
 
-    SpatiocyteWorld(const std::string filename) : num_voxels_(0)
+    SpatiocyteWorld(const std::string filename) : size_(0)
     {
         add_space(new default_space_type(Real3(1, 1, 1), 0.01));
         rng_ = boost::shared_ptr<RandomNumberGenerator>(new GSLRandomNumberGenerator());
@@ -75,7 +75,7 @@ public:
     }
 
     SpatiocyteWorld(VoxelSpaceBase* space, const boost::shared_ptr<RandomNumberGenerator>& rng)
-        : num_voxels_(0), rng_(rng)
+        : size_(0), rng_(rng)
     {
         add_space(space);
     }
@@ -198,6 +198,8 @@ public:
 protected:
 
     void add_space(VoxelSpaceBase *space);
+    SpaceItem& get_corresponding_space(const coordinate_type& coordinate);
+    const SpaceItem& get_corresponding_space(const coordinate_type& coordinate) const;
     std::pair<identified_voxel, bool> new_voxel_structure(const Voxel& v);
     Integer add_structure3(const Species& sp, const boost::shared_ptr<const Shape> shape);
     Integer add_structure2(const Species& sp, const boost::shared_ptr<const Shape> shape);
@@ -239,12 +241,48 @@ public:
      * CompartmentSpaceTraits
      */
     wrap_getter(const Real, volume)
-    wrap_getter(Integer,    num_species)
-    wrap_getter_with_arg(bool,       has_species, const Species&)
+
+    Integer num_species() const
+    {
+        Integer num_species = 0;
+        for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+        {
+            num_species += (*itr).space->num_species();
+        }
+        return num_species;
+    }
+
+    bool has_species(const Species& species) const
+    {
+        for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+        {
+            if ((*itr).space->has_species(species))
+                return true;
+        }
+        return false;
+    }
+
     // bool has_species_exact(const Species &sp) const;
 
-    wrap_getter_with_arg(Integer, num_molecules,       const Species&)
-    wrap_getter_with_arg(Integer, num_molecules_exact, const Species&)
+    Integer num_molecules(const Species& species) const
+    {
+        Integer num_molecules = 0;
+        for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+        {
+            num_molecules += (*itr).space->num_molecules(species);
+        }
+        return num_molecules;
+    }
+
+    Integer num_molecules_exact(const Species& species) const
+    {
+        Integer num_molecules = 0;
+        for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+        {
+            num_molecules += (*itr).space->num_molecules_exact(species);
+        }
+        return num_molecules;
+    }
 
     wrap_getter_with_arg(Real, get_value,       const Species&)
     wrap_getter_with_arg(Real, get_value_exact, const Species&)
@@ -255,10 +293,46 @@ public:
     wrap_getter(const Real3&, edge_lengths)
     wrap_getter(Real3,        actual_lengths)
 
-    wrap_getter         (Integer, num_particles)
-    wrap_getter_with_arg(Integer, num_particles,       const Species&)
-    wrap_getter_with_arg(Integer, num_particles_exact, const Species&)
-    wrap_getter_with_arg(bool,    has_particle,        const ParticleID&)
+    Integer num_particles() const
+    {
+        Integer num_particles(0);
+        for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+        {
+            num_particles += (*itr).space->num_particles();
+        }
+        return num_particles;
+    }
+
+    Integer num_particles(const Species& species) const
+    {
+        Integer num_particles(0);
+        for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+        {
+            num_particles += (*itr).space->num_particles(species);
+        }
+        return num_particles;
+    }
+
+    Integer num_particles_exact(const Species& species) const
+    {
+        Integer num_particles(0);
+        for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+        {
+            num_particles += (*itr).space->num_particles_exact(species);
+        }
+        return num_particles;
+    }
+
+    bool has_particle(const ParticleID& pid) const
+    {
+        for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+        {
+            if ((*itr).space->has_particle(pid))
+                return true;
+        }
+        return false;
+    }
+
     wrap_getter_with_arg(identified_particle, get_particle, const ParticleID&)
 
     wrap_getter         (std::vector<identified_particle>, list_particles)
@@ -268,21 +342,37 @@ public:
     /*
      * LatticeSpaceTraits
      */
-    wrap_getter_with_arg(const Real3, coordinate2position, const coordinate_type&)
+    const Real3 coordinate2position(const coordinate_type& coordinate) const
+    {
+        const SpaceItem& item(get_corresponding_space(coordinate));
+        return item.space->coordinate2position(coordinate - item.offset);
+    }
+
     wrap_getter_with_arg(coordinate_type, position2coordinate, const Real3&)
-    wrap_getter_with_arg(Integer, num_neighbors, const coordinate_type&)
 
-    coordinate_type get_neighbor(coordinate_type coord, Integer nrand) const
+    Integer num_neighbors(const coordinate_type& coordinate) const
     {
-        return spaces_.at(0).space->get_neighbor(coord, nrand);
+        const SpaceItem& item(get_corresponding_space(coordinate));
+        return item.space->num_neighbors(coordinate - item.offset);
     }
 
-    coordinate_type get_neighbor_boundary(coordinate_type coord, Integer nrand) const
+    coordinate_type get_neighbor(coordinate_type coordinate, Integer nrand) const
     {
-        return spaces_.at(0).space->get_neighbor_boundary(coord, nrand);
+        const SpaceItem& item(get_corresponding_space(coordinate));
+        return item.space->get_neighbor(coordinate - item.offset, nrand) + item.offset;
     }
 
-    wrap_getter(const Integer,  size)
+    coordinate_type get_neighbor_boundary(coordinate_type coordinate, Integer nrand) const
+    {
+        const SpaceItem& item(get_corresponding_space(coordinate));
+        return item.space->get_neighbor_boundary(coordinate - item.offset, nrand) + item.offset;
+    }
+
+    Integer size() const
+    {
+        return size_;
+    }
+
     wrap_getter(const Integer3, shape)
     wrap_getter(const Integer,  inner_size)
     wrap_getter_with_arg(const coordinate_type, inner2coordinate, const coordinate_type)
@@ -299,11 +389,44 @@ public:
 
     Integer num_voxels() const
     {
-        return num_voxels_;
+        Integer num_voxels = 0;
+        for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+        {
+            num_voxels += (*itr).space->num_voxels();
+        }
+        return num_voxels;
     }
-    wrap_getter_with_arg(Integer, num_voxels,       const Species&)
-    wrap_getter_with_arg(Integer, num_voxels_exact, const Species&)
-    wrap_getter_with_arg(bool,    has_voxel,        const ParticleID&)
+
+    Integer num_voxels(const Species& species) const
+    {
+        Integer num_voxels = 0;
+        for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+        {
+            num_voxels += (*itr).space->num_voxels(species);
+        }
+        return num_voxels;
+    }
+
+    Integer num_voxels_exact(const Species& species) const
+    {
+        Integer num_voxels = 0;
+        for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+        {
+            num_voxels += (*itr).space->num_voxels_exact(species);
+        }
+        return num_voxels;
+    }
+
+    bool has_voxel(const ParticleID& pid) const
+    {
+        for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+        {
+            if ((*itr).space->has_voxel(pid))
+                return true;
+        }
+        return false;
+    }
+
     wrap_getter_with_arg(identified_voxel, get_voxel, const ParticleID&)
 
     wrap_getter         (std::vector<identified_voxel>, list_voxels)
@@ -375,7 +498,7 @@ public:
 
 protected:
 
-    Integer num_voxels_;
+    Integer size_;
     std::vector<SpaceItem> spaces_;
 
     boost::shared_ptr<RandomNumberGenerator> rng_;

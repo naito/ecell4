@@ -43,9 +43,40 @@ void SpatiocyteWorld::add_space(VoxelSpaceBase *space)
 {
     spaces_.push_back((struct SpaceItem){
         boost::shared_ptr<VoxelSpaceBase>(space),
-        num_voxels_
+        size_
     });
-    num_voxels_ += space->num_voxels();
+    size_ += space->size();
+}
+
+/*
+ * should be inline?
+ */
+SpatiocyteWorld::SpaceItem&
+SpatiocyteWorld::get_corresponding_space(const coordinate_type& coordinate)
+{
+    // should use a binary search algorithm
+    for (std::vector<SpaceItem>::iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+    {
+        if ((*itr).offset + (*itr).space->num_voxels() > coordinate)
+        {
+            return *itr;
+        }
+    }
+    throw NotSupported("Out of range");
+}
+
+const SpatiocyteWorld::SpaceItem&
+SpatiocyteWorld::get_corresponding_space(const coordinate_type& coordinate) const
+{
+    // should use a binary search algorithm
+    for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+    {
+        if ((*itr).offset + (*itr).space->size() > coordinate)
+        {
+            return *itr;
+        }
+    }
+    throw NotSupported("Out of range");
 }
 
 MoleculeInfo SpatiocyteWorld::get_molecule_info(const Species& sp) const
