@@ -43,9 +43,11 @@ void SpatiocyteWorld::add_space(VoxelSpaceBase *space)
 {
     spaces_.push_back((struct SpaceItem){
         boost::shared_ptr<VoxelSpaceBase>(space),
-        size_
+        size_,
+        inner_size_
     });
     size_ += space->size();
+    inner_size_ += space->inner_size();
 }
 
 /*
@@ -57,10 +59,8 @@ SpatiocyteWorld::get_corresponding_space(const coordinate_type& coordinate)
     // should use a binary search algorithm
     for (std::vector<SpaceItem>::iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
     {
-        if ((*itr).offset + (*itr).space->num_voxels() > coordinate)
-        {
+        if ((*itr).offset + (*itr).space->size() > coordinate)
             return *itr;
-        }
     }
     throw NotSupported("Out of range");
 }
@@ -72,12 +72,57 @@ SpatiocyteWorld::get_corresponding_space(const coordinate_type& coordinate) cons
     for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
     {
         if ((*itr).offset + (*itr).space->size() > coordinate)
-        {
             return *itr;
-        }
     }
     throw NotSupported("Out of range");
 }
+
+SpatiocyteWorld::SpaceItem&
+SpatiocyteWorld::get_corresponding_space_from_inner(const coordinate_type& coordinate)
+{
+    // should use a binary search algorithm
+    for (std::vector<SpaceItem>::iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+    {
+        if ((*itr).inner_offset + (*itr).space->inner_size() > coordinate)
+            return *itr;
+    }
+    throw NotSupported("Out of range");
+}
+
+const SpatiocyteWorld::SpaceItem&
+SpatiocyteWorld::get_corresponding_space_from_inner(const coordinate_type& coordinate) const
+{
+    // should use a binary search algorithm
+    for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+    {
+        if ((*itr).inner_offset + (*itr).space->inner_size() > coordinate)
+            return *itr;
+    }
+    throw NotSupported("Out of range");
+}
+
+SpatiocyteWorld::SpaceItem&
+SpatiocyteWorld::get_assigned_space(const ParticleID& pid)
+{
+    for (std::vector<SpaceItem>::iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+    {
+        if ((*itr).space->has_particle(pid))
+            return *itr;
+    }
+    throw NotSupported("Out of range");
+}
+
+const SpatiocyteWorld::SpaceItem&
+SpatiocyteWorld::get_assigned_space(const ParticleID& pid) const
+{
+    for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+    {
+        if ((*itr).space->has_particle(pid))
+            return *itr;
+    }
+    throw NotSupported("Out of range");
+}
+
 
 MoleculeInfo SpatiocyteWorld::get_molecule_info(const Species& sp) const
 {

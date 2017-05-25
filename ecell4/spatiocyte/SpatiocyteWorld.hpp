@@ -42,32 +42,33 @@ public:
     {
         boost::shared_ptr<VoxelSpaceBase> space;
         coordinate_type                   offset;
+        coordinate_type                   inner_offset;
     };
 
 public:
 
     SpatiocyteWorld(const Real3& edge_lengths, const Real& voxel_radius,
         const boost::shared_ptr<RandomNumberGenerator>& rng)
-        : size_(0), rng_(rng)
+        : size_(0), inner_size_(0), rng_(rng)
     {
         add_space(new default_space_type(edge_lengths, voxel_radius));
     }
 
-    SpatiocyteWorld(const Real3& edge_lengths, const Real& voxel_radius) : size_(0)
+    SpatiocyteWorld(const Real3& edge_lengths, const Real& voxel_radius) : size_(0), inner_size_(0)
     {
         add_space(new default_space_type(edge_lengths, voxel_radius));
         rng_ = boost::shared_ptr<RandomNumberGenerator>(new GSLRandomNumberGenerator());
         (*rng_).seed();
     }
 
-    SpatiocyteWorld(const Real3& edge_lengths = Real3(1, 1, 1)) : size_(0)
+    SpatiocyteWorld(const Real3& edge_lengths = Real3(1, 1, 1)) : size_(0), inner_size_(0)
     {
         add_space(new default_space_type(edge_lengths, edge_lengths[0] / 100.0));
         rng_ = boost::shared_ptr<RandomNumberGenerator>(new GSLRandomNumberGenerator());
         (*rng_).seed();
     }
 
-    SpatiocyteWorld(const std::string filename) : size_(0)
+    SpatiocyteWorld(const std::string filename) : size_(0), inner_size_(0)
     {
         add_space(new default_space_type(Real3(1, 1, 1), 0.01));
         rng_ = boost::shared_ptr<RandomNumberGenerator>(new GSLRandomNumberGenerator());
@@ -75,7 +76,7 @@ public:
     }
 
     SpatiocyteWorld(VoxelSpaceBase* space, const boost::shared_ptr<RandomNumberGenerator>& rng)
-        : size_(0), rng_(rng)
+        : size_(0), inner_size_(0), rng_(rng)
     {
         add_space(space);
     }
@@ -200,6 +201,11 @@ protected:
     void add_space(VoxelSpaceBase *space);
     SpaceItem& get_corresponding_space(const coordinate_type& coordinate);
     const SpaceItem& get_corresponding_space(const coordinate_type& coordinate) const;
+    SpaceItem& get_corresponding_space_from_inner(const coordinate_type& coordinate);
+    const SpaceItem& get_corresponding_space_from_inner(const coordinate_type& coordinate) const;
+    SpaceItem& get_assigned_space(const ParticleID& pid);
+    const SpaceItem& get_assigned_space(const ParticleID& pid) const;
+
     std::pair<identified_voxel, bool> new_voxel_structure(const Voxel& v);
     Integer add_structure3(const Species& sp, const boost::shared_ptr<const Shape> shape);
     Integer add_structure2(const Species& sp, const boost::shared_ptr<const Shape> shape);
@@ -208,31 +214,24 @@ protected:
 
 public:
 
-    /*
-     * Wrapped functions
-     */
-
-#define\
-    wrap_getter(rettype, fn)\
-    inline rettype fn() const { return spaces_.at(0).space->fn(); }
-
-#define\
-    wrap_getter_with_arg(rettype, fn, argtype)\
-    inline rettype fn(argtype arg) const { return spaces_.at(0).space->fn(arg); }
-
-#define\
-    wrap_setter(fn, argtype)\
-    inline void fn(argtype arg) { spaces_.at(0).space->fn(arg); }
-
-#define\
-    wrap_mutable(rettype, fn, argtype)\
-    inline rettype fn(argtype arg) { return spaces_.at(0).space->fn(arg); }
+    /* Wrapped functions */
 
     /*
      * SpaceTraits
      */
-    wrap_getter(const Real, t)
-    wrap_setter(set_t, const Real&)
+    const Real t() const
+    {
+        if (spaces_.size() == 0)
+            return 0.0;
+
+        return spaces_.at(0).space->t();
+    }
+
+    void set_t(const Real& t)
+    {
+        if (spaces_.size() != 0)
+            spaces_.at(0).space->set_t(t);
+    }
 
     void save(const std::string& filename) const;
     void load(const std::string& filename);
@@ -240,15 +239,23 @@ public:
     /*
      * CompartmentSpaceTraits
      */
-    wrap_getter(const Real, volume)
+    const Real volume() const
+    {
+        if (spaces_.size() == 0)
+            return 0.0;
+
+        return spaces_.at(0).space->volume();
+    }
 
     Integer num_species() const
     {
         Integer num_species = 0;
+
         for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
         {
             num_species += (*itr).space->num_species();
         }
+
         return num_species;
     }
 
@@ -284,14 +291,46 @@ public:
         return num_molecules;
     }
 
-    wrap_getter_with_arg(Real, get_value,       const Species&)
-    wrap_getter_with_arg(Real, get_value_exact, const Species&)
+    Real get_value(const Species& species) const
+    {
+        Real value = 0;
+        for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+        {
+            value += (*itr).space->get_value(species);
+        }
+        return value;
+    }
+
+    Real get_value_exact(const Species& species) const
+    {
+        Real value = 0;
+        for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+        {
+            value += (*itr).space->get_value_exact(species);
+        }
+        return value;
+    }
+
 
     /*
      * ParticleSpaceTraits
      */
-    wrap_getter(const Real3&, edge_lengths)
-    wrap_getter(Real3,        actual_lengths)
+    const Real3& edge_lengths() const
+    {
+        // This code returns the reference to a stack memory
+        // if (spaces_.size() == 0)
+        //     return Real3();
+
+        return spaces_.at(0).space->edge_lengths();
+    }
+
+    Real3 actual_lengths() const
+    {
+        if (spaces_.size() == 0)
+            return Real3();
+
+        return spaces_.at(0).space->actual_lengths();
+    }
 
     Integer num_particles() const
     {
@@ -333,11 +372,48 @@ public:
         return false;
     }
 
-    wrap_getter_with_arg(identified_particle, get_particle, const ParticleID&)
+    identified_particle get_particle(const ParticleID& pid) const
+    {
+        for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+        {
+            if ((*itr).space->has_particle(pid))
+                return (*itr).space->get_particle(pid);
+        }
+        throw "Not Found";
+    }
 
-    wrap_getter         (std::vector<identified_particle>, list_particles)
-    wrap_getter_with_arg(std::vector<identified_particle>, list_particles,       const Species&)
-    wrap_getter_with_arg(std::vector<identified_particle>, list_particles_exact, const Species&)
+    std::vector<identified_particle> list_particles() const
+    {
+        std::vector<identified_particle> retval;
+        for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+        {
+            std::vector<identified_particle> particles((*itr).space->list_particles());
+            retval.insert(retval.end(), particles.begin(), particles.end());
+        }
+        return retval;
+    }
+
+    std::vector<identified_particle> list_particles(const Species& species) const
+    {
+        std::vector<identified_particle> retval;
+        for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+        {
+            std::vector<identified_particle> particles((*itr).space->list_particles(species));
+            retval.insert(retval.end(), particles.begin(), particles.end());
+        }
+        return retval;
+    }
+
+    std::vector<identified_particle> list_particles_exact(const Species& species) const
+    {
+        std::vector<identified_particle> retval;
+        for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+        {
+            std::vector<identified_particle> particles((*itr).space->list_particles_exact(species));
+            retval.insert(retval.end(), particles.begin(), particles.end());
+        }
+        return retval;
+    }
 
     /*
      * LatticeSpaceTraits
@@ -348,7 +424,10 @@ public:
         return item.space->coordinate2position(coordinate - item.offset);
     }
 
-    wrap_getter_with_arg(coordinate_type, position2coordinate, const Real3&)
+    coordinate_type position2coordinate(const Real3& position) const
+    {
+        return spaces_.at(0).space->position2coordinate(position);
+    }
 
     Integer num_neighbors(const coordinate_type& coordinate) const
     {
@@ -373,19 +452,71 @@ public:
         return size_;
     }
 
-    wrap_getter(const Integer3, shape)
-    wrap_getter(const Integer,  inner_size)
-    wrap_getter_with_arg(const coordinate_type, inner2coordinate, const coordinate_type)
+    const Integer3 shape() const
+    {
+        if (spaces_.size() == 0)
+            return Integer3();
+
+        return spaces_.at(0).space->shape();
+    }
+
+    const Integer inner_size() const
+    {
+        return inner_size_;
+    }
+
+    //TODO
+    coordinate_type inner2coordinate(const coordinate_type coordinate) const
+    {
+        const SpaceItem& item(get_corresponding_space_from_inner(coordinate));
+        return item.space->inner2coordinate(coordinate - item.inner_offset);
+    }
 
     /*
      * VoxelSpaceTraits
      */
-    wrap_getter(Real, voxel_radius)
-    wrap_getter(Real, unit_voxel_volume)
-    wrap_getter(Real, voxel_volume)
-    wrap_getter(Real, unit_area)
+    Real voxel_radius() const
+    {
+        if (spaces_.size() == 0)
+            return 0.0;
 
-    wrap_getter(std::vector<Species>, list_species)
+        return spaces_.at(0).space->voxel_radius();
+    }
+
+    Real unit_voxel_volume() const
+    {
+        if (spaces_.size() == 0)
+            return 0.0;
+
+        return spaces_.at(0).space->unit_voxel_volume();
+    }
+
+    Real voxel_volume() const
+    {
+        if (spaces_.size() == 0)
+            return 0.0;
+
+        return spaces_.at(0).space->voxel_volume();
+    }
+
+    Real unit_area() const
+    {
+        if (spaces_.size() == 0)
+            return 0.0;
+
+        return spaces_.at(0).space->unit_area();
+    }
+
+    std::vector<Species> list_species() const
+    {
+        std::vector<Species> species;
+        for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+        {
+            std::vector<Species> new_species((*itr).space->list_species());
+            species.insert(species.end(), new_species.begin(), new_species.end());
+        }
+        return species;
+    }
 
     Integer num_voxels() const
     {
@@ -427,24 +558,115 @@ public:
         return false;
     }
 
-    wrap_getter_with_arg(identified_voxel, get_voxel, const ParticleID&)
+    identified_voxel get_voxel(const ParticleID& pid) const
+    {
+        const SpaceItem& item(get_assigned_space(pid));
+        identified_voxel retval(item.space->get_voxel(pid));
+        retval.second.coordinate() -= item.offset;
+        return retval;
+    }
 
-    wrap_getter         (std::vector<identified_voxel>, list_voxels)
-    wrap_getter_with_arg(std::vector<identified_voxel>, list_voxels,       const Species&)
-    wrap_getter_with_arg(std::vector<identified_voxel>, list_voxels_exact, const Species&)
+    std::vector<identified_voxel> list_voxels() const
+    {
+        std::vector<identified_voxel> voxels;
+        for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+        {
+            std::vector<identified_voxel> new_voxels((*itr).space->list_voxels());
+            voxels.insert(voxels.end(), new_voxels.begin(), new_voxels.end());
+        }
+        return voxels;
+    }
+
+    std::vector<identified_voxel> list_voxels(const Species& species) const
+    {
+        std::vector<identified_voxel> voxels;
+        for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+        {
+            std::vector<identified_voxel> new_voxels((*itr).space->list_voxels(species));
+            voxels.insert(voxels.end(), new_voxels.begin(), new_voxels.end());
+        }
+        return voxels;
+    }
+
+    std::vector<identified_voxel> list_voxels_exact(const Species& species) const
+    {
+        std::vector<identified_voxel> voxels;
+        for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+        {
+            std::vector<identified_voxel> new_voxels((*itr).space->list_voxels_exact(species));
+            voxels.insert(voxels.end(), new_voxels.begin(), new_voxels.end());
+        }
+        return voxels;
+    }
 
     // bool has_voxel_pool(const Species& sp) const;
 
-    wrap_mutable        (      VoxelPool*, find_voxel_pool, const Species&)
-    wrap_getter_with_arg(const VoxelPool*, find_voxel_pool, const Species&)
+    VoxelPool* find_voxel_pool(const Species& species)
+    {
+        for (std::vector<SpaceItem>::iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+        {
+            if ((*itr).space->has_species(species))
+                return (*itr).space->find_voxel_pool(species);
+        }
+        throw "Not Found";
+    }
 
-    wrap_getter_with_arg(bool, has_molecule_pool, const Species&)
+    const VoxelPool* find_voxel_pool(const Species& species) const
+    {
+        for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+        {
+            if ((*itr).space->has_species(species))
+                return (*itr).space->find_voxel_pool(species);
+        }
+        throw "Not Found";
+    }
 
-    wrap_mutable        (      MoleculePool*, find_molecule_pool, const Species&)
-    wrap_getter_with_arg(const MoleculePool*, find_molecule_pool, const Species&)
+    bool has_molecule_pool(const Species& species) const
+    {
+        for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+        {
+            if ((*itr).space->has_molecule_pool(species))
+                return true;
+        }
+        return false;
+    }
 
-    wrap_mutable(bool, remove_particle, const ParticleID&)
-    wrap_mutable(bool, on_structure, const Voxel&)
+    MoleculePool* find_molecule_pool(const Species& species)
+    {
+        for (std::vector<SpaceItem>::iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+        {
+            if ((*itr).space->has_molecule_pool(species))
+                return (*itr).space->find_molecule_pool(species);
+        }
+        throw "Not Found";
+    }
+
+    const MoleculePool* find_molecule_pool(const Species& species) const
+    {
+        for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
+        {
+            if ((*itr).space->has_molecule_pool(species))
+                return (*itr).space->find_molecule_pool(species);
+        }
+        throw "Not Found";
+    }
+
+    bool remove_particle(const ParticleID& pid)
+    {
+        SpaceItem& item(get_assigned_space(pid));
+        return item.space->remove_particle(pid);
+    }
+
+    bool on_structure(const Voxel& voxel)
+    {
+        SpaceItem& item(get_corresponding_space(voxel.coordinate()));
+        const Voxel modified(voxel.species(),
+                             voxel.coordinate() - item.offset,
+                             voxel.radius(),
+                             voxel.D(),
+                             voxel.loc());
+        return item.space->on_structure(modified);
+    }
 
     /* Not wrapped functions
     bool make_structure_type(const Species& sp,
@@ -459,8 +681,17 @@ public:
                              const std::string loc);
      */
 
-    wrap_getter_with_arg(identified_voxel, get_voxel_at,      const coordinate_type&)
-    wrap_getter_with_arg(const VoxelPool*, get_voxel_pool_at, const coordinate_type&)
+    identified_voxel get_voxel_at(const coordinate_type& coordinate) const
+    {
+        const SpaceItem& item(get_corresponding_space(coordinate));
+        return item.space->get_voxel_at(coordinate - item.offset);
+    }
+
+    const VoxelPool* get_voxel_pool_at(const coordinate_type& coordinate) const
+    {
+        const SpaceItem& item(get_corresponding_space(coordinate));
+        return item.space->get_voxel_pool_at(coordinate - item.offset);
+    }
 
     /* Not wrapped function
     virtual const Particle particle_at(const coordinate_type& coord) const;
@@ -471,8 +702,17 @@ public:
         return spaces_.at(0).space->update_voxel(pid, v);
     }
 
-    wrap_mutable(bool, remove_voxel, const ParticleID&)
-    wrap_mutable(bool, remove_voxel, const coordinate_type&)
+    bool remove_voxel(const ParticleID pid)
+    {
+        SpaceItem& item(get_assigned_space(pid));
+        return item.space->remove_voxel(pid);
+    }
+
+    bool remove_voxel(const coordinate_type& coordinate)
+    {
+        SpaceItem& item(get_corresponding_space(coordinate));
+        return item.space->remove_voxel(coordinate - item.offset);
+    }
 
     bool can_move(const coordinate_type& src, const coordinate_type& dest) const
     {
@@ -492,13 +732,10 @@ public:
         return spaces_.at(0).space->move_to_neighbor(from_mt, loc, info, nrand);
     }
 
-#undef wrap_getter
-#undef wrap_getter_with_arg
-#undef wrap_setter
-
 protected:
 
     Integer size_;
+    Integer inner_size_;
     std::vector<SpaceItem> spaces_;
 
     boost::shared_ptr<RandomNumberGenerator> rng_;
