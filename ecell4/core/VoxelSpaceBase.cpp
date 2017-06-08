@@ -1,6 +1,8 @@
 #include "VoxelSpaceBase.hpp"
 #include "Context.hpp"
 #include "InterfaceType.hpp"
+#include "StructureType.hpp"
+#include "MolecularType.hpp"
 
 namespace ecell4
 {
