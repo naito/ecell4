@@ -7,76 +7,82 @@ namespace ecell4
 namespace spatiocyte
 {
 
-inline ReactionInfo
+inline
+ReactionInfo
 apply_vanishment(boost::shared_ptr<SpatiocyteWorld> world,
                  const ReactionInfo::identified_voxel& p0,
                  const ReactionInfo::identified_voxel& p1)
 {
+    world->remove_voxel(p0.second.coordinate());
+    world->remove_voxel(p1.second.coordinate());
+
     ReactionInfo rinfo(world->t());
     rinfo.add_reactant(p0);
     rinfo.add_reactant(p1);
 
-    world->remove_voxel(p0.second.coordinate());
-    world->remove_voxel(p1.second.coordinate());
-
     return rinfo;
 }
 
-inline ReactionInfo
+inline
+ReactionInfo
 apply_ab2c(boost::shared_ptr<SpatiocyteWorld> world,
-           const ReactionInfo::identified_voxel& p0,
-           const ReactionInfo::identified_voxel& p1,
+           const ReactionInfo::identified_voxel& reactantA,
+           const ReactionInfo::identified_voxel& reactantB,
            const Species& product_species)
 {
-    // A and B (from_info and to_info) become C (product_species)
-    const std::string& location(world->get_molecule_info(product_species).loc);
-    const std::string& fserial(get_serial(world, p0.second.coordinate()));
-    const std::string& floc(get_location(world, p0.second.coordinate()));
-    const std::string& tserial(get_serial(world, p1.second.coordinate()));
-    const std::string& tloc(get_location(world, p1.second.coordinate()));
+    const std::string& serialA(get_serial(world, reactantA.second.coordinate()));
+    const std::string& serialB(get_serial(world, reactantB.second.coordinate()));
+
+    const std::string& locationA(get_location(world, reactantA.second.coordinate()));
+    const std::string& locationB(get_location(world, reactantB.second.coordinate()));
+    const std::string& locationC(world->get_molecule_info(product_species).loc);
+
+    SpatiocyteWorld::coordinate_type new_coordinate;
+
+    if (locationB == locationC)
+    {
+        world->remove_voxel(reactantB.second.coordinate());
+        world->remove_voxel(reactantA.second.coordinate());
+
+        new_coordinate = reactantB.second.coordinate();
+    }
+    else if (locationA == locationC)
+    {
+        world->remove_voxel(reactantA.second.coordinate());
+        world->remove_voxel(reactantB.second.coordinate());
+
+        new_coordinate = reactantA.second.coordinate();
+    }
+    else if (serialB == locationC)
+    {
+        world->remove_voxel(reactantA.second.coordinate());
+
+        new_coordinate = reactantB.second.coordinate();
+    }
+    else if (serialA == locationC)
+    {
+        world->remove_voxel(reactantB.second.coordinate());
+
+        new_coordinate = reactantA.second.coordinate();
+    }
+    else
+    {
+        return ReactionInfo(world->t());
+    }
+
+    std::pair<ReactionInfo::identified_voxel, bool> new_mol(world->new_voxel(product_species, new_coordinate));
 
     ReactionInfo rinfo(world->t());
 
-    if (tserial == location || tloc == location)
-    {
-        // B is on the location of C, or the location itself.
-        // Place C at the coordinate of B, and remove A.
-        rinfo.add_reactant(p0);
-        rinfo.add_reactant(p1);
+    rinfo.add_reactant(reactantA);
+    rinfo.add_reactant(reactantB);
+    rinfo.add_product(new_mol.first);
 
-        if (tserial != location)
-        {
-            world->remove_voxel(p1.second.coordinate());
-        }
-
-        world->remove_voxel(p0.second.coordinate());
-        std::pair<std::pair<ParticleID, Voxel>, bool> new_mol(
-            world->new_voxel(product_species, p1.second.coordinate()));
-
-        rinfo.add_product(new_mol.first);
-    }
-    else if (fserial == location || floc == location)
-    {
-        // A is on the location of C, or the location itself.
-        // Place C at the coordinate of A, and remove B.
-        rinfo.add_reactant(p0);
-        rinfo.add_reactant(p1);
-
-        if (fserial != location)
-        {
-            world->remove_voxel(p0.second.coordinate());
-        }
-
-        world->remove_voxel(p1.second.coordinate());
-        std::pair<std::pair<ParticleID, Voxel>, bool> new_mol(
-            world->new_voxel(product_species, p0.second.coordinate()));
-
-        rinfo.add_product(new_mol.first);
-    }
     return rinfo;
 }
 
-inline ReactionInfo
+inline
+ReactionInfo
 apply_ab2cd_in_order(boost::shared_ptr<SpatiocyteWorld> world,
                      const ReactionInfo::identified_voxel& p0,
                      const ReactionInfo::identified_voxel& p1,
@@ -251,10 +257,9 @@ apply_second_order_reaction(boost::shared_ptr<SpatiocyteWorld> world,
         case 0:
             return apply_vanishment(world, p0, p1);
         case 1:
-            return apply_ab2c(world, p0, p1, *(products.begin()));
+            return apply_ab2c(world, p0, p1, products.at(0));
         case 2:
-            return apply_ab2cd(world, p0, p1,
-                            *(products.begin()), *(++(products.begin())));
+            return apply_ab2cd(world, p0, p1, products.at(0), products.at(1));
         default:
             return ReactionInfo(world->t());
     }
@@ -400,34 +405,34 @@ StepEvent::attempt_reaction_(const SpatiocyteWorld::coordinate_id_pair_type& inf
                              const SpatiocyteWorld::coordinate_type to_coord,
                              const Real& alpha)
 {
-    const VoxelPool* src_vp(world_->get_voxel_pool_at(info.coordinate));
-    const VoxelPool* dst_vp(world_->get_voxel_pool_at(to_coord));
+    const VoxelPool* vpA(world_->get_voxel_pool_at(info.coordinate));
+    const VoxelPool* vpB(world_->get_voxel_pool_at(to_coord));
 
-    if (dst_vp->is_vacant())
+    if (vpB->is_vacant())
     {
         return std::make_pair(NO_REACTION, reaction_type());
     }
 
-    const Species& speciesA(src_vp->species());
-    const Species& speciesB(dst_vp->species());
+    const Species& speciesA(vpA->species());
+    const Species& speciesB(vpB->species());
 
-    const std::vector<ReactionRule> rules(
-        model_->query_reaction_rules(speciesA, speciesB));
+    const std::vector<ReactionRule> rules(model_->query_reaction_rules(speciesA, speciesB));
 
     if (rules.empty())
     {
         return std::make_pair(NO_REACTION, reaction_type());
     }
 
-    const Real factor(calculate_dimensional_factor(src_vp, dst_vp,
+    const Real factor(calculate_dimensional_factor(vpA, vpB,
                 boost::const_pointer_cast<const SpatiocyteWorld>(world_)));
 
     const Real rnd(world_->rng()->uniform(0,1));
     Real accp(0.0);
-    for (std::vector<ReactionRule>::const_iterator itr(rules.begin());
-         itr != rules.end(); ++itr)
+    for (std::vector<ReactionRule>::const_iterator rritr(rules.begin());
+         rritr != rules.end(); ++rritr)
     {
-        accp += (*itr).k() * factor * alpha;
+        const ReactionRule &reaction_rule(*rritr);
+        accp += reaction_rule.k() * factor * alpha;
         if (accp > 1)
         {
             std::cerr << "The total acceptance probability [" << accp
@@ -437,16 +442,16 @@ StepEvent::attempt_reaction_(const SpatiocyteWorld::coordinate_id_pair_type& inf
         if (accp >= rnd)
         {
             ReactionInfo rinfo(apply_second_order_reaction(
-                        world_, *itr,
-                        world_->make_pid_voxel_pair(src_vp, info),
-                        world_->make_pid_voxel_pair(dst_vp, to_coord)));
+                        world_, reaction_rule,
+                        world_->make_pid_voxel_pair(vpA, info),
+                        world_->make_pid_voxel_pair(vpB, to_coord)));
             if (rinfo.has_occurred())
             {
-                reaction_type reaction(std::make_pair(*itr, rinfo));
+                reaction_type reaction(std::make_pair(reaction_rule, rinfo));
                 push_reaction(reaction);
                 return std::make_pair(REACTION_SUCCEEDED, reaction);
             }
-            return std::make_pair(REACTION_FAILED, std::make_pair(*itr, rinfo));
+            return std::make_pair(REACTION_FAILED, std::make_pair(reaction_rule, rinfo));
         }
     }
     return std::make_pair(REACTION_FAILED, reaction_type());
