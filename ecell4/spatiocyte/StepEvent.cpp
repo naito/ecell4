@@ -274,18 +274,18 @@ StepEvent::StepEvent(boost::shared_ptr<Model> model,
     const Real R(world_->voxel_radius());
     const Real D(minfo.D);
     const Real sqRperD(pow(R, 2.0)/D);
-    const VoxelPool* mtype(world_->find_voxel_pool(species));
+    const VoxelPool* vpool(world_->find_voxel_pool(species));
     if (D <= 0)
     {
         dt_ = inf;
-    } else if(mtype->get_dimension() == Shape::THREE) {
+    } else if(vpool->get_dimension() == Shape::THREE) {
         dt_ = 2 * sqRperD / 3 * alpha_;
-    } else if(mtype->get_dimension() == Shape::TWO) {
+    } else if(vpool->get_dimension() == Shape::TWO) {
         // TODO: Regular Lattice
         // dt_  = pow((2*sqrt(2.0)+4*sqrt(3.0)+3*sqrt(6.0)+sqrt(22.0))/
         //           (6*sqrt(2.0)+4*sqrt(3.0)+3*sqrt(6.0)), 2) * sqRperD * alpha_;
         dt_ = sqRperD * alpha_;
-    } else if(mtype->get_dimension() == Shape::ONE) {
+    } else if(vpool->get_dimension() == Shape::ONE) {
         dt_ = 2 * sqRperD * alpha_;
     }
     else
@@ -310,35 +310,34 @@ void StepEvent::walk(const Real& alpha)
         return; // INVALID ALPHA VALUE
     }
 
-    const boost::shared_ptr<RandomNumberGenerator>& rng(world_->rng());
-    const MoleculePool* mtype(world_->find_molecule_pool(species_));
+    const MoleculePool* mpool(world_->find_molecule_pool(species_));
 
-    if (mtype->get_dimension() == Shape::THREE)
-        walk_in_space_(mtype, alpha);
+    if (mpool->get_dimension() == Shape::THREE)
+        walk_in_space_(mpool, alpha);
     else // dimension == TWO, etc.
-        walk_on_surface_(mtype, alpha);
+        walk_on_surface_(mpool, alpha);
 }
 
-void StepEvent::walk_in_space_(const MoleculePool* mtype, const Real& alpha)
+void StepEvent::walk_in_space_(const MoleculePool* mpool, const Real& alpha)
 {
     const boost::shared_ptr<RandomNumberGenerator> rng(world_->rng());
     MoleculePool::container_type targets;
-    copy(mtype->begin(), mtype->end(), back_inserter(targets));
+    copy(mpool->begin(), mpool->end(), back_inserter(targets));
 
     std::size_t idx(0);
     for (MoleculePool::container_type::iterator itr(targets.begin());
          itr != targets.end(); ++itr, ++idx)
     {
         const SpatiocyteWorld::coordinate_type source((*itr).coordinate);
-        if (world_->get_voxel_pool_at(source) != mtype)
-        {
-            // should skip if a voxel is not the target species.
-            // when reaction has occured before, a voxel can be changed.
+
+        // skip when the voxel is not the target species.
+        // former reactions may change the voxel.
+        if (world_->get_voxel_pool_at(source) != mpool)
             continue;
-        }
+
         const Integer rnd(rng->uniform_int(0, world_->num_neighbors(source)-1));
-        const SpatiocyteWorld::coordinate_type destination(
-                world_->get_neighbor_boundary(source, rnd));
+        const SpatiocyteWorld::coordinate_type destination(world_->get_neighbor_boundary(source, rnd));
+
         if (world_->can_move(source, destination))
         {
             if (rng->uniform(0,1) <= alpha)
@@ -351,51 +350,51 @@ void StepEvent::walk_in_space_(const MoleculePool* mtype, const Real& alpha)
     }
 }
 
-void StepEvent::walk_on_surface_(const MoleculePool* mtype, const Real& alpha)
+void StepEvent::walk_on_surface_(const MoleculePool* mpool, const Real& alpha)
 {
     const boost::shared_ptr<RandomNumberGenerator>& rng(world_->rng());
     MoleculePool::container_type targets;
-    copy(mtype->begin(), mtype->end(), back_inserter(targets));
+    copy(mpool->begin(), mpool->end(), back_inserter(targets));
 
-    const VoxelPool* location(mtype->location());
+    const VoxelPool* location(mpool->location());
+    const Shape::dimension_kind dimension(mpool->get_dimension());
+
     std::size_t idx(0);
     for (MoleculePool::container_type::iterator itr(targets.begin());
          itr != targets.end(); ++itr, ++idx)
     {
         const SpatiocyteWorld::coordinate_type source((*itr).coordinate);
-        if (world_->get_voxel_pool_at(source) != mtype)
-        {
-            // should skip if a voxel is not the target species.
-            // when reaction has occured before, a voxel can be changed.
+
+        // skip when the voxel is not the target species.
+        // former reactions may change the voxel.
+        if (world_->get_voxel_pool_at(source) != mpool)
             continue;
+
+        // list up the neighbors whose location is ok.
+        std::vector<SpatiocyteWorld::coordinate_type> neighbors;
+        for (unsigned int i(0); i < world_->num_neighbors(source); ++i)
+        {
+            const SpatiocyteWorld::coordinate_type
+                neighbor(world_->get_neighbor_boundary(source, i));
+
+            if (world_->get_voxel_pool_at(neighbor)->get_dimension() <= dimension)
+                neighbors.push_back(neighbor);
         }
 
-        const Integer num_neighbors(world_->num_neighbors(source));
-        std::vector<unsigned int> nids;
-        for (unsigned int i(0); i < num_neighbors; ++i)
-            nids.push_back(i);
-        ecell4::shuffle(*(rng.get()), nids);
+        if (neighbors.size() == 0)
+            continue;
 
-        for (std::vector<unsigned int>::const_iterator nitr(nids.begin());
-             nitr != nids.end(); ++nitr)
+        const SpatiocyteWorld::coordinate_type
+            destination(neighbors.at(rng->uniform_int(0, neighbors.size()-1)));
+
+        if (world_->can_move(source, destination))
         {
-            const SpatiocyteWorld::coordinate_type destination(
-                    world_->get_neighbor_boundary(source, *nitr));
-            const VoxelPool* target(world_->get_voxel_pool_at(destination));
-
-            if (target->get_dimension() > mtype->get_dimension())
-                continue;
-
-            if (world_->can_move(source, destination))
-            {
-                if (rng->uniform(0,1) <= alpha)
-                    world_->move(source, destination, /*candidate=*/idx);
-            }
-            else
-            {
-                attempt_reaction_(*itr, destination, alpha);
-            }
-            break;
+            if (rng->uniform(0,1) <= alpha)
+                world_->move(source, destination, /*candidate=*/idx);
+        }
+        else
+        {
+            attempt_reaction_(*itr, destination, alpha);
         }
     }
 }
