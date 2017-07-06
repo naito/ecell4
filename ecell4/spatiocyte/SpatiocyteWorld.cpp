@@ -41,11 +41,28 @@ SpatiocyteWorld* create_spatiocyte_world_offlattice_impl(
 
 void SpatiocyteWorld::add_space(VoxelSpaceBase *space)
 {
+    if (spaces_.size() != 0)
+    {
+        for (std::size_t i(0); i < spaces_.at(0).space->size(); ++i)
+        {
+            const Real3 position(spaces_.at(0).space->coordinate2position(i));
+
+            for (std::size_t j(0); j < space->size(); ++j)
+            {
+                if (length(space->coordinate2position(j) - position) < voxel_radius() * 2)
+                {
+                    interfaces_.add_interface(i, j + size_);
+                }
+            }
+        }
+    }
+
     spaces_.push_back((struct SpaceItem){
         boost::shared_ptr<VoxelSpaceBase>(space),
         size_,
         inner_size_
     });
+
     size_ += space->size();
     inner_size_ += space->inner_size();
 }

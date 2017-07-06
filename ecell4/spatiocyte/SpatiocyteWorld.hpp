@@ -14,6 +14,8 @@
 #include <ecell4/core/Model.hpp>
 #include <ecell4/core/Shape.hpp>
 
+#include "InterfaceContainer.hpp"
+
 namespace ecell4
 {
 
@@ -141,6 +143,17 @@ public:
     boost::shared_ptr<Model> lock_model() const
     {
         return model_.lock();
+    }
+
+    coordinate_type get_adjoining_or_self(const coordinate_type& coordinate)
+    {
+        InterfaceContainer::iterator itr(interfaces_.find(coordinate));
+
+        if (interfaces_.is_end(itr))
+            return coordinate;
+
+        const std::size_t idx(rng_->uniform_int(0, interfaces_.num_adjoinings(itr)-1));
+        return interfaces_.get_adjoining(itr, idx);
     }
 
     // XXX: Not implemented
@@ -737,6 +750,7 @@ protected:
     Integer size_;
     Integer inner_size_;
     std::vector<SpaceItem> spaces_;
+    InterfaceContainer interfaces_;
 
     boost::shared_ptr<RandomNumberGenerator> rng_;
     SerialIDGenerator<ParticleID> sidgen_;

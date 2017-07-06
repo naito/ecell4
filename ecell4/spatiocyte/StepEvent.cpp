@@ -401,9 +401,11 @@ void StepEvent::walk_on_surface_(const MoleculePool* mpool, const Real& alpha)
 
 std::pair<StepEvent::attempt_reaction_result_type, StepEvent::reaction_type>
 StepEvent::attempt_reaction_(const SpatiocyteWorld::coordinate_id_pair_type& info,
-                             const SpatiocyteWorld::coordinate_type to_coord,
+                             SpatiocyteWorld::coordinate_type to_coord,
                              const Real& alpha)
 {
+    to_coord = world_->get_adjoining_or_self(to_coord);
+
     const VoxelPool* vpA(world_->get_voxel_pool_at(info.coordinate));
     const VoxelPool* vpB(world_->get_voxel_pool_at(to_coord));
 
