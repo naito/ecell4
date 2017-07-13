@@ -24,24 +24,27 @@ BOOST_AUTO_TEST_CASE(AddInterface)
     OneToManyMap<int> container;
 
     container.add(0, 3);
-    OneToManyMap<int>::iterator itr(container.find(0));
+    std::vector<int> values(container.get(0));
 
-    BOOST_CHECK(!container.is_end(itr));
-    BOOST_CHECK_EQUAL(1, container.num_adjoinings(itr));
-    BOOST_CHECK_EQUAL(3, container.get_adjoining(itr, 0));
+    BOOST_CHECK(!values.empty());
+    BOOST_CHECK_EQUAL(1, values.size());
+    BOOST_CHECK_EQUAL(3, values.at(0));
 
     container.add(0, 5);
-    BOOST_CHECK_EQUAL(2, container.num_adjoinings(itr));
-    BOOST_CHECK_EQUAL(3, container.get_adjoining(itr, 0));
-    BOOST_CHECK_EQUAL(5, container.get_adjoining(itr, 1));
+    BOOST_CHECK_EQUAL(1, values.size());
+
+    values = container.get(0);
+    BOOST_CHECK_EQUAL(2, values.size());
+    BOOST_CHECK_EQUAL(3, values.at(0));
+    BOOST_CHECK_EQUAL(5, values.at(1));
 }
 
-BOOST_AUTO_TEST_CASE(Iterator)
+BOOST_AUTO_TEST_CASE(GET)
 {
     OneToManyMap<int> container;
 
     container.add(0, 1);
 
-    BOOST_CHECK(!container.is_end(container.find(0)));
-    BOOST_CHECK(container.is_end(container.find(1)));
+    BOOST_CHECK(!container.get(0).empty());
+    BOOST_CHECK(container.get(1).empty());
 }

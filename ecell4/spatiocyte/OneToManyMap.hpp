@@ -18,8 +18,8 @@ protected:
     typedef typename utils::get_mapper_mf<coordinate_type, std::vector<coordinate_type> >::type
             container_type;
 
-public:
     typedef typename container_type::iterator iterator;
+    typedef typename container_type::const_iterator const_iterator;
 
 public:
     OneToManyMap() {}
@@ -38,24 +38,14 @@ public:
         }
     }
 
-    iterator find(const coordinate_type& coordinate)
+    std::vector<coordinate_type> get(const coordinate_type& coordinate) const
     {
-        return container_.find(coordinate);
-    }
+        const_iterator itr(container_.find(coordinate));
 
-    bool is_end(iterator itr)
-    {
-        return itr == container_.end();
-    }
-
-    std::size_t num_adjoinings(iterator itr)
-    {
-        return (*itr).second.size();
-    }
-
-    coordinate_type get_adjoining(iterator itr, std::size_t idx)
-    {
-        return (*itr).second.at(idx);
+        if (itr == container_.end())
+            return std::vector<coordinate_type>();
+        else
+            return (*itr).second;
     }
 
 protected:

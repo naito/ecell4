@@ -235,11 +235,9 @@ SpatiocyteWorld::check_neighbor(const coordinate_type coord,
                                 const std::string& loc)
 {
     std::vector<coordinate_type> tmp;
+    std::vector<coordinate_type> additional_neighbors(neighbors_.get(coord));
 
-    OneToManyMap<coordinate_type>::iterator itr(neighbors_.find(coord));
-    const std::size_t additional_size(neighbors_.is_end(itr) ? 0 : neighbors_.num_adjoinings(itr));
-
-    tmp.reserve(12 + additional_size);
+    tmp.reserve(12 + additional_neighbors.size());
     for (unsigned int rnd(0); rnd < 12; ++rnd)
     {
         const coordinate_type neighbor(get_neighbor(coord, rnd));
@@ -251,14 +249,14 @@ SpatiocyteWorld::check_neighbor(const coordinate_type coord,
         }
     }
 
-    for (std::size_t i(0); i < additional_size; ++i)
+    for (std::vector<coordinate_type>::const_iterator itr(additional_neighbors.begin());
+         itr != additional_neighbors.end(); ++itr)
     {
-        const coordinate_type neighbor(neighbors_.get_adjoining(itr, i));
-        const VoxelPool* mt(get_voxel_pool_at(neighbor));
+        const VoxelPool* mt(get_voxel_pool_at(*itr));
         const std::string serial(mt->is_vacant() ? "" : mt->species().serial());
         if (serial == loc)
         {
-            tmp.push_back(neighbor);
+            tmp.push_back(*itr);
         }
     }
 

@@ -147,13 +147,12 @@ public:
 
     coordinate_type get_adjoining_or_self(const coordinate_type& coordinate)
     {
-        OneToManyMap<coordinate_type>::iterator itr(interfaces_.find(coordinate));
+        std::vector<coordinate_type> adjoinings(interfaces_.get(coordinate));
 
-        if (interfaces_.is_end(itr))
+        if (adjoinings.empty())
             return coordinate;
 
-        const std::size_t idx(rng_->uniform_int(0, interfaces_.num_adjoinings(itr)-1));
-        return interfaces_.get_adjoining(itr, idx);
+        return adjoinings.at(rng_->uniform_int(0, adjoinings.size()-1));
     }
 
     // XXX: Not implemented
