@@ -14,7 +14,7 @@
 #include <ecell4/core/Model.hpp>
 #include <ecell4/core/Shape.hpp>
 
-#include "InterfaceContainer.hpp"
+#include "OneToManyMap.hpp"
 
 namespace ecell4
 {
@@ -147,7 +147,7 @@ public:
 
     coordinate_type get_adjoining_or_self(const coordinate_type& coordinate)
     {
-        InterfaceContainer::iterator itr(interfaces_.find(coordinate));
+        OneToManyMap<coordinate_type>::iterator itr(interfaces_.find(coordinate));
 
         if (interfaces_.is_end(itr))
             return coordinate;
@@ -750,7 +750,7 @@ protected:
     Integer size_;
     Integer inner_size_;
     std::vector<SpaceItem> spaces_;
-    InterfaceContainer interfaces_;
+    OneToManyMap<coordinate_type> interfaces_;
 
     boost::shared_ptr<RandomNumberGenerator> rng_;
     SerialIDGenerator<ParticleID> sidgen_;

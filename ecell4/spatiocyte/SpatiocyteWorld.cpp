@@ -51,7 +51,7 @@ void SpatiocyteWorld::add_space(VoxelSpaceBase *space)
             {
                 if (length(space->coordinate2position(j) - position) < voxel_radius() * 2)
                 {
-                    interfaces_.add_interface(i, j + size_);
+                    interfaces_.add(i, j + size_);
                 }
             }
         }

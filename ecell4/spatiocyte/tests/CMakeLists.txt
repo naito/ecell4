@@ -1,5 +1,5 @@
 set(TEST_NAMES
-    InterfaceContainer_test
+    OneToManyMap_test
     SpatiocyteSimulator_test
     SpatiocyteWorld_test)
 

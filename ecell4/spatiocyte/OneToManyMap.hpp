@@ -3,7 +3,6 @@
 
 #include <vector>
 #include <ecell4/core/get_mapper_mf.hpp>
-#include <ecell4/core/VoxelSpaceBase.hpp>
 
 namespace ecell4
 {
@@ -11,24 +10,23 @@ namespace ecell4
 namespace spatiocyte
 {
 
-class InterfaceContainer
+template<typename coordinate_type>
+class OneToManyMap
 {
 
 protected:
-    typedef VoxelSpaceBase::coordinate_type coordinate_type;
-
-    typedef utils::get_mapper_mf<coordinate_type, std::vector<coordinate_type> >::type
+    typedef typename utils::get_mapper_mf<coordinate_type, std::vector<coordinate_type> >::type
             container_type;
 
 public:
-    typedef container_type::iterator iterator;
+    typedef typename container_type::iterator iterator;
 
 public:
-    InterfaceContainer() {}
+    OneToManyMap() {}
 
-    void add_interface(coordinate_type interface, coordinate_type target)
+    void add(coordinate_type interface, coordinate_type target)
     {
-        container_type::iterator itr(container_.find(interface));
+        iterator itr(container_.find(interface));
 
         if (itr != container_.end())
         {
@@ -63,7 +61,7 @@ public:
 protected:
     container_type container_;
 
-}; // class InterfaceContainer
+}; // class OneToManyMap
 
 } // namespace spatiocyte
 
