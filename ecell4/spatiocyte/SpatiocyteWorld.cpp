@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <fstream>
+#include <algorithm>
 
 #include "SpatiocyteWorld.hpp"
 #include <ecell4/core/extras.hpp>
@@ -43,21 +44,37 @@ void SpatiocyteWorld::add_space(VoxelSpaceBase *space)
 {
     if (spaces_.size() != 0)
     {
-        for (std::size_t i(0); i < spaces_.at(0).space->size(); ++i)
+        for (std::size_t i(0); i< space->size(); ++i)
         {
-            const Real3 position(spaces_.at(0).space->coordinate2position(i));
+            const Real3 position(space->coordinate2position(i));
+            std::vector<coordinate_type> interfaces;
 
-            for (std::size_t j(0); j < space->size(); ++j)
+            for (std::size_t j(0); j < spaces_.at(0).space->size(); ++j)
             {
-                if (length(space->coordinate2position(j) - position) < voxel_radius() * 2)
+                if (length(spaces_.at(0).space->coordinate2position(j) - position) < voxel_radius() * 2)
                 {
-                    interfaces_.add(i, j + size_);
+                    interfaces_.add(j, i + size_);
+                    interfaces.push_back(j);
+                }
+            }
+
+            for (std::vector<coordinate_type>::const_iterator itr(interfaces.begin());
+                 itr != interfaces.end(); ++itr)
+            {
+                for (Integer k(0); k < spaces_.at(0).space->num_neighbors(*itr); ++k)
+                {
+                    const coordinate_type neighbor(spaces_.at(0).space->get_neighbor(*itr, k));
+
+                    if (std::find(interfaces.begin(), interfaces.end(), neighbor) != interfaces.end())
+                    {
+                        neighbors_.add(i, neighbor);
+                    }
                 }
             }
         }
     }
 
-    spaces_.push_back((struct SpaceItem){
+    spaces_.push_back((struct SpaceItem) {
         boost::shared_ptr<VoxelSpaceBase>(space),
         size_,
         inner_size_
@@ -218,13 +235,27 @@ SpatiocyteWorld::check_neighbor(const coordinate_type coord,
                                 const std::string& loc)
 {
     std::vector<coordinate_type> tmp;
-    tmp.reserve(12);
+
+    OneToManyMap<coordinate_type>::iterator itr(neighbors_.find(coord));
+    const std::size_t additional_size(neighbors_.is_end(itr) ? 0 : neighbors_.num_adjoinings(itr));
+
+    tmp.reserve(12 + additional_size);
     for (unsigned int rnd(0); rnd < 12; ++rnd)
     {
         const coordinate_type neighbor(get_neighbor(coord, rnd));
         const VoxelPool* mt(get_voxel_pool_at(neighbor));
-        const std::string
-            serial(mt->is_vacant() ? "" : mt->species().serial());
+        const std::string serial(mt->is_vacant() ? "" : mt->species().serial());
+        if (serial == loc)
+        {
+            tmp.push_back(neighbor);
+        }
+    }
+
+    for (std::size_t i(0); i < additional_size; ++i)
+    {
+        const coordinate_type neighbor(neighbors_.get_adjoining(itr, i));
+        const VoxelPool* mt(get_voxel_pool_at(neighbor));
+        const std::string serial(mt->is_vacant() ? "" : mt->species().serial());
         if (serial == loc)
         {
             tmp.push_back(neighbor);
@@ -236,8 +267,7 @@ SpatiocyteWorld::check_neighbor(const coordinate_type coord,
         return std::make_pair(coord, false);
     }
 
-    return std::make_pair(
-        tmp[rng()->uniform_int(0, tmp.size() - 1)], true);
+    return std::make_pair(tmp[rng()->uniform_int(0, tmp.size() - 1)], true);
 
     // const Integer rnd(rng()->uniform_int(0, 11));
     // const coordinate_type neighbor(get_neighbor(coord, rnd));

@@ -751,6 +751,7 @@ protected:
     Integer inner_size_;
     std::vector<SpaceItem> spaces_;
     OneToManyMap<coordinate_type> interfaces_;
+    OneToManyMap<coordinate_type> neighbors_;
 
     boost::shared_ptr<RandomNumberGenerator> rng_;
     SerialIDGenerator<ParticleID> sidgen_;
