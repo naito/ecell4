@@ -42,121 +42,40 @@ SpatiocyteWorld* create_spatiocyte_world_offlattice_impl(
 
 void SpatiocyteWorld::add_space(VoxelSpaceBase *space)
 {
-    if (spaces_.size() != 0)
+    for (std::size_t i(0); i< space->size(); ++i)
     {
-        for (std::size_t i(0); i< space->size(); ++i)
+        const Real3 position(space->coordinate2position(i));
+        std::vector<coordinate_type> interfaces;
+
+        for (std::size_t j(0); j < root_->size(); ++j)
         {
-            const Real3 position(space->coordinate2position(i));
-            std::vector<coordinate_type> interfaces;
-
-            for (std::size_t j(0); j < spaces_.at(0).space->size(); ++j)
+            if (length(root_->coordinate2position(j) - position) < voxel_radius() * 2)
             {
-                if (length(spaces_.at(0).space->coordinate2position(j) - position) < voxel_radius() * 2)
-                {
-                    interfaces_.add(j, i + size_);
-                    interfaces.push_back(j);
-                }
+                interfaces_.add(j, i + size_);
+                interfaces.push_back(j);
             }
+        }
 
-            for (std::vector<coordinate_type>::const_iterator itr(interfaces.begin());
-                 itr != interfaces.end(); ++itr)
+        for (std::vector<coordinate_type>::const_iterator itr(interfaces.begin());
+             itr != interfaces.end(); ++itr)
+        {
+            for (Integer k(0); k < root_->num_neighbors(*itr); ++k)
             {
-                for (Integer k(0); k < spaces_.at(0).space->num_neighbors(*itr); ++k)
-                {
-                    const coordinate_type neighbor(spaces_.at(0).space->get_neighbor(*itr, k));
+                const coordinate_type neighbor(root_->get_neighbor(*itr, k));
 
-                    if (std::find(interfaces.begin(), interfaces.end(), neighbor) != interfaces.end())
-                    {
-                        neighbors_.add(i, neighbor);
-                    }
+                if (std::find(interfaces.begin(), interfaces.end(), neighbor) != interfaces.end())
+                {
+                    neighbors_.add(i, neighbor);
                 }
             }
         }
     }
 
-    spaces_.push_back((struct SpaceItem) {
-        boost::shared_ptr<VoxelSpaceBase>(space),
-        size_,
-        inner_size_
-    });
+    spaces_.push_back(space_type(space, size_, inner_size_));
 
     size_ += space->size();
     inner_size_ += space->inner_size();
 }
-
-/*
- * should be inline?
- */
-SpatiocyteWorld::SpaceItem&
-SpatiocyteWorld::get_corresponding_space(const coordinate_type& coordinate)
-{
-    // should use a binary search algorithm
-    for (std::vector<SpaceItem>::iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
-    {
-        if ((*itr).offset + (*itr).space->size() > coordinate)
-            return *itr;
-    }
-    throw NotSupported("Out of range");
-}
-
-const SpatiocyteWorld::SpaceItem&
-SpatiocyteWorld::get_corresponding_space(const coordinate_type& coordinate) const
-{
-    // should use a binary search algorithm
-    for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
-    {
-        if ((*itr).offset + (*itr).space->size() > coordinate)
-            return *itr;
-    }
-    throw NotSupported("Out of range");
-}
-
-SpatiocyteWorld::SpaceItem&
-SpatiocyteWorld::get_corresponding_space_from_inner(const coordinate_type& coordinate)
-{
-    // should use a binary search algorithm
-    for (std::vector<SpaceItem>::iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
-    {
-        if ((*itr).inner_offset + (*itr).space->inner_size() > coordinate)
-            return *itr;
-    }
-    throw NotSupported("Out of range");
-}
-
-const SpatiocyteWorld::SpaceItem&
-SpatiocyteWorld::get_corresponding_space_from_inner(const coordinate_type& coordinate) const
-{
-    // should use a binary search algorithm
-    for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
-    {
-        if ((*itr).inner_offset + (*itr).space->inner_size() > coordinate)
-            return *itr;
-    }
-    throw NotSupported("Out of range");
-}
-
-SpatiocyteWorld::SpaceItem&
-SpatiocyteWorld::get_assigned_space(const ParticleID& pid)
-{
-    for (std::vector<SpaceItem>::iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
-    {
-        if ((*itr).space->has_particle(pid))
-            return *itr;
-    }
-    throw NotSupported("Out of range");
-}
-
-const SpatiocyteWorld::SpaceItem&
-SpatiocyteWorld::get_assigned_space(const ParticleID& pid) const
-{
-    for (std::vector<SpaceItem>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
-    {
-        if ((*itr).space->has_particle(pid))
-            return *itr;
-    }
-    throw NotSupported("Out of range");
-}
-
 
 MoleculeInfo SpatiocyteWorld::get_molecule_info(const Species& sp) const
 {
@@ -298,9 +217,8 @@ SpatiocyteWorld::new_particle(const Particle& p)
     // const bool is_succeeded(update_particle(pid, p));
     // return std::make_pair(get_particle(pid), is_succeeded);
     const MoleculeInfo minfo(get_molecule_info(p.species()));
-    const Voxel v(
-        p.species(), position2coordinate(p.position()), p.radius(), p.D(), minfo.loc);
-    if (spaces_.at(0).space->on_structure(v))
+    const Voxel v(p.species(), position2coordinate(p.position()), p.radius(), p.D(), minfo.loc);
+    if (on_structure(v))
     {
         return std::make_pair(std::make_pair(ParticleID(), p), false);
     }
@@ -398,7 +316,7 @@ SpatiocyteWorld::new_voxel_interface(const Species& sp, const coordinate_type& c
 Integer SpatiocyteWorld::add_structure(const Species& sp, const boost::shared_ptr<const Shape> shape)
 {
     const MoleculeInfo info(get_molecule_info(sp));
-    spaces_.at(0).space->make_structure_type(sp, shape->dimension(), info.loc);
+    root_->make_structure_type(sp, shape->dimension(), info.loc);
 
     switch (shape->dimension())
     {
@@ -466,7 +384,7 @@ bool SpatiocyteWorld::is_surface_voxel(const coordinate_type coord,
 
 Integer SpatiocyteWorld::add_interface(const Species& sp)
 {
-    return spaces_.at(0).space->make_interface_type(sp, Shape::UNDEF, get_molecule_info(sp).loc);
+    return root_->make_interface_type(sp, Shape::UNDEF, get_molecule_info(sp).loc);
 }
 
 std::vector<Species> SpatiocyteWorld::list_structure_species() const
@@ -611,7 +529,7 @@ void SpatiocyteWorld::save(const std::string& filename) const
     sidgen_.save(fout.get());
     boost::scoped_ptr<H5::Group>
         group(new H5::Group(fout->createGroup("LatticeSpace")));
-    spaces_.at(0).space->save_hdf5(group.get());
+    root_->save_hdf5(group.get());
     extras::save_version_information(fout.get(), "ecell4-spatiocyte-0.0-1");
 #else
     throw NotSupported("This method requires HDF5. The HDF5 support is turned off.");
@@ -624,7 +542,7 @@ void SpatiocyteWorld::load(const std::string& filename)
     boost::scoped_ptr<H5::H5File>
         fin(new H5::H5File(filename.c_str(), H5F_ACC_RDONLY));
     const H5::Group group(fin->openGroup("LatticeSpace"));
-    spaces_.at(0).space->load_hdf5(group);
+    root_->load_hdf5(group);
     sidgen_.load(*fin);
     rng_->load(*fin);
 #else
