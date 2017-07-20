@@ -787,8 +787,10 @@ public:
 
     bool update_voxel(const ParticleID& pid, const Voxel& v)
     {
-        // XXX
-        return root_->update_voxel(pid, v);
+        space_type item(get_corresponding_space(v.coordinate()));
+        Voxel voxel(v);
+        voxel.coordinate() -= item.offset;
+        return item.space->update_voxel(pid, voxel);
     }
 
     bool remove_voxel(const ParticleID pid)
@@ -805,15 +807,15 @@ public:
 
     bool can_move(const coordinate_type& src, const coordinate_type& dest) const
     {
-        // XXX
-        return root_->can_move(src, dest);
+        const_space_type item(get_corresponding_space(src));
+        return item.space->can_move(src - item.offset, dest - item.offset);
     }
 
     bool move(const coordinate_type& src, const coordinate_type& dest,
               const std::size_t candidate=0)
     {
-        // XXX
-        return root_->move(src, dest, candidate);
+        space_type item(get_corresponding_space(src));
+        return item.space->move(src - item.offset, dest - item.offset, candidate);
     }
 
 protected:
