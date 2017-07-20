@@ -47,11 +47,6 @@ public:
     bool move(const coordinate_type& src,
               const coordinate_type& dest,
               const std::size_t candidate=0);
-    std::pair<coordinate_type, bool>
-        move_to_neighbor(VoxelPool* const& from,
-                         VoxelPool* const& loc,
-                         coordinate_id_pair_type& info,
-                         const Integer nrand);
 
     /*
      * for LatticeSpaceBase

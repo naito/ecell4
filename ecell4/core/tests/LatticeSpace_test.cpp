@@ -241,10 +241,10 @@ BOOST_AUTO_TEST_CASE( TestCol )
         {
             const coordinate_type coord(space.global2coordinate(Integer3(0, i, j)));
             const Integer nrnd((j&1)==1?2:3);
-            std::pair<coordinate_type, bool> retval(space.move_to_neighbor(coord, nrnd));
+            const coordinate_type neighbor(space.get_neighbor_boundary(coord, nrnd));
 
-            BOOST_CHECK( retval.second );
-            BOOST_CHECK_EQUAL( space.coordinate2global(retval.first).col, col_size-1 );
+            BOOST_CHECK_EQUAL( space.coordinate2global(neighbor).col, col_size-1 );
+            BOOST_CHECK( space.move(coord, neighbor) );
         }
 
     // from col_size-1 to 0
@@ -253,10 +253,10 @@ BOOST_AUTO_TEST_CASE( TestCol )
         {
             const coordinate_type coord(space.global2coordinate(Integer3(col_size-1, i, j)));
             const Integer nrnd((j&1)==1?4:5);
-            std::pair<coordinate_type, bool> retval(space.move_to_neighbor(coord, nrnd));
+            const coordinate_type neighbor(space.get_neighbor_boundary(coord, nrnd));
 
-            BOOST_CHECK( retval.second );
-            BOOST_CHECK_EQUAL( space.coordinate2global(retval.first).col, 0 );
+            BOOST_CHECK_EQUAL( space.coordinate2global(neighbor).col, 0 );
+            BOOST_CHECK( space.move(coord, neighbor) );
         }
 }
 
@@ -279,11 +279,10 @@ BOOST_AUTO_TEST_CASE( TestRow )
         for (Integer col(0); col < col_size; ++col)
         {
             const coordinate_type coord(space.global2coordinate(Integer3(col, row, layer)));
-            const Integer nrnd(0);
-            std::pair<coordinate_type, bool> retval(space.move_to_neighbor(coord, nrnd));
+            const coordinate_type neighbor(space.get_neighbor_boundary(coord, /* rnd = */ 0));
 
-            BOOST_CHECK( retval.second );
-            BOOST_CHECK_EQUAL( space.coordinate2global(retval.first).row, row_size-1 );
+            BOOST_CHECK_EQUAL( space.coordinate2global(neighbor).row, row_size-1 );
+            BOOST_CHECK( space.move(coord, neighbor) );
         }
     // from row_size-1 to 0
     row = row_size - 1;
@@ -291,11 +290,10 @@ BOOST_AUTO_TEST_CASE( TestRow )
         for (Integer col(0); col < col_size; ++col)
         {
             const coordinate_type coord(space.global2coordinate(Integer3(col, row, layer)));
-            const Integer nrnd(1);
-            std::pair<coordinate_type, bool> retval(space.move_to_neighbor(coord, nrnd));
+            const coordinate_type neighbor(space.get_neighbor_boundary(coord, /* rnd = */ 1));
 
-            BOOST_CHECK( retval.second );
-            BOOST_CHECK_EQUAL( space.coordinate2global(retval.first).row, 0 );
+            BOOST_CHECK_EQUAL( space.coordinate2global(neighbor).row, 0 );
+            BOOST_CHECK( space.move(coord, neighbor) );
         }
 }
 
@@ -319,10 +317,10 @@ BOOST_AUTO_TEST_CASE( TestLayer )
         {
             const coordinate_type coord(space.global2coordinate(Integer3(col, row, layer)));
             const Integer nrnd((col&1)==1?8:9);
-            std::pair<coordinate_type, bool> retval(space.move_to_neighbor(coord, nrnd));
+            const coordinate_type neighbor(space.get_neighbor_boundary(coord, nrnd));
 
-            BOOST_CHECK( retval.second );
-            BOOST_CHECK_EQUAL( space.coordinate2global(retval.first).layer, layer_size-1 );
+            BOOST_CHECK_EQUAL( space.coordinate2global(neighbor).layer, layer_size-1 );
+            BOOST_CHECK( space.move(coord, neighbor) );
         }
     // from layer_size-1 to 0
     layer = layer_size - 1;
@@ -331,10 +329,10 @@ BOOST_AUTO_TEST_CASE( TestLayer )
         {
             const coordinate_type coord(space.global2coordinate(Integer3(col, row, layer)));
             const Integer nrnd((col&1)==1?10:11);
-            std::pair<coordinate_type, bool> retval(space.move_to_neighbor(coord, nrnd));
+            const coordinate_type neighbor(space.get_neighbor_boundary(coord, nrnd));
 
-            BOOST_CHECK( retval.second );
-            BOOST_CHECK_EQUAL( space.coordinate2global(retval.first).layer, 0 );
+            BOOST_CHECK_EQUAL( space.coordinate2global(neighbor).layer, 0 );
+            BOOST_CHECK( space.move(coord, neighbor) );
         }
 }
 

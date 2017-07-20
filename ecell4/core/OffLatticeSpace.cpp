@@ -221,28 +221,6 @@ bool OffLatticeSpace::move(const coordinate_type& src,
     return true;
 }
 
-std::pair<OffLatticeSpace::coordinate_type, bool>
-OffLatticeSpace::move_to_neighbor(VoxelPool* const& src_vp,
-                                  VoxelPool* const& loc,
-                                  coordinate_id_pair_type& info,
-                                  const Integer nrand)
-{
-    const coordinate_type src(info.coordinate);
-    coordinate_type dest(get_neighbor(src, nrand));
-
-    VoxelPool* dest_vp(voxels_.at(dest));
-
-    if (dest_vp != loc)
-        return std::make_pair(dest, false);
-
-    voxels_.at(src) = loc; // == dest_vp
-    voxels_.at(dest) = src_vp;
-
-    src_vp->replace_voxel(src, dest);
-    dest_vp->replace_voxel(dest, src);
-    return std::make_pair(dest, true);
-}
-
 /*
  * for LatticeSpaceBase
  */

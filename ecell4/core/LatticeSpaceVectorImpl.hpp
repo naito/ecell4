@@ -56,14 +56,6 @@ public:
         const std::size_t candidate=0);
     virtual bool can_move(const coordinate_type& src, const coordinate_type& dest) const;
 
-    std::pair<coordinate_type, bool> move_to_neighbor(
-        coordinate_type coord, Integer nrand);
-    std::pair<coordinate_type, bool> move_to_neighbor(
-        coordinate_id_pair_type& info, Integer nrand);
-    std::pair<coordinate_type, bool> move_to_neighbor(
-        VoxelPool* const& from_vp, VoxelPool* const& loc,
-        coordinate_id_pair_type& info, const Integer nrand);
-
     coordinate_type get_neighbor_boundary(
         const coordinate_type& coord, const Integer& nrand) const
     {

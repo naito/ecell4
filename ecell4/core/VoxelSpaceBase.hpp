@@ -128,12 +128,6 @@ public:
              const coordinate_type& dest,
              const std::size_t candidate = 0)
         = 0;
-    virtual std::pair<coordinate_type, bool>
-        move_to_neighbor(VoxelPool* const& from,
-                         VoxelPool* const& loc,
-                         coordinate_id_pair_type& info,
-                         const Integer nrand)
-        = 0;
 
 protected:
 

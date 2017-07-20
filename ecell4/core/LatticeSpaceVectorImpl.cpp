@@ -235,22 +235,6 @@ bool LatticeSpaceVectorImpl::can_move(
 }
 
 std::pair<LatticeSpaceVectorImpl::coordinate_type, bool>
-    LatticeSpaceVectorImpl::move_to_neighbor(
-        coordinate_type coord, Integer nrand)
-{
-    const coordinate_type neighbor(get_neighbor(coord, nrand));
-    return move_(coord, neighbor);
-}
-
-std::pair<LatticeSpaceVectorImpl::coordinate_type, bool>
-    LatticeSpaceVectorImpl::move_to_neighbor(
-        coordinate_id_pair_type& info, Integer nrand)
-{
-    const coordinate_type neighbor(get_neighbor(info.coordinate, nrand));
-    return move_(info, neighbor);
-}
-
-std::pair<LatticeSpaceVectorImpl::coordinate_type, bool>
     LatticeSpaceVectorImpl::move_(
         coordinate_type from, coordinate_type to,
         const std::size_t candidate)
@@ -341,54 +325,6 @@ std::pair<LatticeSpaceVectorImpl::coordinate_type, bool>
     (*to_itr) = from_vp;
 
     return std::pair<coordinate_type, bool>(to, true);
-}
-
-std::pair<LatticeSpaceVectorImpl::coordinate_type, bool>
-    LatticeSpaceVectorImpl::move_to_neighbor(
-        VoxelPool* const& from_vp, VoxelPool* const& loc,
-        coordinate_id_pair_type& info, const Integer nrand)
-{
-    const coordinate_type from(info.coordinate);
-    coordinate_type to(get_neighbor(from, nrand));
-
-    //XXX: assert(from != to);
-    //XXX: assert(from_vp == voxels_[from]);
-    //XXX: assert(from_vp != vacant_);
-
-    VoxelPool* to_vp(voxels_[to]);
-
-    if (to_vp != loc)
-    {
-        if (to_vp == border_)
-        {
-            return std::make_pair(from, false);
-        }
-        else if (to_vp != periodic_)
-        {
-            return std::make_pair(to, false);
-        }
-
-        // to_vp == periodic_
-        to = apply_boundary_(to);
-        to_vp = voxels_[to];
-
-        if (to_vp != loc)
-        {
-            return std::make_pair(to, false);
-        }
-    }
-
-    voxels_[from] = to_vp;
-    voxels_[to] = from_vp;
-    info.coordinate = to; //XXX: updating data
-
-    to_vp->replace_voxel(to, from);
-    // if (to_vp != vacant_) // (!to_vp->is_vacant())
-    // {
-    //     to_vp->replace_voxel(
-    //         to, coordinate_id_pair_type(ParticleID(), from));
-    // }
-    return std::make_pair(to, true);
 }
 
 const Particle LatticeSpaceVectorImpl::particle_at(

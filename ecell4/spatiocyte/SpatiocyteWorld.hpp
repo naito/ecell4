@@ -816,14 +816,6 @@ public:
         return root_->move(src, dest, candidate);
     }
 
-    std::pair<coordinate_type, bool>
-    move_to_neighbor(VoxelPool* const& from_mt, VoxelPool* const& loc,
-                     coordinate_id_pair_type& info, const Integer nrand)
-    {
-        // XXX
-        return root_->move_to_neighbor(from_mt, loc, info, nrand);
-    }
-
 protected:
 
     boost::shared_ptr<VoxelSpaceBase> root_;
