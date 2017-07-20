@@ -177,12 +177,6 @@ public:
         return adjoinings.at(rng_->uniform_int(0, adjoinings.size()-1));
     }
 
-    // XXX: Not implemented
-    // const Species& draw_species(const Species& pttrn) const;
-
-    // XXX: Never called
-    Integer add_neighbors(const Species& sp, const coordinate_type center);
-
 
 public:
 

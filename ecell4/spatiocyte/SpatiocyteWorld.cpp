@@ -118,37 +118,6 @@ MoleculeInfo SpatiocyteWorld::get_molecule_info(const Species& sp) const
     return info;
 }
 
-// XXX: Never called
-Integer SpatiocyteWorld::add_neighbors(const Species& sp,
-    const SpatiocyteWorld::coordinate_type center)
-{
-    Integer count(0);
-    const MoleculeInfo info(get_molecule_info(sp));
-    for (Integer i(0); i < 12; ++i)
-    {
-        const coordinate_type n(get_neighbor(center, i));
-        if (new_voxel(Voxel(sp, n, info.radius, info.D, info.loc)).second)
-            ++count;
-        else
-            throw "Error in add_neighbors()";
-    }
-    return count;
-
-    // Integer count(0);
-    // const MoleculeInfo info(get_molecule_info(sp));
-    // std::vector<SpatiocyteWorld::coordinate_type> neighbors(
-    //         get_neighbors(center));
-    // for (std::vector<SpatiocyteWorld::coordinate_type>::iterator itr(
-    //             neighbors.begin()); itr != neighbors.end(); itr++)
-    // {
-    //     if (new_voxel(Voxel(sp, *itr, info.radius, info.D, info.loc)).second)
-    //         ++count;
-    //     else
-    //         throw "Error in add_neighbors()";
-    // }
-    // return count;
-}
-
 std::pair<SpatiocyteWorld::coordinate_type, bool>
 SpatiocyteWorld::check_neighbor(const coordinate_type coord,
                                 const std::string& loc)
