@@ -1,5 +1,7 @@
-add_executable(simple_lattice simple_lattice.cpp)
-target_link_libraries(simple_lattice ecell4-spatiocyte)
+file(GLOB SOURCES *.cpp)
 
-add_executable(diffusion diffusion.cpp)
-target_link_libraries(diffusion ecell4-spatiocyte)
+foreach(SOURCE ${SOURCES})
+    get_filename_component(PROGNAME ${SOURCE} NAME_WE)
+    add_executable(${PROGNAME} ${SOURCE})
+    target_link_libraries(${PROGNAME} ecell4-spatiocyte)
+endforeach(SOURCE)
