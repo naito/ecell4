@@ -39,36 +39,35 @@ SpatiocyteWorld* create_spatiocyte_world_offlattice_impl(
     return new SpatiocyteWorld(create_hcp_offlattice_space(voxel_radius, lattice_size), rng);
 }
 
-
 void SpatiocyteWorld::add_space(VoxelSpaceBase *space)
 {
-    for (std::size_t i(0); i< space->size(); ++i)
+    for (std::size_t i(0); i < space->size(); ++i)
     {
         const Real3 position(space->coordinate2position(i));
-        std::vector<coordinate_type> interfaces;
+        const coordinate_type nearest(root_->position2coordinate(position));
 
-        for (std::size_t j(0); j < root_->size(); ++j)
+        for (Integer j(0); j < root_->num_neighbors(nearest); ++j)
         {
-            if (length(root_->coordinate2position(j) - position) < voxel_radius() * 2)
-            {
-                interfaces_.add(j, i + size_);
-                interfaces.push_back(j);
-            }
+            const coordinate_type neighbor(root_->get_neighbor(nearest, j));
+            if (length(root_->coordinate2position(neighbor) - position) < voxel_radius() * 2)
+                interfaces_.add(neighbor, i + size_);
+        }
+    }
+
+    for (OneToManyMap<coordinate_type>::const_iterator itr(interfaces_.begin());
+         itr != interfaces_.end(); ++itr)
+    {
+        std::vector<coordinate_type> neighbors;
+        for (Integer i(0); i < root_->num_neighbors((*itr).first); ++i)
+        {
+            const coordinate_type neighbor(root_->get_neighbor((*itr).first, i));
+            if (interfaces_.find(neighbor) == interfaces_.end())
+                neighbors.push_back(neighbor);
         }
 
-        for (std::vector<coordinate_type>::const_iterator itr(interfaces.begin());
-             itr != interfaces.end(); ++itr)
-        {
-            for (Integer k(0); k < root_->num_neighbors(*itr); ++k)
-            {
-                const coordinate_type neighbor(root_->get_neighbor(*itr, k));
-
-                if (std::find(interfaces.begin(), interfaces.end(), neighbor) != interfaces.end())
-                {
-                    neighbors_.add(i, neighbor);
-                }
-            }
-        }
+        for (std::vector<coordinate_type>::const_iterator jtr((*itr).second.begin());
+             jtr != (*itr).second.end(); ++jtr)
+            neighbors_.add(*jtr, neighbors);
     }
 
     spaces_.push_back(space_type(space, size_, inner_size_));

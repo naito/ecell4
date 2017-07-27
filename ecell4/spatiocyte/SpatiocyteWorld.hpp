@@ -63,7 +63,7 @@ protected:
 
         operator SpaceItem<const T>() const
         {
-            return SpaceItem<const T>(space.get(), offset, inner_offset);
+            return SpaceItem<const T>(space, offset, inner_offset);
         }
     };
 
@@ -79,9 +79,10 @@ public:
           size_(root_->size()), inner_size_(root_->inner_size()),
           rng_(rng) {}
 
-    SpatiocyteWorld(const Real3& edge_lengths, const Real& voxel_radius) : size_(0), inner_size_(0)
+    SpatiocyteWorld(const Real3& edge_lengths, const Real& voxel_radius)
+        : root_(new default_space_type(edge_lengths, voxel_radius)),
+          size_(root_->size()), inner_size_(root_->inner_size())
     {
-        add_space(new default_space_type(edge_lengths, voxel_radius));
         rng_ = boost::shared_ptr<RandomNumberGenerator>(new GSLRandomNumberGenerator());
         (*rng_).seed();
     }
@@ -223,10 +224,9 @@ public:
 
     void bind_to(boost::shared_ptr<Model> model);
 
+    void add_space(VoxelSpaceBase *space);
 
 protected:
-
-    void add_space(VoxelSpaceBase *space);
 
     space_type get_corresponding_space(const coordinate_type& coordinate)
     {
@@ -261,12 +261,10 @@ protected:
         if (root_->inner_size() > coordinate)
             return const_space_type(root_, 0, 0);
 
-        // should use a binary search algorithm
         for (std::vector<space_type>::const_iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
-        {
             if ((*itr).inner_offset + (*itr).space->inner_size() > coordinate)
                 return *itr;
-        }
+
         throw NotSupported("Out of range");
     }
 
@@ -684,7 +682,7 @@ public:
             if ((*itr).space->has_species(species))
                 return (*itr).space->find_voxel_pool(species);
         }
-        throw "Not Found";
+        throw NotFound("Not Found");
     }
 
     const VoxelPool* find_voxel_pool(const Species& species) const
@@ -697,7 +695,7 @@ public:
             if ((*itr).space->has_species(species))
                 return (*itr).space->find_voxel_pool(species);
         }
-        throw "Not Found";
+        throw NotFound("Not Found");
     }
 
     bool has_molecule_pool(const Species& species) const
