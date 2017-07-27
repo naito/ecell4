@@ -17,13 +17,13 @@ void SpatiocyteSimulator::initialize()
 
     scheduler_.clear();
     update_alpha_map();
+
     const std::vector<Species> species(world_->list_species());
     for (std::vector<Species>::const_iterator itr(species.begin());
         itr != species.end(); ++itr)
     {
         register_events(*itr);
     }
-
 
     const std::vector<ReactionRule>& rules(model_->reaction_rules());
     for (std::vector<ReactionRule>::const_iterator i(rules.begin());
@@ -34,10 +34,7 @@ void SpatiocyteSimulator::initialize()
         {
             continue;
         }
-        const boost::shared_ptr<SpatiocyteEvent>
-            zeroth_order_reaction_event(
-                create_zeroth_order_reaction_event(rr, world_->t()));
-        scheduler_.add(zeroth_order_reaction_event);
+        scheduler_.add(create_zeroth_order_reaction_event(rr, world_->t()));
     }
 
     dt_ = scheduler_.next_time() - t();
@@ -57,10 +54,12 @@ void SpatiocyteSimulator::update_alpha_map()
         if (reactants.size() != 2)
             continue;
 
-        const Real alpha(calculate_alpha(*itr, world_));
+        const Real alpha(calculate_alpha(reactants, (*itr).k(), world_));
+
         for (int i(0); i < 2; ++i) {
             const Species& sp(reactants.at(i));
             alpha_map_type::iterator map_itr(alpha_map_.find(sp));
+
             if (map_itr == alpha_map_.end())
                 alpha_map_.insert(alpha_map_type::value_type(sp, alpha));
             else if ((*map_itr).second > alpha)

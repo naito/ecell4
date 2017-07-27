@@ -48,20 +48,19 @@ calculate_dimensional_factor(const VoxelPool* vp_a,
 }
 
 inline const Real
-calculate_alpha(const ReactionRule& rr,
+calculate_alpha(const ReactionRule::reactant_container_type& reactants,
+                const Real& k,
                 const boost::shared_ptr<SpatiocyteWorld>& world)
 {
-    const ReactionRule::reactant_container_type& reactants(rr.reactants());
-    if (reactants.size() != 2)
-        return 1.0;
-
     try
     {
         const VoxelPool *vp0(world->find_voxel_pool(reactants.at(0)));
         const VoxelPool *vp1(world->find_voxel_pool(reactants.at(1)));
+
         const Real dfactor(calculate_dimensional_factor(vp0, vp1,
                            boost::const_pointer_cast<const SpatiocyteWorld>(world)));
-        const Real inv_alpha = dfactor * rr.k();
+        const Real inv_alpha = dfactor * k;
+
         return inv_alpha <= 1.0 ? 1.0 : 1.0 / inv_alpha;
     }
     catch(NotFound e)
