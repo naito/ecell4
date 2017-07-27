@@ -10,43 +10,54 @@ namespace ecell4
 namespace spatiocyte
 {
 
-template<typename coordinate_type>
+template<typename T>
 class OneToManyMap
 {
 
 protected:
-    typedef typename utils::get_mapper_mf<coordinate_type, std::vector<coordinate_type> >::type
+    typedef typename utils::get_mapper_mf<T, std::vector<T> >::type
             container_type;
 
     typedef typename container_type::iterator iterator;
-    typedef typename container_type::const_iterator const_iterator;
 
 public:
+    typedef typename container_type::const_iterator const_iterator;
+
     OneToManyMap() {}
 
-    void add(coordinate_type interface, coordinate_type target)
+    void add(T key, T value)
     {
-        iterator itr(container_.find(interface));
+        iterator itr(container_.find(key));
 
         if (itr != container_.end())
-        {
-            (*itr).second.push_back(target);
-        }
+            (*itr).second.push_back(value);
         else
-        {
-            container_.insert(std::make_pair(interface, std::vector<coordinate_type>(1, target)));
-        }
+            container_.insert(std::make_pair(key, std::vector<T>(1, value)));
     }
 
-    std::vector<coordinate_type> get(const coordinate_type& coordinate) const
+    void add(T key, std::vector<T> values)
     {
-        const_iterator itr(container_.find(coordinate));
+        iterator itr(container_.find(key));
+
+        if (itr != container_.end())
+            std::copy(values.begin(), values.end(), back_inserter((*itr).second));
+        else
+            container_.insert(std::make_pair(key, values));
+    }
+
+    std::vector<T> get(const T& key) const
+    {
+        const_iterator itr(container_.find(key));
 
         if (itr == container_.end())
-            return std::vector<coordinate_type>();
+            return std::vector<T>();
         else
             return (*itr).second;
     }
+
+    const_iterator begin() const { return container_.begin(); }
+    const_iterator end() const { return container_.end(); }
+    const_iterator find(const T& key) const { return container_.find(key); }
 
 protected:
     container_type container_;
