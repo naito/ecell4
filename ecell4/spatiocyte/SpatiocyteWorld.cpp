@@ -2,9 +2,10 @@
 #include <fstream>
 #include <algorithm>
 
-#include "SpatiocyteWorld.hpp"
-#include <ecell4/core/extras.hpp>
 #include <ecell4/core/LatticeSpaceCellListImpl.hpp>
+#include <ecell4/core/extras.hpp>
+#include "SpatiocyteWorld.hpp"
+#include "utils.hpp"
 
 namespace ecell4
 {
@@ -152,12 +153,7 @@ SpatiocyteWorld::check_neighbor(const coordinate_type coord,
         return std::make_pair(coord, false);
     }
 
-    return std::make_pair(tmp[rng()->uniform_int(0, tmp.size() - 1)], true);
-
-    // const Integer rnd(rng()->uniform_int(0, 11));
-    // const coordinate_type neighbor(get_neighbor(coord, rnd));
-    // bool flg = find_voxel_pool(neighbor)->is_vacant(); //XXX: loc
-    // return std::make_pair(neighbor, flg);
+    return std::make_pair(pick(tmp, rng()), true);
 }
 
 /*
@@ -393,11 +389,7 @@ bool SpatiocyteWorld::add_molecules(const Species& sp, const Integer& num)
     Integer count(0);
     while (count < num)
     {
-        const coordinate_type coord(
-                inner2coordinate(rng()->uniform_int(0, inner_size() - 1)));
-        //XXX: just for consistency. rather use below
-        // const coordinate_type coord(rng()->uniform_int(0, size() - 1));
-
+        const coordinate_type coord(inner2coordinate(rng()->uniform_int(0, inner_size() - 1)));
         const Voxel v(sp, coord, info.radius, info.D, info.loc);
 
         if (on_structure(v))

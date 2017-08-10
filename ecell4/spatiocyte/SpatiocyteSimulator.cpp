@@ -1,5 +1,4 @@
 #include "SpatiocyteSimulator.hpp"
-#include "utils.hpp"
 
 #include <algorithm>
 #include <iterator>
@@ -38,6 +37,28 @@ void SpatiocyteSimulator::initialize()
     }
 
     dt_ = scheduler_.next_time() - t();
+}
+
+inline const Real
+calculate_alpha(const ReactionRule::reactant_container_type& reactants,
+                const Real& k,
+                const boost::shared_ptr<SpatiocyteWorld>& world)
+{
+    try
+    {
+        const VoxelPool *vp0(world->find_voxel_pool(reactants.at(0)));
+        const VoxelPool *vp1(world->find_voxel_pool(reactants.at(1)));
+
+        const Real dfactor(calculate_dimensional_factor(vp0, vp1,
+                           boost::const_pointer_cast<const SpatiocyteWorld>(world)));
+        const Real inv_alpha = dfactor * k;
+
+        return inv_alpha <= 1.0 ? 1.0 : 1.0 / inv_alpha;
+    }
+    catch(NotFound e)
+    {
+        return 1.0;
+    }
 }
 
 void SpatiocyteSimulator::update_alpha_map()

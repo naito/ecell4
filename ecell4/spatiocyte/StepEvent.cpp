@@ -317,9 +317,7 @@ void StepEvent::walk_in_space_(const MoleculePool* mpool, const Real& alpha)
         if (world_->get_voxel_pool_at(source) != mpool)
             continue;
 
-        const Integer rnd(rng->uniform_int(0, world_->num_neighbors(source)-1));
-        const coord_type destination(world_->get_neighbor_boundary(source, rnd));
-
+        const coord_type destination(world_->pick_neighbor(source));
         if (world_->can_move(source, destination))
         {
             if (rng->uniform(0,1) <= alpha)
@@ -366,8 +364,7 @@ void StepEvent::walk_on_surface_(const MoleculePool* mpool, const Real& alpha)
         if (neighbors.size() == 0)
             continue;
 
-        const coord_type
-            destination(neighbors.at(rng->uniform_int(0, neighbors.size()-1)));
+        const coord_type destination(pick(neighbors, rng));
 
         if (world_->can_move(source, destination))
         {
