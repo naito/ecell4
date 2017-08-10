@@ -131,42 +131,31 @@ bool SpatiocyteSimulator::step(const Real& upto)
 
 void SpatiocyteSimulator::step_()
 {
-
-    scheduler_type::value_type top(scheduler_.pop());
-    const Real time(top.second->time());
+    boost::shared_ptr<SpatiocyteEvent> next_event(scheduler_.pop().second);
+    const Real time(next_event->time());
     world_->set_t(time);
-    top.second->fire(); // top.second->time_ is updated in fire()
-    last_reactions_ = top.second->reactions();
+    next_event->fire();
+    // next_event->time_ is updated in fire()
+    last_reactions_ = next_event->reactions();
 
-    std::vector<Species> new_species;
-    for (std::vector<reaction_type>::const_iterator reaction(last_reactions().begin());
-            reaction != last_reactions().end(); ++reaction)
-    {
-        ReactionInfo::container_type products = (*reaction).second.products();
-        for (ReactionInfo::container_type::const_iterator product(products.begin());
-                product != products.end(); ++product)
-        {
-            const Species& species((*product).second.species());
-            if (!world_->has_species(species))
-                new_species.push_back(species);
-        }
-    }
-
-    scheduler_type::events_range events(scheduler_.events());
-    for (scheduler_type::events_range::iterator event(events.begin());
-        event != events.end(); ++event)
-    {
-        (*event).second->interrupt(time);
-        scheduler_.update(*event);
-    }
-    scheduler_.add(top.second);
+    // ???
+    // scheduler_type::events_range events(scheduler_.events());
+    // for (scheduler_type::events_range::iterator event(events.begin());
+    //     event != events.end(); ++event)
+    // {
+    //     (*event).second->interrupt(time);
+    //     scheduler_.update(*event);
+    // }
 
     // update_alpha_map(); // may be performance cost
+    const std::vector<Species>& new_species(next_event->new_species());
     for (std::vector<Species>::const_iterator species(new_species.begin());
         species != new_species.end(); ++species)
     {
         register_events(*species);
     }
+
+    scheduler_.add(next_event);
 
     num_steps_++;
 }

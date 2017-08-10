@@ -7,6 +7,8 @@ namespace ecell4
 namespace spatiocyte
 {
 
+typedef SpatiocyteWorld::coordinate_type coord_type;
+
 inline
 ReactionInfo
 apply_vanishment(boost::shared_ptr<SpatiocyteWorld> world,
@@ -37,7 +39,7 @@ apply_ab2c(boost::shared_ptr<SpatiocyteWorld> world,
     const std::string& locationB(get_location(world, reactantB.second.coordinate()));
     const std::string& locationC(world->get_molecule_info(product_species).loc);
 
-    SpatiocyteWorld::coordinate_type new_coordinate;
+    coord_type new_coordinate;
 
     if (locationB == locationC)
     {
@@ -70,7 +72,8 @@ apply_ab2c(boost::shared_ptr<SpatiocyteWorld> world,
         return ReactionInfo(world->t());
     }
 
-    std::pair<ReactionInfo::identified_voxel, bool> new_mol(world->new_voxel(product_species, new_coordinate));
+    std::pair<ReactionInfo::identified_voxel, bool>
+        new_mol(world->new_voxel(product_species, new_coordinate));
 
     ReactionInfo rinfo(world->t());
 
@@ -88,8 +91,8 @@ apply_ab2cd_in_order(boost::shared_ptr<SpatiocyteWorld> world,
                      const ReactionInfo::identified_voxel& p1,
                      const Species& product_species0,
                      const Species& product_species1,
-                     const SpatiocyteWorld::coordinate_type coord0,
-                     const SpatiocyteWorld::coordinate_type coord1)
+                     const coord_type coord0,
+                     const coord_type coord1)
 {
     ReactionInfo rinfo(world->t());
     rinfo.add_reactant(p0);
@@ -121,8 +124,8 @@ apply_ab2cd(boost::shared_ptr<SpatiocyteWorld> world,
             const Species& product_species0,
             const Species& product_species1)
 {
-    const SpatiocyteWorld::coordinate_type from_coord(p0.second.coordinate());
-    const SpatiocyteWorld::coordinate_type to_coord(p1.second.coordinate());
+    const coord_type from_coord(p0.second.coordinate());
+    const coord_type to_coord(p1.second.coordinate());
     const std::string aserial(get_serial(world, from_coord));
     const std::string aloc(get_location(world, from_coord));
     const std::string bserial(get_serial(world, to_coord));
@@ -150,7 +153,7 @@ apply_ab2cd(boost::shared_ptr<SpatiocyteWorld> world,
         }
         else
         {
-            std::pair<SpatiocyteWorld::coordinate_type, bool>
+            std::pair<coord_type, bool>
                 neighbor(world->check_neighbor(to_coord, dloc));
 
             if (neighbor.second)
@@ -187,7 +190,7 @@ apply_ab2cd(boost::shared_ptr<SpatiocyteWorld> world,
         }
         else
         {
-            std::pair<SpatiocyteWorld::coordinate_type, bool>
+            std::pair<coord_type, bool>
                 neighbor(world->check_neighbor(to_coord, cloc));
 
             if (neighbor.second)
@@ -206,7 +209,7 @@ apply_ab2cd(boost::shared_ptr<SpatiocyteWorld> world,
     }
     else if (bserial == cloc || bloc == cloc)
     {
-        std::pair<SpatiocyteWorld::coordinate_type, bool>
+        std::pair<coord_type, bool>
             neighbor(world->check_neighbor(to_coord, dloc));
 
         if (neighbor.second)
@@ -224,7 +227,7 @@ apply_ab2cd(boost::shared_ptr<SpatiocyteWorld> world,
     }
     else if (bserial == dloc || bloc == dloc)
     {
-        std::pair<SpatiocyteWorld::coordinate_type, bool>
+        std::pair<coord_type, bool>
             neighbor(world->check_neighbor(to_coord, dloc));
 
         if (neighbor.second)
@@ -244,31 +247,10 @@ apply_ab2cd(boost::shared_ptr<SpatiocyteWorld> world,
     return ReactionInfo(world->t());
 }
 
-inline ReactionInfo
-apply_second_order_reaction(boost::shared_ptr<SpatiocyteWorld> world,
-                            const ReactionRule& reaction_rule,
-                            const ReactionInfo::identified_voxel& p0,
-                            const ReactionInfo::identified_voxel& p1)
-{
-    const ReactionRule::product_container_type& products(reaction_rule.products());
-
-    switch (products.size())
-    {
-        case 0:
-            return apply_vanishment(world, p0, p1);
-        case 1:
-            return apply_ab2c(world, p0, p1, products.at(0));
-        case 2:
-            return apply_ab2cd(world, p0, p1, products.at(0), products.at(1));
-        default:
-            return ReactionInfo(world->t());
-    }
-}
-
 StepEvent::StepEvent(boost::shared_ptr<Model> model,
                      boost::shared_ptr<SpatiocyteWorld> world,
                      const Species& species, const Real& t, const Real alpha)
-    : SpatiocyteEvent(t), model_(model), world_(world), species_(species), alpha_(alpha)
+    : SpatiocyteEvent(world, t), model_(model), species_(species), alpha_(alpha)
 {
     const MoleculeInfo minfo(world_->get_molecule_info(species));
     const Real R(world_->voxel_radius());
@@ -328,7 +310,7 @@ void StepEvent::walk_in_space_(const MoleculePool* mpool, const Real& alpha)
     for (MoleculePool::container_type::iterator itr(targets.begin());
          itr != targets.end(); ++itr, ++idx)
     {
-        const SpatiocyteWorld::coordinate_type source((*itr).coordinate);
+        const coord_type source((*itr).coordinate);
 
         // skip when the voxel is not the target species.
         // former reactions may change the voxel.
@@ -336,7 +318,7 @@ void StepEvent::walk_in_space_(const MoleculePool* mpool, const Real& alpha)
             continue;
 
         const Integer rnd(rng->uniform_int(0, world_->num_neighbors(source)-1));
-        const SpatiocyteWorld::coordinate_type destination(world_->get_neighbor_boundary(source, rnd));
+        const coord_type destination(world_->get_neighbor_boundary(source, rnd));
 
         if (world_->can_move(source, destination))
         {
@@ -363,7 +345,7 @@ void StepEvent::walk_on_surface_(const MoleculePool* mpool, const Real& alpha)
     for (MoleculePool::container_type::iterator itr(targets.begin());
          itr != targets.end(); ++itr, ++idx)
     {
-        const SpatiocyteWorld::coordinate_type source((*itr).coordinate);
+        const coord_type source((*itr).coordinate);
 
         // skip when the voxel is not the target species.
         // former reactions may change the voxel.
@@ -371,10 +353,10 @@ void StepEvent::walk_on_surface_(const MoleculePool* mpool, const Real& alpha)
             continue;
 
         // list up the neighbors whose location is ok.
-        std::vector<SpatiocyteWorld::coordinate_type> neighbors;
+        std::vector<coord_type> neighbors;
         for (unsigned int i(0); i < world_->num_neighbors(source); ++i)
         {
-            const SpatiocyteWorld::coordinate_type
+            const coord_type
                 neighbor(world_->get_neighbor_boundary(source, i));
 
             if (world_->get_voxel_pool_at(neighbor)->get_dimension() <= dimension)
@@ -384,7 +366,7 @@ void StepEvent::walk_on_surface_(const MoleculePool* mpool, const Real& alpha)
         if (neighbors.size() == 0)
             continue;
 
-        const SpatiocyteWorld::coordinate_type
+        const coord_type
             destination(neighbors.at(rng->uniform_int(0, neighbors.size()-1)));
 
         if (world_->can_move(source, destination))
@@ -401,7 +383,7 @@ void StepEvent::walk_on_surface_(const MoleculePool* mpool, const Real& alpha)
 
 std::pair<StepEvent::attempt_reaction_result_type, StepEvent::reaction_type>
 StepEvent::attempt_reaction_(const SpatiocyteWorld::coordinate_id_pair_type& info,
-                             SpatiocyteWorld::coordinate_type to_coord,
+                             coord_type to_coord,
                              const Real& alpha)
 {
     to_coord = world_->get_adjoining_or_self(to_coord);
@@ -440,12 +422,33 @@ StepEvent::attempt_reaction_(const SpatiocyteWorld::coordinate_id_pair_type& inf
                 << "] exceeds 1 for '" << speciesA.serial()
                 << "' and '" << speciesB.serial() << "'." << std::endl;
         }
+
         if (accp >= rnd)
         {
-            ReactionInfo rinfo(apply_second_order_reaction(
-                        world_, reaction_rule,
-                        world_->make_pid_voxel_pair(vpA, info),
-                        world_->make_pid_voxel_pair(vpB, to_coord)));
+            const ReactionRule::product_container_type& products(reaction_rule.products());
+            const ReactionInfo::identified_voxel& p0(world_->make_pid_voxel_pair(vpA, info));
+            const ReactionInfo::identified_voxel& p1(world_->make_pid_voxel_pair(vpB, to_coord));
+
+            ReactionInfo rinfo;
+
+            switch (products.size())
+            {
+                case 0:
+                    rinfo = apply_vanishment(world_, p0, p1);
+                    break;
+                case 1:
+                    push_product(products.at(0));
+                    rinfo = apply_ab2c(world_, p0, p1, products.at(0));
+                    break;
+                case 2:
+                    push_product(products.at(0));
+                    push_product(products.at(1));
+                    rinfo = apply_ab2cd(world_, p0, p1, products.at(0), products.at(1));
+                    break;
+                default:
+                    rinfo = ReactionInfo(world_->t());
+            }
+
             if (rinfo.has_occurred())
             {
                 reaction_type reaction(std::make_pair(reaction_rule, rinfo));

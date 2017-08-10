@@ -194,7 +194,7 @@ apply_a2bc(boost::shared_ptr<SpatiocyteWorld> world,
 
 FirstOrderReactionEvent::FirstOrderReactionEvent(boost::shared_ptr<SpatiocyteWorld> world,
                                                  const ReactionRule& rule, const Real& t)
-    : SpatiocyteEvent(t), world_(world), rule_(rule)
+    : SpatiocyteEvent(world, t), rule_(rule)
 {
     //assert(rule_.reactants().size() == 1);
     time_ = t + draw_dt();
@@ -202,11 +202,14 @@ FirstOrderReactionEvent::FirstOrderReactionEvent(boost::shared_ptr<SpatiocyteWor
 
 void FirstOrderReactionEvent::fire_()
 {
-    const ReactionInfo::identified_voxel& voxel(
-            world_->choice(*(rule_.reactants().begin())));
+    time_ += draw_dt();
+
+    if (world_->num_voxels(rule_.reactants().at(0)) == 0)
+        return;
+
+    const ReactionInfo::identified_voxel& voxel(world_->choice(rule_.reactants().at(0)));
     const ReactionRule::product_container_type& products(rule_.products());
 
-    time_ += draw_dt();
     switch (products.size())
     {
         case 0:
@@ -219,18 +222,21 @@ void FirstOrderReactionEvent::fire_()
             break;
         case 1:
             {
-                ReactionInfo rinfo(apply_a2b(world_, voxel, *(products.begin())));
+                push_product(products.at(0));
+                ReactionInfo rinfo(apply_a2b(world_, voxel, products.at(0)));
                 if (rinfo.has_occurred())
                     push_reaction(std::make_pair(rule_, rinfo));
             }
-            push_reaction(std::make_pair(rule_, apply_a2b(world_, voxel, *(products.begin()))));
             break;
         case 2:
             {
-                ReactionInfo rinfo(
-                        apply_a2bc(world_, voxel, *(products.begin()), (*(++products.begin()))));
+                push_product(products.at(0));
+                push_product(products.at(1));
+                ReactionInfo rinfo(apply_a2bc(world_, voxel, products.at(0), products.at(1)));
                 if (rinfo.has_occurred())
+                {
                     push_reaction(std::make_pair(rule_, rinfo));
+                }
             }
             break;
     }
@@ -238,7 +244,7 @@ void FirstOrderReactionEvent::fire_()
 
 Real FirstOrderReactionEvent::draw_dt()
 {
-    const Species& reactant(*(rule_.reactants().begin()));
+    const Species& reactant(rule_.reactants().at(0));
     const Integer num(world_->num_voxels_exact(reactant));
     const Real k(rule_.k());
     const Real p = k * num;
@@ -248,6 +254,7 @@ Real FirstOrderReactionEvent::draw_dt()
         const Real rnd(world_->rng()->uniform(0.,1.));
         dt = - log(1 - rnd) / p;
     }
+    std::cerr << "dt = " << dt << std::endl;
     return dt;
 }
 

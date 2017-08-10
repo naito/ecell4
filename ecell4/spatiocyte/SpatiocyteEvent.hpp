@@ -18,7 +18,8 @@ struct SpatiocyteEvent : public Event
 public:
     typedef std::pair<ReactionRule, ReactionInfo> reaction_type;
 
-    SpatiocyteEvent(Real const& time) : Event(time) {}
+    SpatiocyteEvent(boost::shared_ptr<SpatiocyteWorld> world, Real const& time)
+        : Event(time), world_(world) {}
     virtual ~SpatiocyteEvent() {}
 
     const std::vector<reaction_type>& reactions() const
@@ -26,9 +27,16 @@ public:
         return reactions_;
     }
 
+    const std::vector<Species>& new_species() const
+    {
+        return new_species_;
+    }
+
     virtual void fire() {
         reactions_.clear();
+        new_species_.clear();
         fire_();
+        filter_generated_species();
     }
 
 protected:
@@ -39,7 +47,34 @@ protected:
         reactions_.push_back(reaction);
     }
 
+    void push_product(const Species& product)
+    {
+        if (!world_->has_species(product))
+            new_species_.push_back(product);
+    }
+
+    boost::shared_ptr<SpatiocyteWorld> world_;
+
+private:
+
+    void filter_generated_species()
+    {
+        std::sort(new_species_.begin(), new_species_.end());
+        std::vector<Species>::iterator end(std::unique(new_species_.begin(), new_species_.end()));
+        new_species_.resize(std::distance(new_species_.begin(), end));
+
+        std::vector<Species> filtered(new_species_.size());
+        for (std::vector<Species>::const_iterator itr(new_species_.begin());
+             itr != new_species_.end(); ++itr)
+        {
+            if (world_->has_species(*itr))
+                filtered.push_back(*itr);
+        }
+        new_species_ = filtered;
+    }
+
     std::vector<reaction_type> reactions_;
+    std::vector<Species> new_species_;
 
 };
 
@@ -78,7 +113,6 @@ protected:
         const SpatiocyteWorld::coordinate_type to_coord, const Real& alpha);
 
     boost::shared_ptr<Model> model_;
-    boost::shared_ptr<SpatiocyteWorld> world_;
     Species species_;
     VoxelPool* mt_;
     const Real alpha_;
@@ -100,7 +134,6 @@ struct ZerothOrderReactionEvent : SpatiocyteEvent
 
 protected:
 
-    boost::shared_ptr<SpatiocyteWorld> world_;
     ReactionRule rule_;
 };
 
@@ -120,7 +153,6 @@ struct FirstOrderReactionEvent : SpatiocyteEvent
 
 protected:
 
-    boost::shared_ptr<SpatiocyteWorld> world_;
     ReactionRule rule_;
 };
 
