@@ -45,6 +45,10 @@ public:
         return OffsetSpace<const T>(space_, offset_, inner_offset_);
     }
 
+    coord_type offset() const
+    {
+        return offset_;
+    }
 
     bool has(const coord_type& coordinate) const
     {

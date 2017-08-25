@@ -292,15 +292,16 @@ void StepEvent::walk(const Real& alpha)
         return; // INVALID ALPHA VALUE
     }
 
-    const MoleculePool* mpool(world_->find_molecule_pool(species_));
+    std::pair<const MoleculePool*, coord_type> mpool(world_->find_molecule_pool(species_));
 
-    if (mpool->get_dimension() == Shape::THREE)
-        walk_in_space_(mpool, alpha);
+    if (mpool.first->get_dimension() == Shape::THREE)
+        walk_in_space_(mpool.first, mpool.second, alpha);
     else // dimension == TWO, etc.
-        walk_on_surface_(mpool, alpha);
+        walk_on_surface_(mpool.first, mpool.second, alpha);
 }
 
-void StepEvent::walk_in_space_(const MoleculePool* mpool, const Real& alpha)
+void StepEvent::walk_in_space_(
+        const MoleculePool* mpool, const coord_type& offset, const Real& alpha)
 {
     const boost::shared_ptr<RandomNumberGenerator> rng(world_->rng());
     MoleculePool::container_type targets;
@@ -310,7 +311,7 @@ void StepEvent::walk_in_space_(const MoleculePool* mpool, const Real& alpha)
     for (MoleculePool::container_type::iterator itr(targets.begin());
          itr != targets.end(); ++itr, ++idx)
     {
-        const coord_type source((*itr).coordinate);
+        const coord_type source((*itr).coordinate += offset);
 
         // skip when the voxel is not the target species.
         // former reactions may change the voxel.
@@ -330,7 +331,8 @@ void StepEvent::walk_in_space_(const MoleculePool* mpool, const Real& alpha)
     }
 }
 
-void StepEvent::walk_on_surface_(const MoleculePool* mpool, const Real& alpha)
+void StepEvent::walk_on_surface_(
+        const MoleculePool* mpool, const coord_type& offset, const Real& alpha)
 {
     const boost::shared_ptr<RandomNumberGenerator>& rng(world_->rng());
     MoleculePool::container_type targets;
@@ -343,7 +345,7 @@ void StepEvent::walk_on_surface_(const MoleculePool* mpool, const Real& alpha)
     for (MoleculePool::container_type::iterator itr(targets.begin());
          itr != targets.end(); ++itr, ++idx)
     {
-        const coord_type source((*itr).coordinate);
+        const coord_type source((*itr).coordinate += offset);
 
         // skip when the voxel is not the target species.
         // former reactions may change the voxel.

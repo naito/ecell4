@@ -146,9 +146,11 @@ public:
 
     identified_voxel choice(const Species& sp)
     {
-        const MoleculePool* mpool(find_molecule_pool(sp));
-        const Integer i(rng_->uniform_int(0, mpool->size()-1));
-        return make_pid_voxel_pair(mpool, mpool->at(i));
+        std::pair<const MoleculePool*, coordinate_type> mpool(find_molecule_pool(sp));
+        const Integer i(rng_->uniform_int(0, mpool.first->size()-1));
+        coordinate_id_pair_type info(mpool.first->at(i));
+        info.coordinate += mpool.second;
+        return make_pid_voxel_pair(mpool.first, info);
     }
 
     boost::shared_ptr<Model> lock_model() const
@@ -717,16 +719,17 @@ public:
         return false;
     }
 
-    const MoleculePool* find_molecule_pool(const Species& species) const
+    std::pair<const MoleculePool*, coordinate_type>
+    find_molecule_pool(const Species& species) const
     {
         if (root_->has_molecule_pool(species))
-            return root_->find_molecule_pool(species);
+            return std::make_pair(root_->find_molecule_pool(species), 0);
 
         for (std::vector<space_type>::const_iterator itr(spaces_.begin());
              itr != spaces_.end(); ++itr)
         {
             if ((*itr).has_molecule_pool(species))
-                return (*itr).find_molecule_pool(species);
+                return std::make_pair((*itr).find_molecule_pool(species), (*itr).offset());
         }
         throw "Not Found";
     }

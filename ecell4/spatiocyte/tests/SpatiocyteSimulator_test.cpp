@@ -222,9 +222,9 @@ BOOST_AUTO_TEST_CASE(Scheduler)
     BOOST_ASSERT(world->has_molecule_pool(speciesC));
 
     const MoleculePool
-        *mpA(world->find_molecule_pool(speciesA)),
-        *mpB(world->find_molecule_pool(speciesB)),
-        *mpC(world->find_molecule_pool(speciesC));
+        *mpA(world->find_molecule_pool(speciesA).first),
+        *mpB(world->find_molecule_pool(speciesB).first),
+        *mpC(world->find_molecule_pool(speciesC).first);
 
     BOOST_ASSERT(mpA->begin() != mpA->end());
     BOOST_ASSERT(mpB->begin() != mpB->end());

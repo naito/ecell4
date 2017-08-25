@@ -443,8 +443,8 @@ void SpatiocyteWorld::remove_molecules(const Species& sp, const Integer& num)
         throw std::invalid_argument("The number of molecules must be positive.");
     }
 
-    const MoleculePool* mtype(find_molecule_pool(sp));
-    if (mtype->size() < num)
+    std::pair<const MoleculePool*, coordinate_type> mtype(find_molecule_pool(sp));
+    if (mtype.first->size() < num)
     {
         throw std::invalid_argument(
             "The number of molecules cannot be negative.");
@@ -453,8 +453,8 @@ void SpatiocyteWorld::remove_molecules(const Species& sp, const Integer& num)
     Integer count(0);
     while (count < num)
     {
-        const Integer idx(rng_->uniform_int(0, mtype->size() - 1));
-        if (remove_voxel(mtype->at(idx).coordinate))
+        const Integer idx(rng_->uniform_int(0, mtype.first->size() - 1));
+        if (remove_voxel(mtype.first->at(idx).coordinate + mtype.second))
         {
             ++count;
         }
