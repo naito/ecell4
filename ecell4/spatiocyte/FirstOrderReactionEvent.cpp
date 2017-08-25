@@ -204,10 +204,10 @@ void FirstOrderReactionEvent::fire_()
 {
     time_ += draw_dt();
 
-    if (world_->num_voxels(rule_.reactants().at(0)) == 0)
+    if (world_->num_voxels(reactant_()) == 0)
         return;
 
-    const ReactionInfo::identified_voxel& voxel(world_->choice(rule_.reactants().at(0)));
+    const ReactionInfo::identified_voxel& voxel(world_->choice(reactant_()));
     const ReactionRule::product_container_type& products(rule_.products());
 
     switch (products.size())
@@ -244,8 +244,7 @@ void FirstOrderReactionEvent::fire_()
 
 Real FirstOrderReactionEvent::draw_dt()
 {
-    const Species& reactant(rule_.reactants().at(0));
-    const Integer num(world_->num_voxels_exact(reactant));
+    const Integer num(world_->num_voxels_exact(reactant_()));
     const Real k(rule_.k());
     const Real p = k * num;
     Real dt(inf);
@@ -254,7 +253,7 @@ Real FirstOrderReactionEvent::draw_dt()
         const Real rnd(world_->rng()->uniform(0.,1.));
         dt = - log(1 - rnd) / p;
     }
-    std::cerr << "dt = " << dt << std::endl;
+    prev_num_voxels_ = num;
     return dt;
 }
 

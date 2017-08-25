@@ -66,8 +66,8 @@ int main(int argc, char** argv)
 
     const std::string D("1e-12"), radius("2.5e-9");
 
-    const Real kd(0.5e17), U(0.5);
-    const Real ka(kd * volume * (1 - U) / (U * U * N));
+    const Real kd(1.0e+1);
+    const Real ka(1.0e-4);
 
     Species speciesA("A", radius, D),
             speciesB("B", radius, "0.0"),
@@ -75,13 +75,15 @@ int main(int argc, char** argv)
 
     speciesC.set_attribute("location", "B");
 
-    ReactionRule rr(create_binding_reaction_rule(speciesA, speciesB, speciesC, ka));
+    ReactionRule rr1(create_binding_reaction_rule(speciesA, speciesB, speciesC, ka));
+    ReactionRule rr2(create_unbinding_reaction_rule(speciesC, speciesA, speciesB, kd));
 
     boost::shared_ptr<NetworkModel> model(new NetworkModel);
     model->add_species_attribute(speciesA);
     model->add_species_attribute(speciesB);
     model->add_species_attribute(speciesC);
-    model->add_reaction_rule(rr);
+    model->add_reaction_rule(rr1);
+    model->add_reaction_rule(rr2);
 
     boost::shared_ptr<GSLRandomNumberGenerator> rng(new GSLRandomNumberGenerator());
     rng->seed(1);

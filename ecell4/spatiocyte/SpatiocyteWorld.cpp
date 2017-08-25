@@ -125,8 +125,10 @@ SpatiocyteWorld::check_neighbor(const coordinate_type coord,
     std::vector<coordinate_type> tmp;
     std::vector<coordinate_type> additional_neighbors(neighbors_.get(coord));
 
-    tmp.reserve(12 + additional_neighbors.size());
-    for (unsigned int rnd(0); rnd < 12; ++rnd)
+    const_space_type space(get_space(coord));
+    const std::size_t num_neighbors(space.num_neighbors(coord));
+    tmp.reserve(num_neighbors + additional_neighbors.size());
+    for (unsigned int rnd(0); rnd < num_neighbors; ++rnd)
     {
         const coordinate_type neighbor(get_neighbor(coord, rnd));
         const VoxelPool* mt(get_voxel_pool_at(neighbor));

@@ -131,10 +131,6 @@ struct ZerothOrderReactionEvent : SpatiocyteEvent
     virtual void fire_();
 
     Real draw_dt();
-    virtual void interrupt(Real const& t)
-    {
-        time_ = t + draw_dt();
-    }
 
 protected:
 
@@ -152,12 +148,19 @@ struct FirstOrderReactionEvent : SpatiocyteEvent
     Real draw_dt();
     virtual void interrupt(Real const& t)
     {
-        time_ = t + draw_dt();
+        if (world_->num_voxels_exact(reactant_()) != prev_num_voxels_) {
+            time_ = t + draw_dt();
+        }
     }
 
 protected:
 
+    const Species& reactant_() const {
+        return rule_.reactants().at(0);
+    }
+
     ReactionRule rule_;
+    Integer prev_num_voxels_;
 };
 
 inline const std::string

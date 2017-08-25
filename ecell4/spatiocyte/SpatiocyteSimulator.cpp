@@ -159,14 +159,13 @@ void SpatiocyteSimulator::step_()
     // next_event->time_ is updated in fire()
     last_reactions_ = next_event->reactions();
 
-    // ???
-    // scheduler_type::events_range events(scheduler_.events());
-    // for (scheduler_type::events_range::iterator event(events.begin());
-    //     event != events.end(); ++event)
-    // {
-    //     (*event).second->interrupt(time);
-    //     scheduler_.update(*event);
-    // }
+    scheduler_type::events_range events(scheduler_.events());
+    for (scheduler_type::events_range::iterator event(events.begin());
+         event != events.end(); ++event)
+    {
+        (*event).second->interrupt(time);
+        scheduler_.update(*event);
+    }
 
     // update_alpha_map(); // may be performance cost
     const std::vector<Species>& new_species(next_event->new_species());
