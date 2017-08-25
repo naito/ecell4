@@ -186,11 +186,6 @@ public:
         return space_->find_voxel_pool(species);
     }
 
-    MoleculePool* find_molecule_pool(const Species& species)
-    {
-        return space_->find_molecule_pool(species);
-    }
-
 };
 
 } // ns spatiocyte

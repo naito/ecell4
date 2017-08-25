@@ -717,19 +717,6 @@ public:
         return false;
     }
 
-    MoleculePool* find_molecule_pool(const Species& species)
-    {
-        if (root_->has_molecule_pool(species))
-            return root_->find_molecule_pool(species);
-
-        for (std::vector<space_type>::iterator itr(spaces_.begin()); itr != spaces_.end(); ++itr)
-        {
-            if ((*itr).has_molecule_pool(species))
-                return (*itr).find_molecule_pool(species);
-        }
-        throw "Not Found";
-    }
-
     const MoleculePool* find_molecule_pool(const Species& species) const
     {
         if (root_->has_molecule_pool(species))
