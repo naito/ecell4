@@ -147,7 +147,13 @@ public:
     identified_voxel choice(const Species& sp)
     {
         std::pair<const MoleculePool*, coordinate_type> mpool(find_molecule_pool(sp));
-        const Integer i(rng_->uniform_int(0, mpool.first->size()-1));
+
+        if (mpool.first->size() == 0)
+        {
+            throw NotFound("There is no corresponding voxel.");
+        }
+        const Integer i(mpool.first->size() == 1 ? 0 : rng_->uniform_int(0, mpool.first->size()-1));
+
         coordinate_id_pair_type info(mpool.first->at(i));
         info.coordinate += mpool.second;
         return make_pid_voxel_pair(mpool.first, info);
