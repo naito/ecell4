@@ -145,12 +145,16 @@ BOOST_AUTO_TEST_CASE(Structure)
     boost::shared_ptr<const Sphere> sphere(
             new Sphere(Real3(.5e-6, .5e-6, .5e-6), .45e-6));
 
-    BOOST_CHECK(world.add_structure(membrane, sphere) > 0);
+    const Integer num_particles(world.add_structure(membrane, sphere));
+    BOOST_CHECK(num_particles > 0);
+
+    std::vector<SpatiocyteWorld::identified_particle> particles(world.list_particles_exact(membrane));
+
+    BOOST_CHECK_EQUAL(particles.size(), num_particles);
+
+    const Real3 position(particles.at(0).second.position());
     BOOST_CHECK(world.new_particle(
-                Particle(species,
-                         /* position = */ Real3(.5e-6, .5e-6, .95e-6),
-                         /*   radius = */ 1e-8,
-                         /*        D = */ 1e-12)).second);
+                Particle(species, position, /* radius = */ 1e-8, /* D = */ 1e-12)).second);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

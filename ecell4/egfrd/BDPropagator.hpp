@@ -2,6 +2,7 @@
 #define BD_PROPAGATOR_HPP
 
 #include <algorithm>
+#include <limits>
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/range/size.hpp>
@@ -13,11 +14,15 @@
 #include "Defs.hpp"
 #include "generator.hpp"
 #include "exceptions.hpp"
-#include "freeFunctions.hpp"
 #include "utils.hpp"
 #include "utils/random.hpp"
 #include "utils/get_default_impl.hpp"
 #include "Logger.hpp"
+
+#include <ecell4/core/get_mapper_mf.hpp>
+#include "PotentialField.hpp"
+#include <greens_functions/freeFunctions.hpp>
+// using namespace greens_functions;
 
 template<typename Ttraits_>
 class BDPropagator
@@ -47,16 +52,23 @@ public:
     typedef typename traits_type::reaction_recorder_type reaction_recorder_type;
     typedef typename traits_type::volume_clearer_type volume_clearer_type;
 
+    typedef typename ecell4::utils::get_mapper_mf<particle_id_type, position_type>::type particle_id_position_map_type;
+
+    typedef ecell4::PotentialField<particle_container_type> potential_field_type;
+    typedef typename ecell4::utils::get_mapper_mf<species_id_type, boost::shared_ptr<potential_field_type> >::type potential_field_map_type;
+
 public:
     template<typename Trange_>
     BDPropagator(
         particle_container_type& tx, network_rules_type const& rules,
         rng_type& rng, time_type dt, int max_retry_count,
         reaction_recorder_type* rrec, volume_clearer_type* vc,
-        Trange_ const& particles)
+        Trange_ const& particles,
+        potential_field_map_type const& potentials = potential_field_map_type())
         : tx_(tx), rules_(rules), rng_(rng), dt_(dt),
           max_retry_count_(max_retry_count), rrec_(rrec), vc_(vc),
-          queue_(), rejected_move_count_(0)
+          queue_(), rejected_move_count_(0),
+          potentials_(potentials)
     {
         call_with_size_if_randomly_accessible(
             boost::bind(&particle_id_vector_type::reserve, &queue_, _1),
@@ -93,31 +105,39 @@ public:
             return true;
         }
 
-        const species_id_type& species_id(pp.second.sid());
-        const molecule_info_type species(tx_.find_molecule_info(species_id));
+        const species_id_type& species_id(pp.second.species());
+        const molecule_info_type species(tx_.get_molecule_info(species_id));
         if (species.D == 0.)
             return true;
 
-        position_type const displacement(drawR_free(species));
-        position_type const new_pos(
-            tx_.apply_boundary(
-                add(pp.second.position(), displacement)));
+        position_type const displacement = drawR_free(species);
+        position_type const new_pos    = tx_.apply_structure(pp.second.position(), displacement);
+//         position_type const new_pos      = tx_.apply_boundary(reflected);
+
+        typename potential_field_map_type::const_iterator it = potentials_.find(species_id);
+        if (it != potentials_.end())
+        {
+            if (!(*it).second->try_move(rng_, pp, new_pos, tx_))
+            {
+                return true;
+            }
+        }
 
         particle_id_pair particle_to_update(
                 pp.first, particle_type(species_id,
                     new_pos, species.radius,
                     species.D));
-        boost::scoped_ptr<particle_id_pair_and_distance_list> overlapped(
+        particle_id_pair_and_distance_list overlapped(
             tx_.check_overlap(shape(particle_to_update.second),
                               particle_to_update.first));
-        switch (overlapped ? overlapped->size(): 0)
+        switch (overlapped.size())
         {
         case 0:
             break;
 
         case 1:
             {
-                particle_id_pair_and_distance const& closest(overlapped->at(0));
+                particle_id_pair_and_distance const& closest(overlapped.at(0));
                 try
                 {
                     if (!attempt_reaction(pp, closest.first))
@@ -149,7 +169,7 @@ public:
                 return true;
             }
         }
-        tx_.update_particle(particle_to_update);
+        tx_.update_particle(particle_to_update.first, particle_to_update.second);
         return true;
     }
 
@@ -166,7 +186,7 @@ private:
 
     bool attempt_reaction(particle_id_pair const& pp)
     {
-        reaction_rules const& rules(rules_.query_reaction_rule(pp.second.sid()));
+        reaction_rules const& rules(rules_.query_reaction_rule(pp.second.species()));
         if (::size(rules) == 0)
         {
             return false;
@@ -196,12 +216,6 @@ private:
                         const particle_id_pair new_p(
                             pp.first, particle_type(products[0],
                                 pp.second.position(), s0.radius, s0.D));
-                        // boost::scoped_ptr<particle_id_pair_and_distance_list>
-                        //     overlapped(tx_.check_overlap(shape(new_p.second), new_p.first));
-                        // if (overlapped && overlapped->size() > 0)
-                        // {
-                        //     throw propagation_error("no space");
-                        // }
                         if (!tx_.no_overlap(shape(new_p.second), new_p.first))
                         {
                             throw propagation_error("no space");
@@ -215,7 +229,7 @@ private:
                             }
                         }
 
-                        tx_.update_particle(new_p);
+                        tx_.update_particle(new_p.first, new_p.second);
 
                         if (rrec_)
                         {
@@ -248,24 +262,12 @@ private:
 
                             const Real rnd(rng_.random());
                             length_type pair_distance(
-                                drawR_gbd(rnd, r01, dt_, D01));
+                                greens_functions::drawR_gbd_3D(rnd, r01, dt_, D01));
                             const position_type m(random_unit_vector() * pair_distance);
                             np0 = tx_.apply_boundary(pp.second.position()
                                     + m * (s0.D / D01));
                             np1 = tx_.apply_boundary(pp.second.position()
                                     - m * (s1.D / D01));
-
-                            // boost::scoped_ptr<particle_id_pair_and_distance_list> overlapped_s0(
-                            //     tx_.check_overlap(
-                            //         particle_shape_type(np0, s0.radius()),
-                            //         pp.first));
-                            // boost::scoped_ptr<particle_id_pair_and_distance_list> overlapped_s1(
-                            //     tx_.check_overlap(
-                            //         particle_shape_type(np1, s1.radius()),
-                            //         pp.first));
-                            // if (!(overlapped_s0 && overlapped_s0->size() > 0)
-                            //     && !(overlapped_s1 && overlapped_s1->size() > 0))
-                            //     break;
 
                             const particle_shape_type sphere1(np0, s0.radius);
                             const particle_shape_type sphere2(np1, s1.radius);
@@ -286,8 +288,8 @@ private:
 
                         tx_.remove_particle(pp.first);
                         const particle_id_pair
-                            npp0(tx_.new_particle(product_id0, np0)),
-                            npp1(tx_.new_particle(product_id1, np1));
+                            npp0(tx_.new_particle(product_id0, np0).first),
+                            npp1(tx_.new_particle(product_id1, np1).first);
 
                         if (rrec_)
                         {
@@ -311,14 +313,14 @@ private:
 
     bool attempt_reaction(particle_id_pair const& pp0, particle_id_pair const& pp1)
     {
-        reaction_rules const& rules(rules_.query_reaction_rule(pp0.second.sid(), pp1.second.sid()));
+        reaction_rules const& rules(rules_.query_reaction_rule(pp0.second.species(), pp1.second.species()));
         if (::size(rules) == 0)
         {
             return false;
         }
 
-        const molecule_info_type s0(tx_.find_molecule_info(pp0.second.sid())),
-                s1(tx_.find_molecule_info(pp1.second.sid()));
+        const molecule_info_type s0(tx_.get_molecule_info(pp0.second.species())),
+                s1(tx_.get_molecule_info(pp1.second.species()));
         const length_type r01(s0.radius + s1.radius);
 
         const Real rnd(rng_.random());
@@ -328,7 +330,7 @@ private:
                 i(boost::begin(rules)), e(boost::end(rules)); i != e; ++i)
         {
             reaction_rule_type const& r(*i);
-            const Real p(r.k() * dt_ / ((I_bd(r01, dt_, s0.D) + I_bd(r01, dt_, s1.D)) * 4.0 * M_PI));
+            const Real p(r.k() * dt_ / ((greens_functions::I_bd_3D(r01, dt_, s0.D) + greens_functions::I_bd_3D(r01, dt_, s1.D)) * 4.0 * M_PI));
             BOOST_ASSERT(p >= 0.);
             prob += p;
             if (prob >= 1.)
@@ -357,17 +359,10 @@ private:
                             tx_.apply_boundary(
                                 divide(
                                     add(multiply(pp0.second.position(), s1.D),
-                                        multiply(tx_.cyclic_transpose(
+                                        multiply(tx_.periodic_transpose(
                                             pp1.second.position(),
                                             pp0.second.position()), s0.D)),
                                     (s0.D + s1.D))));
-                        // boost::scoped_ptr<particle_id_pair_and_distance_list> overlapped(
-                        //     tx_.check_overlap(particle_shape_type(new_pos, sp.radius()),
-                        //                       pp0.first, pp1.first));
-                        // if (overlapped && overlapped->size() > 0)
-                        // {
-                        //     throw propagation_error("no space");
-                        // }
                         if (!tx_.no_overlap(
                             particle_shape_type(new_pos, sp.radius),
                             pp0.first, pp1.first))
@@ -387,7 +382,7 @@ private:
 
                         remove_particle(pp0.first);
                         remove_particle(pp1.first);
-                        particle_id_pair npp(tx_.new_particle(product, new_pos));
+                        particle_id_pair npp(tx_.new_particle(product, new_pos).first);
                         if (rrec_)
                         {
                             // (*rrec_)(
@@ -401,7 +396,6 @@ private:
                     remove_particle(pp0.first);
                     remove_particle(pp1.first);
                     break;
-                
                 default:
                     throw not_implemented("bimolecular reactions that produce more than one product are not supported");
                 }
@@ -439,6 +433,7 @@ private:
     volume_clearer_type* const vc_;
     particle_id_vector_type queue_;
     int rejected_move_count_;
+    potential_field_map_type const& potentials_;
     static Logger& log_;
 };
 

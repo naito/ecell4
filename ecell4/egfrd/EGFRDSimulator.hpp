@@ -36,17 +36,19 @@
 #include "DomainID.hpp"
 #include "Shell.hpp"
 //#include "EventScheduler.hpp"
-#include "PairGreensFunction.hpp"
 #include "ParticleSimulator.hpp"
 #include "MatrixSpace.hpp"
 #include "AnalyticalSingle.hpp"
 #include "AnalyticalPair.hpp"
 #include "Multi.hpp"
-#include "GreensFunction3DRadAbs.hpp"
-#include "GreensFunction3DRadInf.hpp"
-#include "GreensFunction3DAbsSym.hpp"
-#include "GreensFunction3DAbs.hpp"
-#include "GreensFunction3D.hpp"
+
+#include <greens_functions/PairGreensFunction.hpp>
+#include <greens_functions/GreensFunction3DRadAbs.hpp>
+#include <greens_functions/GreensFunction3DRadInf.hpp>
+#include <greens_functions/GreensFunction3DAbsSym.hpp>
+#include <greens_functions/GreensFunction3DAbs.hpp>
+#include <greens_functions/GreensFunction3D.hpp>
+// using namespace greens_functions;
 
 
 template<typename Tworld_>
@@ -111,25 +113,25 @@ struct get_greens_function {};
 template<>
 struct get_greens_function<ecell4::Sphere>
 {
-    typedef GreensFunction3DAbsSym type;
+    typedef greens_functions::GreensFunction3DAbsSym type;
 };
 
 // template<>
 // struct get_greens_function<Cylinder>
 // {
-//     typedef GreensFunction3DAbsSym type;
+//     typedef greens_functions::GreensFunction3DAbsSym type;
 // };
 // 
 // template<>
 // struct get_greens_function<Sphere>
 // {
-//     typedef GreensFunction3DAbsSym type;
+//     typedef greens_functions::GreensFunction3DAbsSym type;
 // };
 
 template<>
 struct get_greens_function<ecell4::Cylinder>
 {
-    typedef GreensFunction3DAbsSym type;
+    typedef greens_functions::GreensFunction3DAbsSym type;
 };
 
 template<typename T_>
@@ -138,29 +140,29 @@ struct get_pair_greens_function {};
 template<>
 struct get_pair_greens_function<ecell4::Sphere>
 {
-    typedef GreensFunction3DRadAbs iv_type;
-    typedef GreensFunction3DAbsSym com_type;
+    typedef greens_functions::GreensFunction3DRadAbs iv_type;
+    typedef greens_functions::GreensFunction3DAbsSym com_type;
 };
 
 template<>
 struct get_pair_greens_function<ecell4::Cylinder>
 {
-    typedef GreensFunction3DRadAbs iv_type;
-    typedef GreensFunction3DAbsSym com_type;
+    typedef greens_functions::GreensFunction3DRadAbs iv_type;
+    typedef greens_functions::GreensFunction3DAbsSym com_type;
 };
 
 // template<>
 // struct get_pair_greens_function<Sphere>
 // {
-//     typedef GreensFunction3DRadAbs iv_type;
-//     typedef GreensFunction3DAbsSym com_type;
+//     typedef greens_functions::GreensFunction3DRadAbs iv_type;
+//     typedef greens_functions::GreensFunction3DAbsSym com_type;
 // };
 // 
 // template<>
 // struct get_pair_greens_function<Cylinder>
 // {
-//     typedef GreensFunction3DRadAbs iv_type;
-//     typedef GreensFunction3DAbsSym com_type;
+//     typedef greens_functions::GreensFunction3DRadAbs iv_type;
+//     typedef greens_functions::GreensFunction3DAbsSym com_type;
 // };
 
 } // namespace detail
@@ -652,7 +654,7 @@ protected:
         position_type draw_iv(spherical_pair_type const& domain,
                               time_type dt, position_type const& old_iv) const
         {
-            boost::scoped_ptr<PairGreensFunction> const gf(
+            boost::scoped_ptr<greens_functions::PairGreensFunction> const gf(
                 choose_pair_greens_function(domain, dt));
             length_type const r(draw_r(
                 rng_, *gf, dt, domain.a_r(), domain.sigma()));
@@ -687,7 +689,7 @@ protected:
             BOOST_ASSERT(::size(domain.reactions()) == 1);
             throw not_implemented("unsupported pair type.");
             // length_type const r(
-            //     draw_r(rng_, GreensFunction3DRadAbs(domain.D_tot(),
+            //     draw_r(rng_, greens_functions::GreensFunction3DRadAbs(domain.D_tot(),
             //         domain.reactions()[0].k(), domain.r0(),
             //         domain.sigma(), domain.a_r()),
             //        dt, domain.a_r(), domain.sigma()));
@@ -709,7 +711,7 @@ protected:
     //         return add(
     //             domain.shell().second.position(),
     //             draw_r(rng_,
-    //                     GreensFunction3DAbsSym(domain.D_R(), domain.a_R()),
+    //                     greens_functions::GreensFunction3DAbsSym(domain.D_R(), domain.a_R()),
     //                     dt, domain.a_R()));
 
     //     }
@@ -717,7 +719,7 @@ protected:
     //     position_type draw_iv(spherical_pair_type const& domain,
     //                           time_type dt, position_type const& old_iv) const
     //     {
-    //         boost::scoped_ptr<PairGreensFunction> const gf(
+    //         boost::scoped_ptr<greens_functions::PairGreensFunction> const gf(
     //             choose_pair_greens_function(domain, dt));
     //         length_type const r(draw_r(
     //             rng_, *gf, dt, domain.a_r(), domain.sigma()));
@@ -751,7 +753,7 @@ protected:
     //     {
     //         BOOST_ASSERT(::size(domain.reactions()) == 1);
     //         length_type const r(
-    //             draw_r(rng_, GreensFunction3DRadAbs(domain.D_tot(),
+    //             draw_r(rng_, greens_functions::GreensFunction3DRadAbs(domain.D_tot(),
     //                 domain.reactions()[0].k(), domain.r0(),
     //                 domain.sigma(), domain().a_r()),
     //                dt, domain.a_r(), domain.sigma()));
@@ -780,14 +782,14 @@ protected:
                         rng_.uniform(-1., 1.)),
                     draw_r(
                         rng_,
-                        GreensFunction3DAbsSym(domain.D_R(), domain.a_R()),
+                        greens_functions::GreensFunction3DAbsSym(domain.D_R(), domain.a_R()),
                         dt, domain.a_R())));
         }
 
         position_type draw_iv(spherical_pair_type const& domain,
                               time_type dt, position_type const& old_iv)
         {
-            boost::scoped_ptr<PairGreensFunction> const gf(
+            boost::scoped_ptr<greens_functions::PairGreensFunction> const gf(
                 choose_pair_greens_function(domain, dt));
             length_type const r(domain.a_r());
             length_type const theta(draw_theta(rng_, *gf, dt, r));
@@ -814,7 +816,7 @@ protected:
 
             // length_type const r_R(draw_r(
             //     rng_,
-            //     GreensFunction3DAbsSym(domain.D_R(), domain.a_R()),
+            //     greens_functions::GreensFunction3DAbsSym(domain.D_R(), domain.a_R()),
             //     dt, domain.a_R()));
             // return add(
             //     domain.shell().second.position(),
@@ -849,14 +851,14 @@ protected:
                         rng_.uniform(-1., 1.)),
                     draw_r(
                         rng_,
-                        GreensFunction3DAbsSym(domain.D_R(), domain.a_R()),
+                        greens_functions::GreensFunction3DAbsSym(domain.D_R(), domain.a_R()),
                         dt, domain.a_R())));
         }
 
         position_type draw_iv(spherical_pair_type const& domain,
                               time_type dt, position_type const& old_iv)
         {
-            boost::scoped_ptr<PairGreensFunction> const gf(
+            boost::scoped_ptr<greens_functions::PairGreensFunction> const gf(
                 choose_pair_greens_function(domain, dt));
             length_type const r(domain.sigma());
             length_type const theta(draw_theta(rng_, *gf, dt, r));
@@ -882,7 +884,7 @@ protected:
 
             // length_type const r_R(draw_r(
             //     rng_,
-            //     GreensFunction3DAbsSym(domain.D_R(), domain.a_R()),
+            //     greens_functions::GreensFunction3DAbsSym(domain.D_R(), domain.a_R()),
             //     dt, domain.a_R()));
             // return add(
             //     domain.shell().second.position(),
@@ -917,14 +919,14 @@ protected:
                         rng_.uniform(-1., 1.)),
                     draw_r(
                         rng_,
-                        GreensFunction3DAbsSym(domain.D_R(), domain.a_R()),
+                        greens_functions::GreensFunction3DAbsSym(domain.D_R(), domain.a_R()),
                         dt, domain.a_R())));
         }
 
         position_type draw_iv(spherical_pair_type const& domain,
                               time_type dt, position_type const& old_iv)
         {
-            boost::scoped_ptr<PairGreensFunction> const gf(
+            boost::scoped_ptr<greens_functions::PairGreensFunction> const gf(
                 choose_pair_greens_function(domain, dt));
             length_type const r(draw_r(
                 rng_, *gf, dt, domain.a_r(), domain.sigma()));
@@ -952,7 +954,7 @@ protected:
 
             // length_type const r_R(draw_r(
             //     rng_,
-            //     GreensFunction3DAbsSym(domain.D_R(), domain.a_R()),
+            //     greens_functions::GreensFunction3DAbsSym(domain.D_R(), domain.a_R()),
             //     dt, domain.a_R()));
             // return add(
             //     domain.shell().second.position(),
@@ -966,7 +968,7 @@ protected:
             // BOOST_ASSERT(::size(domain.reactions()) == 1);
             // length_type const r(
             //     draw_r(rng_,
-            //         GreensFunction3DRadAbs(
+            //         greens_functions::GreensFunction3DRadAbs(
             //             domain.D_tot(),
             //             domain.reactions()[0].k(), domain.r0(),
             //             domain.sigma(), domain.a_r()),
@@ -1712,7 +1714,8 @@ protected:
             domain_kind& kind;
         };
 
-        molecule_info_type const& species((*base_type::world_).find_molecule_info(p.second.sid()));
+        molecule_info_type const species((*base_type::world_).get_molecule_info(p.second.species()));
+        // molecule_info_type const& species((*base_type::world_).find_molecule_info(p.second.species()));
         dynamic_cast<particle_simulation_structure_type const&>(*(*base_type::world_).get_structure(species.structure_id)).accept(factory(this, p, did, new_single, kind));
         boost::shared_ptr<domain_type> const retval(new_single);
         domains_.insert(std::make_pair(did, retval));
@@ -1793,7 +1796,7 @@ protected:
                 : _this(_this), p0(p0), p1(p1), com(com), iv(iv),
                   shell_size(shell_size), did(did),
                   rules((*_this->network_rules_).query_reaction_rule(
-                        p0.second.sid(), p1.second.sid())),
+                        p0.second.species(), p1.second.species())),
                   new_pair(new_pair), kind(kind) {}
 
             EGFRDSimulator* _this;
@@ -1808,7 +1811,8 @@ protected:
             domain_kind& kind;
         };
 
-        molecule_info_type const& species((*base_type::world_).find_molecule_info(p0.second.sid()));
+        molecule_info_type const species((*base_type::world_).get_molecule_info(p0.second.species()));
+        // molecule_info_type const& species((*base_type::world_).find_molecule_info(p0.second.species()));
         dynamic_cast<particle_simulation_structure_type&>(*(*base_type::world_).get_structure(species.structure_id)).accept(factory(this, p0, p1, com, iv, shell_size, did, new_pair, kind));
 
         boost::shared_ptr<domain_type> const retval(new_pair);
@@ -2055,7 +2059,8 @@ protected:
         particle_type const& old(domain.particle().second);
         domain.particle().second = particle_type(old.sid(),
                 new_pos, old.radius(), old.D());
-        (*base_type::world_).update_particle(domain.particle());
+        (*base_type::world_).update_particle(
+            domain.particle().first, domain.particle().second);
 
         domain.position() = new_pos;
         domain.size() = domain.particle().second.radius();
@@ -2086,8 +2091,10 @@ protected:
             BOOST_ASSERT(check_pair_pos(domain, new_particles));
         }
 
-        (*base_type::world_).update_particle(new_particles[0]);
-        (*base_type::world_).update_particle(new_particles[1]);
+        (*base_type::world_).update_particle(
+            new_particles[0].first, new_particles[0].second);
+        (*base_type::world_).update_particle(
+            new_particles[1].first, new_particles[1].second);
 
         remove_domain(domain);
 
@@ -2275,8 +2282,9 @@ protected:
     bool attempt_single_reaction(single_type& domain)
     {
         const particle_id_pair reactant(domain.particle());
-        const molecule_info_type reactant_species((*base_type::world_).find_molecule_info(reactant.second.sid()));
-        reaction_rules const& rules((*base_type::network_rules_).query_reaction_rule(reactant.second.sid()));
+        const molecule_info_type reactant_species((*base_type::world_).get_molecule_info(reactant.second.species()));
+        // const molecule_info_type reactant_species((*base_type::world_).find_molecule_info(reactant.second.species()));
+        reaction_rules const& rules((*base_type::network_rules_).query_reaction_rule(reactant.second.species()));
         if (::size(rules) == 0)
         {
             return false;
@@ -2303,7 +2311,7 @@ protected:
         case 1: 
             {
                 species_id_type const& product_id0(r.get_products()[0]);
-                molecule_info_type const& product_species(
+                molecule_info_type const product_species(
                     (*base_type::world_).get_molecule_info(product_id0));
 
                 if (reactant_species.radius < product_species.radius)
@@ -2320,10 +2328,10 @@ protected:
                 (*base_type::world_).remove_particle(reactant.first);
                 // particle_id_pair product(
                 //     (*base_type::world_).new_particle(
-                //         product_species.id(), reactant.second.position()));
+                //         product_species.id(), reactant.second.position()).first);
                 particle_id_pair product(
                     (*base_type::world_).new_particle(
-                        product_id0, reactant.second.position()));
+                        product_id0, reactant.second.position()).first);
                 boost::shared_ptr<single_type> new_domain(create_single(product));
                 add_event(*new_domain, SINGLE_EVENT_ESCAPE);
                 if (base_type::rrec_)
@@ -2339,14 +2347,22 @@ protected:
             {
                 species_id_type const& product_id0(r.get_products()[0]);
                 species_id_type const& product_id1(r.get_products()[1]);
-                molecule_info_type const* const product_species[] = {
-                    &(*base_type::world_).get_molecule_info(product_id0),
-                    &(*base_type::world_).get_molecule_info(product_id1)
+                // molecule_info_type const* const product_species[] = {
+                //     &(*base_type::world_).get_molecule_info(product_id0),
+                //     &(*base_type::world_).get_molecule_info(product_id1)
+                // };
+
+                // D_type const D0(product_species[0]->D), D1(product_species[1]->D);
+                // length_type const radius0(product_species[0]->radius),
+                //     radius1(product_species[1]->radius);
+                molecule_info_type const product_species[] = {
+                    (*base_type::world_).get_molecule_info(product_id0),
+                    (*base_type::world_).get_molecule_info(product_id1)
                 };
 
-                D_type const D0(product_species[0]->D), D1(product_species[1]->D);
-                length_type const radius0(product_species[0]->radius),
-                    radius1(product_species[1]->radius);
+                D_type const D0(product_species[0].D), D1(product_species[1].D);
+                length_type const radius0(product_species[0].radius),
+                    radius1(product_species[1].radius);
                 D_type const D01(D0 + D1);
                 length_type r01(radius0 + radius1);
                 Real const rad(std::max(
@@ -2408,9 +2424,9 @@ protected:
 
                 particle_id_pair const pp[] = {
                     (*base_type::world_).new_particle(
-                        product_id0, new_particles[0].position()),
+                        product_id0, new_particles[0].position()).first,
                     (*base_type::world_).new_particle(
-                        product_id1, new_particles[1].position())
+                        product_id1, new_particles[1].position()).first
                 };
                 // create domains for two particles and add them to
                 // the event queue
@@ -2509,8 +2525,8 @@ protected:
     draw_single_reaction_time(AnalyticalPair<traits_type, Tshell> const& domain)
     {
         time_type const dt[2] = {
-            draw_single_reaction_time(domain.particles()[0].second.sid()),
-            draw_single_reaction_time(domain.particles()[1].second.sid())
+            draw_single_reaction_time(domain.particles()[0].second.species()),
+            draw_single_reaction_time(domain.particles()[1].second.species())
         };
         if (dt[0] < dt[1])
         {
@@ -2529,7 +2545,7 @@ protected:
         typedef Tshell shell_type;
         typedef typename shell_type::shape_type shape_type;
         typedef typename detail::get_greens_function<shape_type>::type greens_function;
-        time_type const dt_reaction(draw_single_reaction_time(domain.particle().second.sid()));
+        time_type const dt_reaction(draw_single_reaction_time(domain.particle().second.species()));
         time_type const dt_escape_or_interaction(draw_escape_or_interaction_time(domain));
         LOG_DEBUG(("determine_next_event: %s => dt_reaction=%.16g, "
                    "dt_escape_or_interaction=%.16g",
@@ -2837,7 +2853,7 @@ protected:
 
         position_type iv(
                 subtract(domain.position(),
-                    (*base_type::world_).cyclic_transpose(
+                    (*base_type::world_).periodic_transpose(
                         possible_partner.position(),
                         domain.position())));
         length_type const r0(length(iv));
@@ -3359,7 +3375,7 @@ protected:
     }
 
     template<typename Tshell>
-    GreensFunction3DRadAbs::EventKind
+    greens_functions::GreensFunction3DRadAbs::EventKind
     draw_iv_event_type(AnalyticalPair<traits_type, Tshell> const& domain)
     {
         typedef Tshell shell_type;
@@ -3404,10 +3420,10 @@ protected:
             // Draw actual pair event for iv at very last minute.
             switch (draw_iv_event_type(domain))
             {
-            case GreensFunction3DRadAbs::IV_ESCAPE:
+            case greens_functions::GreensFunction3DRadAbs::IV_ESCAPE:
                 kind = PAIR_EVENT_IV_ESCAPE;
                 break;
-            case GreensFunction3DRadAbs::IV_REACTION:
+            case greens_functions::GreensFunction3DRadAbs::IV_REACTION:
                 kind = PAIR_EVENT_IV_REACTION;
                 break;
             }
@@ -3487,7 +3503,7 @@ protected:
                 case 1:
                     {
                         species_id_type const& new_species_id(r.get_products()[0]);
-                        molecule_info_type const& new_species(
+                        molecule_info_type const new_species(
                             (*base_type::world_).get_molecule_info(new_species_id));
 
                         // calculate new R
@@ -3509,7 +3525,7 @@ protected:
 
                         particle_id_pair const new_particle(
                             (*base_type::world_).new_particle(
-                                new_species_id, new_com));
+                                new_species_id, new_com).first);
                         boost::shared_ptr<single_type> new_single(
                             create_single(new_particle));
                         add_event(*new_single, SINGLE_EVENT_ESCAPE);
@@ -3584,7 +3600,7 @@ protected:
 
         try
         {
-            molecule_info_type const& minfo(
+            molecule_info_type const minfo(
                 (*base_type::world_).get_molecule_info(sp));
 
             //XXX: A cuboidal region is expected here.
@@ -3604,7 +3620,7 @@ protected:
             }
 
             particle_id_pair pp(
-                (*base_type::world_).new_particle(sp, new_pos));
+                (*base_type::world_).new_particle(sp, new_pos).first);
 
             if (base_type::rrec_)
             {
@@ -3951,14 +3967,14 @@ protected:
 
     bool check_overlap(particle_shape_type const& s) const
     {
-        boost::scoped_ptr<particle_id_pair_and_distance_list> overlapped(
+        const particle_id_pair_and_distance_list overlapped(
             (*base_type::world_).check_overlap(s));
 
-        if (overlapped && ::size(*overlapped))
+        if (overlapped.size() > 0)
         {
             LOG_DEBUG(("check_overlap %s failed:",
                 boost::lexical_cast<std::string>(s).c_str()));
-            dump_overlapped(*overlapped);
+            dump_overlapped(overlapped);
             return false;
         }
         return true;
@@ -3966,14 +3982,14 @@ protected:
 
     bool check_overlap(particle_shape_type const& s, particle_id_type const& ignore) const
     {
-        boost::scoped_ptr<particle_id_pair_and_distance_list> overlapped(
+        const particle_id_pair_and_distance_list overlapped(
             (*base_type::world_).check_overlap(s, ignore));
 
-        if (overlapped && ::size(*overlapped))
+        if (overlapped.size() > 0)
         {
             LOG_DEBUG(("check_overlap %s failed:",
                 boost::lexical_cast<std::string>(s).c_str());
-            dump_overlapped(*overlapped));
+            dump_overlapped(overlapped));
             return false;
         }
         return true;
@@ -3981,14 +3997,14 @@ protected:
 
     bool check_overlap(particle_shape_type const& s, particle_id_type const& ignore1, particle_id_type const& ignore2) const
     {
-        boost::scoped_ptr<particle_id_pair_and_distance_list> overlapped(
+        const particle_id_pair_and_distance_list overlapped(
             (*base_type::world_).check_overlap(s, ignore1, ignore2));
 
-        if (overlapped && ::size(*overlapped))
+        if (overlapped.size() > 0)
         {
             LOG_DEBUG(("check_overlap %s failed:",
                 boost::lexical_cast<std::string>(s).c_str()));
-            dump_overlapped(*overlapped);
+            dump_overlapped(overlapped);
             return false;
         }
         return true;
@@ -4099,7 +4115,7 @@ protected:
     }
 
     template<typename T>
-    static PairGreensFunction* choose_pair_greens_function(
+    static greens_functions::PairGreensFunction* choose_pair_greens_function(
             AnalyticalPair<traits_type, T> const& domain, time_type t)
     {
         length_type const r0(domain.r0());
@@ -4114,17 +4130,17 @@ protected:
             if (distance_from_shell < threshold_distance)
             {
                 // near both a and sigma;
-                // use GreensFunction3DRadAbs
+                // use greens_functions::GreensFunction3DRadAbs
                 LOG_DEBUG(("GF: normal"));
-                return new GreensFunction3DRadAbs(
+                return new greens_functions::GreensFunction3DRadAbs(
                     domain.D_tot(), domain.reactions()[0].k(),
                     r0, domain.sigma(), domain.a_r());
             }
             else
             {
-                // near sigma; use GreensFunction3DRadInf
+                // near sigma; use greens_functions::GreensFunction3DRadInf
                 LOG_DEBUG(("GF: only sigma"));
-                return new GreensFunction3DRadInf(
+                return new greens_functions::GreensFunction3DRadInf(
                     domain.D_tot(), domain.reactions()[0].k(),
                     r0, domain.sigma());
             }
@@ -4135,14 +4151,14 @@ protected:
             {
                 // near a;
                 LOG_DEBUG(("GF: only a"));
-                return new GreensFunction3DAbs(
+                return new greens_functions::GreensFunction3DAbs(
                     domain.D_tot(), r0, domain.a_r());
             }
             else
             {
                 // distant from both a and sigma; 
                 LOG_DEBUG(("GF: free"));
-                return new GreensFunction3D(domain.D_tot(), r0);
+                return new greens_functions::GreensFunction3D(domain.D_tot(), r0);
             }
         }
     }

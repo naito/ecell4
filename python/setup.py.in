@@ -7,12 +7,21 @@ from setuptools import setup
 from distutils.core import Command, Extension
 # from distutils.core import setup, Command, Extension
 
+from logging import getLogger, StreamHandler, Formatter, DEBUG
+logger = getLogger(__name__)
+handler = StreamHandler()
+formatter = Formatter('%(levelname)s:%(name)s:%(message)s')
+handler.setLevel(DEBUG)
+handler.setFormatter(formatter)
+logger.setLevel(DEBUG)
+logger.addHandler(handler)
+
 try:
     from Cython.Build import cythonize
     from Cython.Distutils import build_ext
 except ImportError:
-    print("You don't seem to have Cython installed. Please get a")
-    print("copy from www.cython.org and install it")
+    logger.error("You don't seem to have Cython installed. Please get a")
+    logger.error("copy from www.cython.org and install it")
     sys.exit(1)
 
 os.environ["CC"] = "${CMAKE_C_COMPILER}"
@@ -20,6 +29,12 @@ os.environ["CXX"] = "${CMAKE_CXX_COMPILER}"
 source_dir = "${PROJECT_SOURCE_DIR}"
 python_dir = os.path.join("${CMAKE_CURRENT_SOURCE_DIR}", "lib")
 include_dirs = [source_dir] + "${INCLUDE_PATH}".split(";")
+
+logger.debug("CC={}".format(os.environ["CC"]))
+logger.debug("CXX={}".format(os.environ["CXX"]))
+logger.debug("source_dir={}".format(source_dir))
+logger.debug("python_dir={}".format(python_dir))
+logger.debug("include_dirs={}".format(include_dirs))
 
 sys.path.append(python_dir)
 
@@ -49,15 +64,17 @@ class run_tests(Command):
         test_runner = unittest.TextTestRunner()
         test_runner.run(suite)
 
-with_cpp_shared_libraries = False
-with_hdf5 = (sys.platform in ("win32", "darwin") or not with_cpp_shared_libraries)
 libraries = []
 library_dirs = []
+
+with_cpp_shared_libraries = False
 
 if "--prefer-shared" in sys.argv:
     #XXX: This might be not a proper way to give a user defined parameter
     with_cpp_shared_libraries = True
     sys.argv.remove("--prefer-shared")
+
+with_hdf5 = (sys.platform in ("win32", "darwin") or not with_cpp_shared_libraries)
 
 if "--hdf5" in sys.argv:
     #XXX: This might be not a proper way to give a user defined parameter
@@ -84,6 +101,8 @@ else: # for linux
     libraries.extend(['gsl', 'gslcblas', 'm'])
     extra_compile_args = ["-DNO_BESSEL_TABLE", "-DHAVE_CONFIG_H"]
 
+logger.debug("with_hdf5={}".format(with_hdf5))
+
 if with_hdf5:
     libraries.extend(['hdf5_cpp', 'hdf5'])
     library_dirs.extend("${HDF5_LIBRARY_DIRS}".split(";"))
@@ -99,13 +118,18 @@ if True: # with_vtk
 libraries = [name for name in libraries if name.strip() != ""]
 library_dirs = [path for path in library_dirs if path.strip() != ""]
 
+logger.debug("libraries={}".format(libraries))
+logger.debug("library_dirs={}".format(library_dirs))
+logger.debug("extra_compile_args={}".format(extra_compile_args))
+logger.debug("with_cpp_shared_libraries={}".format(with_cpp_shared_libraries))
+
 if with_cpp_shared_libraries:
     ext_modules = [
         Extension("ecell4.core", sources=[os.path.join(python_dir, "ecell4/core.pyx")],
             include_dirs=include_dirs, libraries=["ecell4-core"], language="c++",
             extra_compile_args=extra_compile_args),
         Extension("ecell4.egfrd", sources=[os.path.join(python_dir, "ecell4/egfrd.pyx")],
-            include_dirs=include_dirs, libraries=["ecell4-core", "ecell4-egfrd"],
+            include_dirs=include_dirs, libraries=["ecell4-core", "ecell4-egfrd", "greens_functions"],
             language="c++", extra_compile_args=extra_compile_args + ["-w"]),
         Extension("ecell4.gillespie", sources=[os.path.join(python_dir, "ecell4/gillespie.pyx")],
             include_dirs=include_dirs, libraries=["ecell4-core", "ecell4-gillespie"],
@@ -125,6 +149,7 @@ if with_cpp_shared_libraries:
         ]
 else:
     core_src = glob.glob(os.path.join(source_dir, "ecell4/core/*.cpp"))
+    greens_functions_src = glob.glob(os.path.join(source_dir, "greens_functions/*.cpp"))
     ext_modules = [
         Extension("ecell4.core", sources=[os.path.join(python_dir, "ecell4/core.pyx")] + core_src,
             extra_compile_args=extra_compile_args, library_dirs=library_dirs,
@@ -156,7 +181,8 @@ else:
             libraries=libraries, include_dirs=include_dirs, language="c++"),
         Extension("ecell4.egfrd",
             sources=[os.path.join(python_dir, "ecell4/egfrd.pyx")]
-                + glob.glob(os.path.join(source_dir, "ecell4/egfrd/*.cpp")) + core_src,
+                + glob.glob(os.path.join(source_dir, "ecell4/egfrd/*.cpp")) + core_src
+                + greens_functions_src,
             extra_compile_args=extra_compile_args, library_dirs=library_dirs,
             libraries=libraries, include_dirs=include_dirs, language="c++")
         ]

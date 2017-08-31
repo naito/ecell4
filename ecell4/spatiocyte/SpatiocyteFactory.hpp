@@ -1,5 +1,5 @@
-#ifndef __ECELL4_LATTICE_LATTICE_FACTORY_HPP
-#define __ECELL4_LATTICE_LATTICE_FACTORY_HPP
+#ifndef ECELL4_LATTICE_LATTICE_FACTORY_HPP
+#define ECELL4_LATTICE_LATTICE_FACTORY_HPP
 
 #include <ecell4/core/SimulatorFactory.hpp>
 #include <ecell4/core/RandomNumberGenerator.hpp>
@@ -24,22 +24,31 @@ public:
 
 public:
 
-    SpatiocyteFactory(const Real voxel_radius=0.0)
-        : base_type(), voxel_radius_(voxel_radius), rng_()
+    SpatiocyteFactory(const Real voxel_radius = default_voxel_radius())
+        : base_type(), rng_(), voxel_radius_(voxel_radius)
     {
         ; // do nothing
     }
 
-    SpatiocyteFactory(const Real voxel_radius,
-        const boost::shared_ptr<RandomNumberGenerator>& rng)
-        : base_type(), voxel_radius_(voxel_radius), rng_(rng)
+    static inline const Real default_voxel_radius()
     {
-        ; // do nothing
+        return 0.0;
     }
 
     virtual ~SpatiocyteFactory()
     {
         ; // do nothing
+    }
+
+    SpatiocyteFactory& rng(const boost::shared_ptr<RandomNumberGenerator>& rng)
+    {
+        rng_ = rng;
+        return (*this);
+    }
+
+    inline SpatiocyteFactory* rng_ptr(const boost::shared_ptr<RandomNumberGenerator>& rng)
+    {
+        return &(this->rng(rng));  //XXX: == this
     }
 
     virtual SpatiocyteWorld* create_world(const std::string filename) const
@@ -92,4 +101,4 @@ protected:
 
 } // ecell4
 
-#endif /* __ECELL4_LATTICE_LATTICE_FACTORY_HPP */
+#endif /* ECELL4_LATTICE_LATTICE_FACTORY_HPP */

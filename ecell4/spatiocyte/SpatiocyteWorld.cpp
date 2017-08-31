@@ -83,12 +83,9 @@ MoleculeInfo SpatiocyteWorld::get_molecule_info(const Species& sp) const
     const bool with_radius(sp.has_attribute("radius"));
     const bool with_loc(sp.has_attribute("location"));
 
-    Real radius(with_radius ? std::atof(sp.get_attribute("radius").c_str())
-                            : voxel_radius());
-    Real D(with_D ? std::atof(sp.get_attribute("D").c_str())
-                  : 0.0);
-    std::string loc(with_loc ? sp.get_attribute("location")
-                             : "");
+    Real radius(with_radius ? sp.get_attribute_as<Real>("radius") : voxel_radius());
+    Real D(with_D ? sp.get_attribute_as<Real>("D") : 0.0);
+    std::string loc(with_loc ? sp.get_attribute_as<std::string>("location") : "");
 
     if (!with_D || !with_radius)
     {
@@ -98,18 +95,17 @@ MoleculeInfo SpatiocyteWorld::get_molecule_info(const Species& sp) const
 
             if (!with_D && attributed.has_attribute("D"))
             {
-                D = std::atof(attributed.get_attribute("D").c_str());
+                D = attributed.get_attribute_as<Real>("D");
             }
 
             if (!with_radius && attributed.has_attribute("radius"))
             {
-                radius = std::atof(
-                    attributed.get_attribute("radius").c_str());
+                radius = attributed.get_attribute_as<Real>("radius");
             }
 
             if (!with_loc && attributed.has_attribute("location"))
             {
-                loc = attributed.get_attribute("location");
+                loc = attributed.get_attribute_as<std::string>("location");
             }
         }
     }
@@ -485,14 +481,12 @@ void SpatiocyteWorld::bind_to(boost::shared_ptr<Model> model)
 void SpatiocyteWorld::save(const std::string& filename) const
 {
 #ifdef WITH_HDF5
-    boost::scoped_ptr<H5::H5File>
-        fout(new H5::H5File(filename.c_str(), H5F_ACC_TRUNC));
+    boost::scoped_ptr<H5::H5File> fout(new H5::H5File(filename.c_str(), H5F_ACC_TRUNC));
     rng_->save(fout.get());
     sidgen_.save(fout.get());
-    boost::scoped_ptr<H5::Group>
-        group(new H5::Group(fout->createGroup("LatticeSpace")));
+    boost::scoped_ptr<H5::Group> group(new H5::Group(fout->createGroup("LatticeSpace")));
     root_->save_hdf5(group.get());
-    extras::save_version_information(fout.get(), "ecell4-spatiocyte-0.0-1");
+    extras::save_version_information(fout.get(), std::string("ecell4-spatiocyte-") + std::string(ECELL4_VERSION));
 #else
     throw NotSupported("This method requires HDF5. The HDF5 support is turned off.");
 #endif
@@ -501,8 +495,25 @@ void SpatiocyteWorld::save(const std::string& filename) const
 void SpatiocyteWorld::load(const std::string& filename)
 {
 #ifdef WITH_HDF5
-    boost::scoped_ptr<H5::H5File>
-        fin(new H5::H5File(filename.c_str(), H5F_ACC_RDONLY));
+    boost::scoped_ptr<H5::H5File> fin(new H5::H5File(filename.c_str(), H5F_ACC_RDONLY));
+
+    const std::string required = "ecell4-spatiocyte-4.1.0";
+    try
+    {
+        const std::string version = extras::load_version_information(*fin);
+        if (!extras::check_version_information(version, required))
+        {
+            std::stringstream ss;
+            ss << "The version of the given file [" << version
+                << "] is too old. [" << required << "] or later is required.";
+            throw NotSupported(ss.str());
+        }
+    }
+    catch(H5::GroupIException not_found_error)
+    {
+        throw NotFound("No version information was found.");
+    }
+
     const H5::Group group(fin->openGroup("LatticeSpace"));
     root_->load_hdf5(group);
     sidgen_.load(*fin);

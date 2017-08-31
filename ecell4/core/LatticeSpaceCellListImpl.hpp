@@ -1,5 +1,5 @@
-#ifndef __ECELL4_LATTICE_SPACE_CELL_LIST_IMPL_HPP
-#define __ECELL4_LATTICE_SPACE_CELL_LIST_IMPL_HPP
+#ifndef ECELL4_LATTICE_SPACE_CELL_LIST_IMPL_HPP
+#define ECELL4_LATTICE_SPACE_CELL_LIST_IMPL_HPP
 
 #include "Context.hpp"
 #include "MolecularType.hpp"
@@ -264,11 +264,6 @@ public:
         return true;
     }
 
-    bool can_move(const coordinate_type& src, const coordinate_type& dest) const
-    {
-        return false;
-    }
-
     virtual bool move(
         const coordinate_type& src, const coordinate_type& dest,
         const std::size_t candidate=0)
@@ -315,6 +310,34 @@ public:
         return true;
     }
 
+    virtual bool can_move(const coordinate_type& src, const coordinate_type& dest) const
+    {
+        if (src == dest)
+        {
+            return false;
+        }
+
+        const VoxelPool* src_vp(get_voxel_pool_at(src));
+        if (src_vp->is_vacant())
+        {
+            return false;
+        }
+
+        const VoxelPool* dest_vp(get_voxel_pool_at(dest));
+
+        if (dest_vp == border_)
+        {
+            return false;
+        }
+
+        if (dest_vp == periodic_)
+        {
+            dest_vp = get_voxel_pool_at(periodic_transpose(dest));
+        }
+
+        return (dest_vp == src_vp->location());
+    }
+
     virtual const Particle particle_at(const coordinate_type& coord) const
     {
         const VoxelPool* vp(get_voxel_pool_at(coord));
@@ -339,8 +362,23 @@ public:
 
     virtual Integer num_molecules(const Species& sp) const;
 
-    /**
+#ifdef WITH_HDF5
+    /*
+     * HDF5 Save
      */
+    void save_hdf5(H5::Group* root) const
+    {
+        // save_lattice_space(*this, root, "LatticeSpaceCellListImpl");
+        throw NotSupported("LatticeSpaceCellListImpl::save_hdf5 is not supported yet.");
+    }
+
+    void load_hdf5(const H5::Group& root)
+    {
+        // load_lattice_space(root, this);
+        // load_lattice_space(root, this, "LatticeSpaceCellListImpl");
+        throw NotSupported("LatticeSpaceCellListImpl::load_hdf5 is not supported yet.");
+    }
+#endif
 
 protected:
 
@@ -363,4 +401,4 @@ protected:
 
 } // ecell4
 
-#endif /* __ECELL4_LATTICE_SPACE_CELL_LIST_IMPL_HPP */
+#endif /* ECELL4_LATTICE_SPACE_CELL_LIST_IMPL_HPP */

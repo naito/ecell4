@@ -1,6 +1,7 @@
-#ifndef __ECELL4_LATTICE_LATTICE_WORLD_HPP
-#define __ECELL4_LATTICE_LATTICE_WORLD_HPP
+#ifndef ECELL4_LATTICE_LATTICE_WORLD_HPP
+#define ECELL4_LATTICE_LATTICE_WORLD_HPP
 
+#include <sstream>
 #include <stdexcept>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
@@ -523,6 +524,31 @@ public:
         return root_->position2coordinate(position);
     }
 
+    Real get_volume(const Species& species) const
+    {
+        if (root_->has_molecule_pool(species))
+        {
+            if (root_->find_molecule_pool(species)->is_structure())
+                return 0.0;
+            else
+                return root_->get_volume(species);
+        }
+
+        for (std::vector<space_type>::const_iterator itr(spaces_.begin());
+             itr != spaces_.end(); ++itr)
+        {
+            if ((*itr).has_molecule_pool(species))
+            {
+                if ((*itr).find_molecule_pool(species)->is_structure())
+                    return 0.0;
+                else
+                    return (*itr).get_volume(species);
+            }
+        }
+
+        return 0.0;
+    }
+
     Integer num_neighbors(const coordinate_type& coordinate) const
     {
         return get_space(coordinate).num_neighbors(coordinate);
@@ -805,6 +831,29 @@ public:
         return get_space_mut(src).move(src, dest, candidate);
     }
 
+    /**
+     * static members
+     */
+    static inline Real calculate_voxel_volume(const Real r)
+    {
+        return LatticeSpace::calculate_voxel_volume(r);
+    }
+
+    static inline Real3 calculate_hcp_lengths(const Real voxel_radius)
+    {
+        return LatticeSpace::calculate_hcp_lengths(voxel_radius);
+    }
+
+    static inline Integer3 calculate_shape(const Real3& edge_lengths, const Real& voxel_radius)
+    {
+        return LatticeSpace::calculate_shape(edge_lengths, voxel_radius, true);
+    }
+
+    static inline Real calculate_volume(const Real3& edge_lengths, const Real& voxel_radius)
+    {
+        return LatticeSpace::calculate_volume(edge_lengths, voxel_radius, true);
+    }
+
 protected:
 
     boost::shared_ptr<VoxelSpaceBase> root_;
@@ -901,4 +950,4 @@ inline SpatiocyteWorld* create_spatiocyte_world_offlattice_impl_alias(
 
 } // ecell4
 
-#endif /* __ECELL4_LATTICE_LATTICE_WORLD_HPP */
+#endif /* ECELL4_LATTICE_LATTICE_WORLD_HPP */

@@ -1,5 +1,5 @@
-#ifndef __ECELL4_BD_BD_SIMULATOR_HPP
-#define __ECELL4_BD_BD_SIMULATOR_HPP
+#ifndef ECELL4_BD_BD_SIMULATOR_HPP
+#define ECELL4_BD_BD_SIMULATOR_HPP
 
 #include <stdexcept>
 #include <boost/shared_ptr.hpp>
@@ -69,7 +69,8 @@ public:
         }
 
         const Real dt(rmin < inf && Dmax > 0.0
-            ? rmin * rmin / (6.0 * Dmax) * bd_dt_factor_
+            ? 4.0 * rmin * rmin / (2.0 * Dmax) * bd_dt_factor_
+            // ? rmin * rmin / (6.0 * Dmax) * bd_dt_factor_
             : inf);
         return dt;
     }
@@ -124,4 +125,4 @@ protected:
 
 } // ecell4
 
-#endif /* __ECELL4_BD_BD_SIMULATOR_HPP */
+#endif /* ECELL4_BD_BD_SIMULATOR_HPP */

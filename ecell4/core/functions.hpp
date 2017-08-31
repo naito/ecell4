@@ -1,5 +1,5 @@
-#ifndef __ECELL4_FUNCTIONS_HPP
-#define __ECELL4_FUNCTIONS_HPP
+#ifndef ECELL4_FUNCTIONS_HPP
+#define ECELL4_FUNCTIONS_HPP
 
 #include <cmath>
 #include <gsl/gsl_pow_int.h>
@@ -32,7 +32,7 @@ namespace ecell4
 
 inline int64_t modulo(const int64_t& p1, const int64_t& p2)
 {
-    int64_t r(p1 % p2);
+    int64_t r = p1 % p2;
     if (r != 0 && (r > 0) == (p2 < 0))
     {
         r += p2;
@@ -42,7 +42,7 @@ inline int64_t modulo(const int64_t& p1, const int64_t& p2)
 
 inline double modulo(const double& p1, const double& p2)
 {
-    double r(std::fmod(p1, p2));
+    double r = std::fmod(p1, p2);
     if (r != 0 && (r > 0) == (p2 < 0))
     {
         r += p2;
@@ -129,4 +129,4 @@ inline bool is_directory(const std::string& filename)
 
 }
 
-#endif /* __ECELL4_FUNCTIONS_HPP */
+#endif /* ECELL4_FUNCTIONS_HPP */

@@ -1,5 +1,5 @@
-#ifndef __ECELL4_PARTICLE_SPACE_HPP
-#define __ECELL4_PARTICLE_SPACE_HPP
+#ifndef ECELL4_PARTICLE_SPACE_HPP
+#define ECELL4_PARTICLE_SPACE_HPP
 
 #include <cmath>
 
@@ -273,27 +273,29 @@ public:
     Real distance_sq(
         const Real3& pos1, const Real3& pos2) const
     {
-        Real retval(0);
-        const Real3& edges(edge_lengths());
-        for (Real3::size_type dim(0); dim < 3; ++dim)
-        {
-            const Real edge_length(edges[dim]);
-            const Real diff(pos2[dim] - pos1[dim]), half(edge_length * 0.5);
+        // Real retval(0);
+        // const Real3& edges(edge_lengths());
+        // for (Real3::size_type dim(0); dim < 3; ++dim)
+        // {
+        //     const Real edge_length(edges[dim]);
+        //     const Real diff(pos2[dim] - pos1[dim]), half(edge_length * 0.5);
 
-            if (diff > half)
-            {
-                retval += pow_2(diff - edge_length);
-            }
-            else if (diff < -half)
-            {
-                retval += pow_2(diff + edge_length);
-            }
-            else
-            {
-                retval += pow_2(diff);
-            }
-        }
-        return retval;
+        //     if (diff > half)
+        //     {
+        //         retval += pow_2(diff - edge_length);
+        //     }
+        //     else if (diff < -half)
+        //     {
+        //         retval += pow_2(diff + edge_length);
+        //     }
+        //     else
+        //     {
+        //         retval += pow_2(diff);
+        //     }
+        // }
+        // return retval;
+
+        return length_sq(subtract(pos1, periodic_transpose(pos2, pos1)));
     }
 
     /**
@@ -320,6 +322,12 @@ public:
     virtual Real get_value_exact(const Species& sp) const
     {
         return static_cast<Real>(num_molecules_exact(sp));
+    }
+
+    virtual const Real volume() const
+    {
+        const Real3& size(edge_lengths());
+        return size[0] * size[1] * size[2];
     }
 
 protected:
@@ -423,4 +431,4 @@ protected:
 
 } // ecell4
 
-#endif /* __ECELL4_PARTICLE_SPACE_HPP */
+#endif /* ECELL4_PARTICLE_SPACE_HPP */

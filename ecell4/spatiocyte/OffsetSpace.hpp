@@ -60,6 +60,11 @@ public:
         return coordinate >= inner_offset_ && coordinate < inner_offset_ + space_->inner_size();
     }
 
+    Real get_volume(const Species& species) const
+    {
+        return space_->get_volume(species);
+    }
+
     std::size_t num_neighbors(const coord_type& coordinate) const
     {
         return space_->num_neighbors(coordinate - offset_);

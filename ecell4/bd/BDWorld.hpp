@@ -1,9 +1,10 @@
-#ifndef __ECELL4_BD_BD_WORLD_HPP
-#define __ECELL4_BD_BD_WORLD_HPP
+#ifndef ECELL4_BD_BD_WORLD_HPP
+#define ECELL4_BD_BD_WORLD_HPP
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
+#include <sstream>
 
 #include <ecell4/core/extras.hpp>
 #include <ecell4/core/RandomNumberGenerator.hpp>
@@ -105,18 +106,17 @@ public:
 
         if (sp.has_attribute("radius") && sp.has_attribute("D"))
         {
-            radius = std::atof(sp.get_attribute("radius").c_str());
-            D = std::atof(sp.get_attribute("D").c_str());
+            radius = sp.get_attribute_as<Real>("radius");
+            D = sp.get_attribute_as<Real>("D");
         }
         else if (boost::shared_ptr<Model> bound_model = lock_model())
         {
-            Species attributed(bound_model->apply_species_attributes(sp));
-            if (attributed.has_attribute("radius")
-                && attributed.has_attribute("D"))
+            Species newsp(bound_model->apply_species_attributes(sp));
+            if (newsp.has_attribute("radius")
+                && newsp.has_attribute("D"))
             {
-                radius = std::atof(
-                    attributed.get_attribute("radius").c_str());
-                D = std::atof(attributed.get_attribute("D").c_str());
+                radius = newsp.get_attribute_as<Real>("radius");
+                D = newsp.get_attribute_as<Real>("D");
             }
         }
 
@@ -196,6 +196,11 @@ public:
     }
 
     // ParticleSpace member functions
+
+    bool update_particle_without_checking(const ParticleID& pid, const Particle& p)
+    {
+        return (*ps_).update_particle(pid, p);
+    }
 
     bool update_particle(const ParticleID& pid, const Particle& p)
     {
@@ -339,7 +344,7 @@ public:
         boost::scoped_ptr<H5::Group>
             group(new H5::Group(fout->createGroup("ParticleSpace")));
         ps_->save_hdf5(group.get());
-        extras::save_version_information(fout.get(), "ecell4-bd-0.0-1");
+        extras::save_version_information(fout.get(), std::string("ecell4-bd-") + std::string(ECELL4_VERSION));
 #else
         throw NotSupported(
             "This method requires HDF5. The HDF5 support is turned off.");
@@ -351,6 +356,24 @@ public:
 #ifdef WITH_HDF5
         boost::scoped_ptr<H5::H5File>
             fin(new H5::H5File(filename.c_str(), H5F_ACC_RDONLY));
+
+        const std::string required = "ecell4-bd-4.1.0";
+        try
+        {
+            const std::string version = extras::load_version_information(*fin);
+            if (!extras::check_version_information(version, required))
+            {
+                std::stringstream ss;
+                ss << "The version of the given file [" << version
+                    << "] is too old. [" << required << "] or later is required.";
+                throw NotSupported(ss.str());
+            }
+        }
+        catch(H5::GroupIException not_found_error)
+        {
+            throw NotFound("No version information was found.");
+        }
+
         const H5::Group group(fin->openGroup("ParticleSpace"));
         ps_->load_hdf5(group);
         pidgen_.load(*fin);
@@ -393,4 +416,4 @@ protected:
 
 } // ecell4
 
-#endif /* __ECELL4_BD_BD_WORLD_HPP */
+#endif /* ECELL4_BD_BD_WORLD_HPP */

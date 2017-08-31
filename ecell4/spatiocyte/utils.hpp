@@ -1,5 +1,5 @@
-#ifndef __ECELL4_SPATIOCYTE_UTILS_HPP
-#define __ECELL4_SPATIOCYTE_UTILS_HPP
+#ifndef ECELL4_SPATIOCYTE_UTILS_HPP
+#define ECELL4_SPATIOCYTE_UTILS_HPP
 
 #include <ecell4/core/RandomNumberGenerator.hpp>
 
@@ -23,4 +23,4 @@ pick(const std::vector<T>& container, const boost::shared_ptr<RandomNumberGenera
 
 } // ecell4
 
-#endif /* __ECELL4_SPATIOCYTE_UTILS_HPP */
+#endif /* ECELL4_SPATIOCYTE_UTILS_HPP */

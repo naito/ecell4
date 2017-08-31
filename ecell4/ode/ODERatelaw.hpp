@@ -1,5 +1,5 @@
-#ifndef __ECELL4_ODE_RATELOW_HPP
-#define __ECELL4_ODE_RATELOW_HPP
+#ifndef ECELL4_ODE_RATELOW_HPP
+#define ECELL4_ODE_RATELOW_HPP
 
 #include <ecell4/core/types.hpp>
 #include <ecell4/core/exceptions.hpp>
@@ -58,6 +58,8 @@ public:
     {
         return "nan";
     }
+private:
+
 };
 
 class ODERatelawCppCallback
@@ -180,6 +182,11 @@ public:
         this->inc_ref_(this->python_func_);
     }
 
+    Python_CallbackFunctype get_callback_pyfunc() const
+    {
+        return this->python_func_;
+    }
+
     void set_name(const std::string& name)
     {
         funcname_ = name;
@@ -262,6 +269,10 @@ private:
 
     Real k_;
 };
+
+boost::shared_ptr<ODERatelawMassAction> to_ODERatelawMassAction(boost::shared_ptr<ODERatelaw> p);
+
+boost::shared_ptr<ODERatelawCythonCallback> to_ODERatelawCythonCallback(boost::shared_ptr<ODERatelaw> p);
 
 } // ode
 

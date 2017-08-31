@@ -187,9 +187,23 @@ cdef class SpatiocyteWorld:
         """Return the volume of a voxel."""
         return self.thisptr.get().voxel_volume()
 
-    # def get_volume(self):
-    #     """Return the actual volume of the world."""
-    #     return self.thisptr.get().get_volume()
+    def get_volume(self, Species sp):
+        """get_volume(sp) -> Real
+
+        Return a volume of the given structure.
+
+        Parameters
+        ----------
+        sp : Species
+            A species for the target structure.
+
+        Returns
+        -------
+        Real:
+            A total volume of voxels belonging to the structure.
+
+        """
+        return self.thisptr.get().get_volume(deref(sp.thisptr))
 
     def actual_lengths(self):
         """Return the actual edge lengths of the world.
@@ -262,7 +276,7 @@ cdef class SpatiocyteWorld:
 
         Parameters
         ----------
-        arg : ParticleID
+        pid : ParticleID
             An id of the particle in the voxel you want
 
         Returns
@@ -276,7 +290,7 @@ cdef class SpatiocyteWorld:
         return (ParticleID_from_Cpp_ParticleID(address(pid_voxel_pair.first)),
                 Voxel_from_Cpp_Voxel(address(pid_voxel_pair.second)))
 
-    def get_voxel_at(self, coord):
+    def get_voxel_at(self, Integer coord):
         """get_voxel_at(coord) -> (ParticleID, Voxel)
 
         Return the voxel at a given coordinate.
@@ -284,7 +298,7 @@ cdef class SpatiocyteWorld:
         Parameters
         ----------
         coord: Integer
-            An coordinate of the voxel you want
+            A coordinate of the voxel you want
 
         Returns
         -------
@@ -1003,9 +1017,9 @@ cdef class SpatiocyteWorld:
         cdef Cpp_Integer3 sizes = self.thisptr.get().shape()
         return Integer3_from_Cpp_Integer3(address(sizes))
 
-    def inner_size(self):
-        """Return the size of inner voxels."""
-        return self.thisptr.get().inner_size()
+    # def inner_size(self):
+    #     """Return the size of inner voxels."""
+    #     return self.thisptr.get().inner_size()
 
     # def inner_shape(self):
     #     """inner_shape() -> Integer3
@@ -1177,6 +1191,42 @@ cdef class SpatiocyteWorld:
         """Return a random number generator object."""
         return GSLRandomNumberGenerator_from_Cpp_RandomNumberGenerator(
             self.thisptr.get().rng())
+
+    @staticmethod
+    def calculate_voxel_volume(voxel_radius):
+        """Calculate a voxel volume from a voxel radius."""
+        return Cpp_SpatiocyteWorld.calculate_voxel_volume(voxel_radius)
+
+    @staticmethod
+    def calculate_hcp_lengths(voxel_radius):
+        """calculate_hcp_lengths(Real voxel_radius) -> Real3
+
+        Calculate HCP lengths (HCP_L, HCP_X, HCP_Y) from a voxel radius.
+
+        """
+        cdef Cpp_Real3 lengths = Cpp_SpatiocyteWorld.calculate_hcp_lengths(voxel_radius)
+        return Real3_from_Cpp_Real3(address(lengths))
+
+    @staticmethod
+    def calculate_shape(Real3 edge_lengths, voxel_radius):
+        """calculate_shape(Real3 edge_lengths, Real voxel_radius) -> Integer3
+
+        Calculate World shape.
+
+        """
+        cdef Cpp_Integer3 shape = Cpp_SpatiocyteWorld.calculate_shape(
+            deref(edge_lengths.thisptr), voxel_radius)
+        return Integer3_from_Cpp_Integer3(address(shape))
+
+    @staticmethod
+    def calculate_volume(Real3 edge_lengths, voxel_radius):
+        """calculate_volume(Real3 edge_lengths, Real voxel_radius) -> Real
+
+        Calculate World volume.
+
+        """
+        return Cpp_SpatiocyteWorld.calculate_volume(
+            deref(edge_lengths.thisptr), voxel_radius)
 
     def as_base(self):
         """Return self as a base class. Only for developmental use."""
@@ -1428,12 +1478,12 @@ cdef SpatiocyteSimulator SpatiocyteSimulator_from_Cpp_SpatiocyteSimulator(Cpp_Sp
 cdef class SpatiocyteFactory:
     """ A factory class creating a SpatiocyteWorld instance and a SpatiocyteSimulator instance.
 
-    SpatiocyteFactory(voxel_radius, rng)
+    SpatiocyteFactory(Real voxel_radius)
 
     """
 
-    def __init__(self, voxel_radius=None, arg1=None):
-        """SpatiocyteFactory(Real voxel_radius=None, GSLRandomNumberGenerator rng=None)
+    def __init__(self, voxel_radius=None):
+        """SpatiocyteFactory(Real voxel_radius=None)
 
         Constructor.
 
@@ -1441,23 +1491,26 @@ cdef class SpatiocyteFactory:
         ----------
         voxel_radius : Real, optional
             A radius of a voxel.
-        rng : GSLRandomNumberGenerator, optional
-            A random number generator.
 
         """
         pass
 
-    def __cinit__(self, voxel_radius=None, arg1=None):
-        if voxel_radius is None:
-            self.thisptr = new Cpp_SpatiocyteFactory()
-        elif arg1 is None:
-            self.thisptr = new Cpp_SpatiocyteFactory(<Real>voxel_radius)
-        else:
-            self.thisptr = new Cpp_SpatiocyteFactory(
-                <Real>voxel_radius, deref((<GSLRandomNumberGenerator>arg1).thisptr))
+    def __cinit__(self, voxel_radius=None):
+        self.thisptr = new Cpp_SpatiocyteFactory(
+            Cpp_SpatiocyteFactory.default_voxel_radius() if voxel_radius is None else <Real>voxel_radius)
 
     def __dealloc__(self):
         del self.thisptr
+
+    def rng(self, GSLRandomNumberGenerator rng):
+        """rng(GSLRandomNumberGenerator) -> SpatiocyteFactory
+
+        Set a random number generator, and return self.
+
+        """
+        cdef Cpp_SpatiocyteFactory *ptr = self.thisptr.rng_ptr(deref(rng.thisptr))
+        assert ptr == self.thisptr
+        return self
 
     def create_world(self, arg1=None):
         """create_world(arg1=None) -> SpatiocyteWorld

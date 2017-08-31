@@ -1,5 +1,5 @@
-#ifndef __ECELL4_OFFLATTICE_SPACE_HPP
-#define __ECELL4_OFFLATTICE_SPACE_HPP
+#ifndef ECELL4_OFFLATTICE_SPACE_HPP
+#define ECELL4_OFFLATTICE_SPACE_HPP
 
 #include "VoxelSpaceBase.hpp"
 
@@ -70,10 +70,17 @@ public:
     const Real3& edge_lengths() const;
     // Real3 actual_lengths() const;
 
-// #ifdef WITH_HDF5
-//     void save_hdf5(H5::Group* root) const;
-//     void load_hdf5(const H5::Group& root);
-// #endif
+#ifdef WITH_HDF5
+    void save_hdf5(H5::Group* root) const
+    {
+        throw NotSupported("OffLatticeSpace::save_hdf5 is not supported yet.");
+    }
+
+    void load_hdf5(const H5::Group& root)
+    {
+        throw NotSupported("OffLatticeSpace::load_hdf5 is not supported yet.");
+    }
+#endif
 
 protected:
 
@@ -99,4 +106,4 @@ create_hcp_offlattice_space(const Real voxel_radius, const Integer3& lattice_siz
 
 } // ecell4
 
-#endif /* __ECELL4_OFFLATTICE_SPACE_HPP */
+#endif /* ECELL4_OFFLATTICE_SPACE_HPP */

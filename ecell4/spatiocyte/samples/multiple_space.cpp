@@ -48,7 +48,7 @@ create_plane_offlattice(const Real& voxel_radius, const Real3& e1, const Real3& 
     space->reset(positions, adjoining_pairs);
 
     space->make_structure_type(species, Shape::TWO, "");
-    const Real radius(std::atof(species.get_attribute("radius").c_str()));
+    const Real radius(species.get_attribute_as<Real>("radius"));
 
     for (unsigned int coord(0); coord < max1*max2; ++coord)
         space->update_voxel(ParticleID(), Voxel(species, coord, radius, 0.0, ""));

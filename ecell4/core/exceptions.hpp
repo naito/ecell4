@@ -1,5 +1,5 @@
-#ifndef __ECELL4_EXCEPTIONS_HPP
-#define __ECELL4_EXCEPTIONS_HPP
+#ifndef ECELL4_EXCEPTIONS_HPP
+#define ECELL4_EXCEPTIONS_HPP
 
 #include <exception>
 #include <stdexcept>
@@ -160,6 +160,33 @@ private:
     std::string str_;
 };
 
+class IllegalArgument
+    : public Exception
+{
+public:
+
+    IllegalArgument(const std::string& str)
+        : str_(str)
+    {
+        ;
+    }
+
+
+    virtual ~IllegalArgument() throw()
+    {
+        ;
+    }
+
+    virtual const char* what() const throw()
+    {
+        return str_.c_str();
+    }
+
+private:
+
+    std::string str_;
+};
+
 }
 
-#endif /* __ECELL4_EXCEPTIONS_HPP */
+#endif /* ECELL4_EXCEPTIONS_HPP */

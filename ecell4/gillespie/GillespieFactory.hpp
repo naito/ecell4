@@ -1,5 +1,5 @@
-#ifndef __ECELL4_GILLESPIE_GILLESPIE_FACTORY_HPP
-#define __ECELL4_GILLESPIE_GILLESPIE_FACTORY_HPP
+#ifndef ECELL4_GILLESPIE_GILLESPIE_FACTORY_HPP
+#define ECELL4_GILLESPIE_GILLESPIE_FACTORY_HPP
 
 #include <ecell4/core/SimulatorFactory.hpp>
 #include <ecell4/core/RandomNumberGenerator.hpp>
@@ -30,15 +30,20 @@ public:
         ; // do nothing
     }
 
-    GillespieFactory(const boost::shared_ptr<RandomNumberGenerator>& rng)
-        : base_type(), rng_(rng)
+    virtual ~GillespieFactory()
     {
         ; // do nothing
     }
 
-    virtual ~GillespieFactory()
+    GillespieFactory& rng(const boost::shared_ptr<RandomNumberGenerator>& rng)
     {
-        ; // do nothing
+        rng_ = rng;
+        return (*this);
+    }
+
+    inline GillespieFactory* rng_ptr(const boost::shared_ptr<RandomNumberGenerator>& rng)
+    {
+        return &(this->rng(rng));  //XXX: == this
     }
 
     virtual GillespieWorld* create_world(const std::string filename) const
@@ -86,4 +91,4 @@ protected:
 
 } // ecell4
 
-#endif /* __ECELL4_GILLESPIE_GILLESPIE_FACTORY_HPP */
+#endif /* ECELL4_GILLESPIE_GILLESPIE_FACTORY_HPP */

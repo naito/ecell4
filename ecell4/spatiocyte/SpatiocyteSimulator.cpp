@@ -118,9 +118,10 @@ void SpatiocyteSimulator::finalize()
         if (step_event != NULL && queued_time < t())
         {
             const Real alpha((t() - queued_time) / (*event).second->dt());
-            step_event->walk(alpha);
+            step_event->walk(step_event->alpha() * alpha);
         }
     }
+
     initialize();
 }
 
@@ -144,9 +145,10 @@ bool SpatiocyteSimulator::step(const Real& upto)
         return true;
     }
 
-    world_->set_t(upto); //XXX: TODO
-    dt_ = scheduler_.next_time() - t();
+    world_->set_t(upto);
     last_reactions_.clear();
+    dt_ = scheduler_.next_time() - t();
+    finalize();
     return false;
 }
 

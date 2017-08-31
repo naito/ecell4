@@ -1,5 +1,5 @@
-#ifndef __ECELL4_VOXELSPACEBASE_HPP
-#define __ECELL4_VOXELSPACEBASE_HPP
+#ifndef ECELL4_VOXELSPACEBASE_HPP
+#define ECELL4_VOXELSPACEBASE_HPP
 
 #include <vector>
 #include <set>
@@ -63,19 +63,24 @@ public:
     /*
      * VoxelSpaceTraits
      */
-    inline Real voxel_radius() const
+    Real voxel_radius() const
     {
         return voxel_radius_;
     }
 
-    inline Real voxel_volume() const
+    Real voxel_volume() const
     {
         return unit_voxel_volume() * pow(voxel_radius_, 3);
     }
 
-    inline Real unit_area() const
+    Real unit_area() const
     {
         return 2.0 * sqrt(3.0) * pow(voxel_radius_, 2);
+    }
+
+    Real get_volume(const Species& species) const
+    {
+        return voxel_volume() * num_voxels_exact(species);
     }
 
     std::vector<Species> list_species() const;
@@ -220,4 +225,4 @@ protected:
 
 } // ecell4
 
-#endif /* __ECELL4_VOXELSPACEBASE_HPP */
+#endif /* ECELL4_VOXELSPACEBASE_HPP */

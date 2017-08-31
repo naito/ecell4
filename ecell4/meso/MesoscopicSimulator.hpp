@@ -1,5 +1,5 @@
-#ifndef __ECELL4_MESO_MESOSCOPIC_SIMULATOR_HPP
-#define __ECELL4_MESO_MESOSCOPIC_SIMULATOR_HPP
+#ifndef ECELL4_MESO_MESOSCOPIC_SIMULATOR_HPP
+#define ECELL4_MESO_MESOSCOPIC_SIMULATOR_HPP
 
 #include <boost/shared_ptr.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
@@ -228,11 +228,11 @@ protected:
                 retval = this->draw(src);
 
             const ReactionRule& nextr = retval.first;
-            const coordinate_type& dst = retval.second;
+            // const coordinate_type& dst = retval.second;
             const ReactionRule::reactant_container_type& reactants(nextr.reactants());
             const ReactionRule::product_container_type& products(nextr.products());
 
-            assert(dst == src);
+            assert(retval.second == src);
 
             for (ReactionRule::product_container_type::const_iterator
                     it(products.begin()); it != products.end(); ++it)
@@ -913,4 +913,4 @@ protected:
 
 } // ecell4
 
-#endif /* __ECELL4_MESO_MESOSCOPIC_SIMULATOR_HPP */
+#endif /* ECELL4_MESO_MESOSCOPIC_SIMULATOR_HPP */

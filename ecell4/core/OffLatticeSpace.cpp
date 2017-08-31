@@ -1,5 +1,6 @@
 #include <algorithm>
 #include "Context.hpp"
+#include "MolecularType.hpp"
 #include "OffLatticeSpace.hpp"
 #include "hcp_lattice.hpp"
 

@@ -1,6 +1,11 @@
 #include "LatticeSpace.hpp"
 #include "hcp_lattice.hpp"
 
+#ifdef WIN32_MSC
+double rint(const double x);
+double round(const double x);
+#endif
+
 namespace ecell4
 {
 
