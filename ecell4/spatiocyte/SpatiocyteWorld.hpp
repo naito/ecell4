@@ -32,6 +32,11 @@ struct MoleculeInfo
     const std::string loc;
 };
 
+struct Movement
+{
+    enum type { Step, Cross, Denied };
+};
+
 class SpatiocyteWorld : public Space
 {
 public:
@@ -823,6 +828,18 @@ public:
     bool can_move(const coordinate_type& src, const coordinate_type& dest) const
     {
         return get_space(src).can_move(src, dest);
+    }
+
+    Movement::type get_movement_type(const coordinate_type& src, const coordinate_type &dest) const
+    {
+        const std::vector<coordinate_type> adjoinings(interfaces_.get(dest));
+        if (!adjoinings.empty())
+            return Movement::Cross;
+
+        if (get_space(src).can_move(src, dest))
+            return Movement::Step;
+
+        return Movement::Denied;
     }
 
     bool move(const coordinate_type& src, const coordinate_type& dest,

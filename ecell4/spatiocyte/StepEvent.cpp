@@ -319,14 +319,17 @@ void StepEvent::walk_in_space_(
             continue;
 
         const coord_type destination(world_->pick_neighbor(source));
-        if (world_->can_move(source, destination))
+        switch (world_->get_movement_type(source, destination))
         {
-            if (rng->uniform(0,1) <= alpha)
-                world_->move(source, destination, /*candidate=*/idx);
-        }
-        else
-        {
-            attempt_reaction_(*itr, destination, alpha);
+            case Movement::Step:
+                if (rng->uniform(0,1) <= alpha)
+                    world_->move(source, destination, /*candidate=*/idx);
+                break;
+            case Movement::Cross:
+                attempt_reaction_(*itr, world_->get_adjoining_or_self(destination), alpha);
+                break;
+            case Movement::Denied:
+                attempt_reaction_(*itr, destination, alpha);
         }
     }
 }
@@ -367,26 +370,26 @@ void StepEvent::walk_on_surface_(
             continue;
 
         const coord_type destination(pick(neighbors, rng));
-
-        if (world_->can_move(source, destination))
+        switch (world_->get_movement_type(source, destination))
         {
-            if (rng->uniform(0,1) <= alpha)
-                world_->move(source, destination, /*candidate=*/idx);
-        }
-        else
-        {
-            attempt_reaction_(*itr, destination, alpha);
+            case Movement::Step:
+                if (rng->uniform(0,1) <= alpha)
+                    world_->move(source, destination, /*candidate=*/idx);
+                break;
+            case Movement::Cross:
+                attempt_reaction_(*itr, world_->get_adjoining_or_self(destination), alpha);
+                break;
+            case Movement::Denied:
+                attempt_reaction_(*itr, destination, alpha);
         }
     }
 }
 
 std::pair<StepEvent::attempt_reaction_result_type, StepEvent::reaction_type>
 StepEvent::attempt_reaction_(const SpatiocyteWorld::coordinate_id_pair_type& info,
-                             coord_type to_coord,
+                             const coord_type to_coord,
                              const Real& alpha)
 {
-    to_coord = world_->get_adjoining_or_self(to_coord);
-
     const VoxelPool* vpA(world_->get_voxel_pool_at(info.coordinate));
     const VoxelPool* vpB(world_->get_voxel_pool_at(to_coord));
 
