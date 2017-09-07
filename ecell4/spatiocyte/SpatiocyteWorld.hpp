@@ -32,11 +32,6 @@ struct MoleculeInfo
     const std::string loc;
 };
 
-struct Movement
-{
-    enum type { Step, Cross, Denied };
-};
-
 class SpatiocyteWorld : public Space
 {
 public:
@@ -168,15 +163,6 @@ public:
     boost::shared_ptr<Model> lock_model() const
     {
         return model_.lock();
-    }
-
-    coordinate_type get_adjoining_or_self(const coordinate_type& coordinate)
-    {
-        boost::optional<const std::vector<coordinate_type>&> adjoinings(interfaces_.find(coordinate));
-
-        if (adjoinings)
-            return pick(adjoinings.get(), rng());
-        return coordinate;
     }
 
 
@@ -825,22 +811,17 @@ public:
         return get_space_mut(coordinate).remove_voxel(coordinate);
     }
 
-    bool can_move(const coordinate_type& src, const coordinate_type& dest) const
-    {
-        return get_space(src).can_move(src, dest);
-    }
-
-    Movement::type get_movement_type(const coordinate_type& src, const coordinate_type &dest) const
+    bool can_move(const coordinate_type& src, coordinate_type& dest)
     {
         boost::optional<const std::vector<coordinate_type>&> adjoinings(interfaces_.find(dest));
 
         if (adjoinings)
-            return Movement::Cross;
+        {
+            dest = pick(adjoinings.get(), rng());
+            return false;
+        }
 
-        if (get_space(src).can_move(src, dest))
-            return Movement::Step;
-
-        return Movement::Denied;
+        return get_space(src).can_move(src, dest);
     }
 
     bool move(const coordinate_type& src, const coordinate_type& dest,

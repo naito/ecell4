@@ -318,18 +318,15 @@ void StepEvent::walk_in_space_(
         if (world_->get_voxel_pool_at(source) != mpool)
             continue;
 
-        const coord_type destination(world_->pick_neighbor(source));
-        switch (world_->get_movement_type(source, destination))
+        coord_type destination(world_->pick_neighbor(source));
+        if (world_->can_move(source, destination))
         {
-            case Movement::Step:
-                if (rng->uniform(0,1) <= alpha)
-                    world_->move(source, destination, /*candidate=*/idx);
-                break;
-            case Movement::Cross:
-                attempt_reaction_(*itr, world_->get_adjoining_or_self(destination), alpha);
-                break;
-            case Movement::Denied:
-                attempt_reaction_(*itr, destination, alpha);
+            if (rng->uniform(0,1) < alpha)
+                world_->move(source, destination, /*candidate=*/idx);
+        }
+        else
+        {
+            attempt_reaction_(*itr, destination, alpha);
         }
     }
 }
@@ -369,18 +366,15 @@ void StepEvent::walk_on_surface_(
         if (neighbors.size() == 0)
             continue;
 
-        const coord_type destination(pick(neighbors, rng));
-        switch (world_->get_movement_type(source, destination))
+        coord_type destination(world_->pick_neighbor(source));
+        if (world_->can_move(source, destination))
         {
-            case Movement::Step:
-                if (rng->uniform(0,1) <= alpha)
-                    world_->move(source, destination, /*candidate=*/idx);
-                break;
-            case Movement::Cross:
-                attempt_reaction_(*itr, world_->get_adjoining_or_self(destination), alpha);
-                break;
-            case Movement::Denied:
-                attempt_reaction_(*itr, destination, alpha);
+            if (rng->uniform(0,1) < alpha)
+                world_->move(source, destination, /*candidate=*/idx);
+        }
+        else
+        {
+            attempt_reaction_(*itr, destination, alpha);
         }
     }
 }
