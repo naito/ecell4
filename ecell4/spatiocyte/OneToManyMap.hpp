@@ -36,7 +36,7 @@ public:
             container_.insert(std::make_pair(key, std::vector<T>(1, value)));
     }
 
-    void add(T key, std::vector<T> values)
+    void extend(T key, std::vector<T> values)
     {
         iterator itr(container_.find(key));
 

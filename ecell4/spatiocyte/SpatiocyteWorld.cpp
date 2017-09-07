@@ -68,7 +68,7 @@ void SpatiocyteWorld::add_space(VoxelSpaceBase *space)
 
         for (std::vector<coordinate_type>::const_iterator jtr((*itr).second.begin());
              jtr != (*itr).second.end(); ++jtr)
-            neighbors_.add(*jtr, neighbors);
+            neighbors_.extend(*jtr, neighbors);
     }
 
     spaces_.push_back(space_type(space, size_, inner_size_));
