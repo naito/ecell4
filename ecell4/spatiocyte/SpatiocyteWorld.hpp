@@ -172,11 +172,11 @@ public:
 
     coordinate_type get_adjoining_or_self(const coordinate_type& coordinate)
     {
-        const std::vector<coordinate_type> adjoinings(interfaces_.get(coordinate));
+        boost::optional<const std::vector<coordinate_type>&> adjoinings(interfaces_.find(coordinate));
 
-        if (adjoinings.empty())
-            return coordinate;
-        return pick(adjoinings, rng());
+        if (adjoinings)
+            return pick(adjoinings.get(), rng());
+        return coordinate;
     }
 
 
@@ -832,8 +832,9 @@ public:
 
     Movement::type get_movement_type(const coordinate_type& src, const coordinate_type &dest) const
     {
-        const std::vector<coordinate_type> adjoinings(interfaces_.get(dest));
-        if (!adjoinings.empty())
+        boost::optional<const std::vector<coordinate_type>&> adjoinings(interfaces_.find(dest));
+
+        if (adjoinings)
             return Movement::Cross;
 
         if (get_space(src).can_move(src, dest))

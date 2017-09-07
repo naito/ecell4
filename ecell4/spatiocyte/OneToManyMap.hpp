@@ -2,6 +2,7 @@
 #define __ECELL4_SPATIOCYTE_INTERFACE_CONTAINER
 
 #include <vector>
+#include <boost/optional.hpp>
 #include <ecell4/core/get_mapper_mf.hpp>
 
 namespace ecell4
@@ -45,19 +46,17 @@ public:
             container_.insert(std::make_pair(key, values));
     }
 
-    std::vector<T> get(const T& key) const
+    boost::optional<const std::vector<T>&> find(const T& key) const
     {
         const_iterator itr(container_.find(key));
 
-        if (itr == container_.end())
-            return std::vector<T>();
-        else
+        if (itr != container_.end())
             return (*itr).second;
+        return boost::none;
     }
 
     const_iterator begin() const { return container_.begin(); }
     const_iterator end() const { return container_.end(); }
-    const_iterator find(const T& key) const { return container_.find(key); }
 
 protected:
     container_type container_;

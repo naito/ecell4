@@ -14,37 +14,38 @@
 using namespace ecell4;
 using namespace ecell4::spatiocyte;
 
-BOOST_AUTO_TEST_CASE(Constructor)
+BOOST_AUTO_TEST_CASE( Constructor )
 {
     OneToManyMap<int> container;
 }
 
-BOOST_AUTO_TEST_CASE(AddInterface)
+BOOST_AUTO_TEST_CASE( AddInterface )
 {
     OneToManyMap<int> container;
 
     container.add(0, 3);
-    std::vector<int> values(container.get(0));
+    boost::optional<const std::vector<int>&> values(container.find(0));
 
-    BOOST_CHECK(!values.empty());
-    BOOST_CHECK_EQUAL(1, values.size());
-    BOOST_CHECK_EQUAL(3, values.at(0));
+    BOOST_ASSERT( values );
+    BOOST_CHECK_EQUAL( 1, values->size() );
+    BOOST_CHECK_EQUAL( 3, values->at(0) );
 
     container.add(0, 5);
-    BOOST_CHECK_EQUAL(1, values.size());
+    BOOST_CHECK_EQUAL( 2, values->size() );
 
-    values = container.get(0);
-    BOOST_CHECK_EQUAL(2, values.size());
-    BOOST_CHECK_EQUAL(3, values.at(0));
-    BOOST_CHECK_EQUAL(5, values.at(1));
+    values = container.find(0);
+    BOOST_ASSERT( values );
+    BOOST_CHECK_EQUAL( 2, values->size() );
+    BOOST_CHECK_EQUAL( 3, values->at(0) );
+    BOOST_CHECK_EQUAL( 5, values->at(1) );
 }
 
-BOOST_AUTO_TEST_CASE(GET)
+BOOST_AUTO_TEST_CASE( GET )
 {
     OneToManyMap<int> container;
 
     container.add(0, 1);
 
-    BOOST_CHECK(!container.get(0).empty());
-    BOOST_CHECK(container.get(1).empty());
+    BOOST_CHECK( container.find(0) );
+    BOOST_CHECK( !container.find(1) );
 }

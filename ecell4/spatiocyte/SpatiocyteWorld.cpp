@@ -62,7 +62,7 @@ void SpatiocyteWorld::add_space(VoxelSpaceBase *space)
         for (Integer i(0); i < root_->num_neighbors((*itr).first); ++i)
         {
             const coordinate_type neighbor(root_->get_neighbor((*itr).first, i));
-            if (interfaces_.find(neighbor) == interfaces_.end())
+            if (! interfaces_.find(neighbor))
                 neighbors.push_back(neighbor);
         }
 
@@ -119,11 +119,15 @@ SpatiocyteWorld::check_neighbor(const coordinate_type coord,
                                 const std::string& loc)
 {
     std::vector<coordinate_type> tmp;
-    std::vector<coordinate_type> additional_neighbors(neighbors_.get(coord));
+    boost::optional<const std::vector<coordinate_type>&>
+        additional_neighbors(neighbors_.find(coord));
 
     const_space_type space(get_space(coord));
     const std::size_t num_neighbors(space.num_neighbors(coord));
-    tmp.reserve(num_neighbors + additional_neighbors.size());
+    if (additional_neighbors)
+        tmp.reserve(num_neighbors + additional_neighbors->size());
+    else
+        tmp.reserve(num_neighbors);
     for (unsigned int rnd(0); rnd < num_neighbors; ++rnd)
     {
         const coordinate_type neighbor(get_neighbor(coord, rnd));
@@ -135,14 +139,17 @@ SpatiocyteWorld::check_neighbor(const coordinate_type coord,
         }
     }
 
-    for (std::vector<coordinate_type>::const_iterator itr(additional_neighbors.begin());
-         itr != additional_neighbors.end(); ++itr)
+    if (additional_neighbors)
     {
-        const VoxelPool* mt(get_voxel_pool_at(*itr));
-        const std::string serial(mt->is_vacant() ? "" : mt->species().serial());
-        if (serial == loc)
+        for (std::vector<coordinate_type>::const_iterator itr(additional_neighbors->begin());
+             itr != additional_neighbors->end(); ++itr)
         {
-            tmp.push_back(*itr);
+            const VoxelPool* mt(get_voxel_pool_at(*itr));
+            const std::string serial(mt->is_vacant() ? "" : mt->species().serial());
+            if (serial == loc)
+            {
+                tmp.push_back(*itr);
+            }
         }
     }
 
