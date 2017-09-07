@@ -39,6 +39,8 @@ public:
         filter_generated_species();
     }
 
+    virtual void finalize(const Real& t) {}
+
 protected:
     virtual void fire_() = 0;
 
@@ -84,6 +86,7 @@ struct StepEvent : SpatiocyteEvent
             const Species& species, const Real& t, const Real alpha=1.0);
     virtual ~StepEvent() {}
     virtual void fire_();
+    virtual void finalize(const Real& t);
 
     Species const& species() const
     {

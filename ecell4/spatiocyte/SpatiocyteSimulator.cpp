@@ -113,13 +113,7 @@ void SpatiocyteSimulator::finalize()
     for (scheduler_type::events_range::iterator event(events.begin());
             event != events.end(); ++event)
     {
-        const Real queued_time((*event).second->time() - (*event).second->dt());
-        StepEvent* step_event(dynamic_cast<StepEvent*>((*event).second.get()));
-        if (step_event != NULL && queued_time < t())
-        {
-            const Real alpha((t() - queued_time) / (*event).second->dt());
-            step_event->walk(step_event->alpha() * alpha);
-        }
+        (*event).second->finalize(t());
     }
 
     initialize();

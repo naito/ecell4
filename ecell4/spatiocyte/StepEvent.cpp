@@ -285,6 +285,12 @@ void StepEvent::fire_()
     time_ += dt_;
 }
 
+void StepEvent::finalize(const Real& t)
+{
+    const Real queued_time(time() - dt());
+    walk(alpha() * (t - queued_time) / dt());
+}
+
 void StepEvent::walk(const Real& alpha)
 {
     if (alpha < 0 || alpha > 1)
