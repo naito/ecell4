@@ -279,18 +279,6 @@ StepEvent::StepEvent(boost::shared_ptr<Model> model,
     time_ = t + dt_;
 }
 
-void StepEvent::fire_()
-{
-    walk(alpha_);
-    time_ += dt_;
-}
-
-void StepEvent::finalize(const Real& t)
-{
-    const Real queued_time(time() - dt());
-    walk(alpha() * (t - queued_time) / dt());
-}
-
 void StepEvent::walk(const Real& alpha)
 {
     if (alpha < 0 || alpha > 1)

@@ -85,8 +85,18 @@ struct StepEvent : SpatiocyteEvent
     StepEvent(boost::shared_ptr<Model> model, boost::shared_ptr<SpatiocyteWorld> world,
             const Species& species, const Real& t, const Real alpha=1.0);
     virtual ~StepEvent() {}
-    virtual void fire_();
-    virtual void finalize(const Real& t);
+
+    virtual void fire_()
+    {
+        walk(alpha_);
+        time_ += dt_;
+    }
+
+    virtual void finalize(const Real& t)
+    {
+        const Real queued_time(time() - dt());
+        walk(alpha() * (t - queued_time) / dt());
+    }
 
     Species const& species() const
     {
@@ -98,9 +108,9 @@ struct StepEvent : SpatiocyteEvent
         return alpha_;
     }
 
-    void walk(const Real& alpha);
-
 protected:
+
+    void walk(const Real& alpha);
 
     void walk_in_space_(const MoleculePool* mtype,
                         const SpatiocyteWorld::coordinate_type& offset,
