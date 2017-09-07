@@ -99,26 +99,18 @@ struct StepEvent : SpatiocyteEvent
 
 protected:
 
-    typedef enum
-    {
-        NO_REACTION = 0,
-        REACTION_FAILED = 1,
-        REACTION_SUCCEEDED = 2
-    } attempt_reaction_result_type;
-
     void walk_in_space_(const MoleculePool* mtype,
                         const SpatiocyteWorld::coordinate_type& offset,
                         const Real& alpha);
     void walk_on_surface_(const MoleculePool* mtype,
                           const SpatiocyteWorld::coordinate_type& offset,
                           const Real& alpha);
-    std::pair<attempt_reaction_result_type, reaction_type> attempt_reaction_(
-        const SpatiocyteWorld::coordinate_id_pair_type& info,
-        const SpatiocyteWorld::coordinate_type to_coord, const Real& alpha);
+    void attempt_reaction_(const SpatiocyteWorld::coordinate_id_pair_type& info,
+                           const SpatiocyteWorld::coordinate_type to_coord,
+                           const Real& alpha);
 
     boost::shared_ptr<Model> model_;
     Species species_;
-    VoxelPool* mt_;
     const Real alpha_;
 };
 

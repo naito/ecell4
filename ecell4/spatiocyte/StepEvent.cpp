@@ -379,17 +379,16 @@ void StepEvent::walk_on_surface_(
     }
 }
 
-std::pair<StepEvent::attempt_reaction_result_type, StepEvent::reaction_type>
-StepEvent::attempt_reaction_(const SpatiocyteWorld::coordinate_id_pair_type& info,
-                             const coord_type to_coord,
-                             const Real& alpha)
+void StepEvent::attempt_reaction_(const SpatiocyteWorld::coordinate_id_pair_type& info,
+                                  const coord_type to_coord,
+                                  const Real& alpha)
 {
     const VoxelPool* vpA(world_->get_voxel_pool_at(info.coordinate));
     const VoxelPool* vpB(world_->get_voxel_pool_at(to_coord));
 
     if (vpB->is_vacant())
     {
-        return std::make_pair(NO_REACTION, reaction_type());
+        return;
     }
 
     const Species& speciesA(vpA->species());
@@ -399,7 +398,7 @@ StepEvent::attempt_reaction_(const SpatiocyteWorld::coordinate_id_pair_type& inf
 
     if (rules.empty())
     {
-        return std::make_pair(NO_REACTION, reaction_type());
+        return;
     }
 
     const Real factor(calculate_dimensional_factor(vpA, vpB,
@@ -419,42 +418,41 @@ StepEvent::attempt_reaction_(const SpatiocyteWorld::coordinate_id_pair_type& inf
                 << "' and '" << speciesB.serial() << "'." << std::endl;
         }
 
-        if (accp >= rnd)
+        if (accp < rnd)
+            continue;
+
+        const ReactionRule::product_container_type& products(reaction_rule.products());
+        const ReactionInfo::identified_voxel& p0(world_->make_pid_voxel_pair(vpA, info));
+        const ReactionInfo::identified_voxel& p1(world_->make_pid_voxel_pair(vpB, to_coord));
+
+        ReactionInfo rinfo;
+
+        switch (products.size())
         {
-            const ReactionRule::product_container_type& products(reaction_rule.products());
-            const ReactionInfo::identified_voxel& p0(world_->make_pid_voxel_pair(vpA, info));
-            const ReactionInfo::identified_voxel& p1(world_->make_pid_voxel_pair(vpB, to_coord));
-
-            ReactionInfo rinfo;
-
-            switch (products.size())
-            {
-                case 0:
-                    rinfo = apply_vanishment(world_, p0, p1);
-                    break;
-                case 1:
-                    push_product(products.at(0));
-                    rinfo = apply_ab2c(world_, p0, p1, products.at(0));
-                    break;
-                case 2:
-                    push_product(products.at(0));
-                    push_product(products.at(1));
-                    rinfo = apply_ab2cd(world_, p0, p1, products.at(0), products.at(1));
-                    break;
-                default:
-                    rinfo = ReactionInfo(world_->t());
-            }
-
-            if (rinfo.has_occurred())
-            {
-                reaction_type reaction(std::make_pair(reaction_rule, rinfo));
-                push_reaction(reaction);
-                return std::make_pair(REACTION_SUCCEEDED, reaction);
-            }
-            return std::make_pair(REACTION_FAILED, std::make_pair(reaction_rule, rinfo));
+            case 0:
+                rinfo = apply_vanishment(world_, p0, p1);
+                break;
+            case 1:
+                push_product(products.at(0));
+                rinfo = apply_ab2c(world_, p0, p1, products.at(0));
+                break;
+            case 2:
+                push_product(products.at(0));
+                push_product(products.at(1));
+                rinfo = apply_ab2cd(world_, p0, p1, products.at(0), products.at(1));
+                break;
+            default:
+                rinfo = ReactionInfo(world_->t());
         }
+
+        if (rinfo.has_occurred())
+        {
+            reaction_type reaction(std::make_pair(reaction_rule, rinfo));
+            push_reaction(reaction);
+        }
+
+        break;
     }
-    return std::make_pair(REACTION_FAILED, reaction_type());
 }
 
 } // spatiocyte
