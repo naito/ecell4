@@ -202,10 +202,11 @@ FirstOrderReactionEvent::FirstOrderReactionEvent(boost::shared_ptr<SpatiocyteWor
 
 void FirstOrderReactionEvent::fire_()
 {
-    time_ += draw_dt();
-
-    if (world_->num_voxels(reactant_()) == 0)
+    if (world_->num_voxels_exact(reactant_()) == 0)
+    {
+        time_ += draw_dt();
         return;
+    }
 
     const ReactionInfo::identified_voxel& voxel(world_->choice(reactant_()));
     const ReactionRule::product_container_type& products(rule_.products());
@@ -240,6 +241,7 @@ void FirstOrderReactionEvent::fire_()
             }
             break;
     }
+    time_ += draw_dt();
 }
 
 Real FirstOrderReactionEvent::draw_dt()
