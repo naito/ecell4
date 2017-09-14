@@ -1,3 +1,4 @@
+#include <cassert>
 #include "SpatiocyteEvent.hpp"
 #include "utils.hpp"
 
@@ -247,132 +248,6 @@ apply_ab2cd(boost::shared_ptr<SpatiocyteWorld> world,
     return ReactionInfo(world->t());
 }
 
-StepEvent::StepEvent(boost::shared_ptr<Model> model,
-                     boost::shared_ptr<SpatiocyteWorld> world,
-                     const Species& species, const Real& t, const Real alpha)
-    : SpatiocyteEvent(world, t), model_(model), species_(species), alpha_(alpha)
-{
-    const MoleculeInfo minfo(world_->get_molecule_info(species));
-    const Real R(world_->voxel_radius());
-    const Real D(minfo.D);
-    const Real sqRperD(pow(R, 2.0)/D);
-    const VoxelPool* vpool(world_->find_voxel_pool(species));
-    if (D <= 0)
-    {
-        dt_ = inf;
-    } else if(vpool->get_dimension() == Shape::THREE) {
-        dt_ = 2 * sqRperD / 3 * alpha_;
-    } else if(vpool->get_dimension() == Shape::TWO) {
-        // TODO: Regular Lattice
-        // dt_  = pow((2*sqrt(2.0)+4*sqrt(3.0)+3*sqrt(6.0)+sqrt(22.0))/
-        //           (6*sqrt(2.0)+4*sqrt(3.0)+3*sqrt(6.0)), 2) * sqRperD * alpha_;
-        dt_ = sqRperD * alpha_;
-    } else if(vpool->get_dimension() == Shape::ONE) {
-        dt_ = 2 * sqRperD * alpha_;
-    }
-    else
-    {
-        throw NotSupported(
-            "The dimension of a structure must be two or three.");
-    }
-
-    time_ = t + dt_;
-}
-
-void StepEvent::walk(const Real& alpha)
-{
-    if (alpha < 0 || alpha > 1)
-    {
-        return; // INVALID ALPHA VALUE
-    }
-
-    std::pair<const MoleculePool*, coord_type> mpool(world_->find_molecule_pool(species_));
-
-    if (mpool.first->get_dimension() == Shape::THREE)
-        walk_in_space_(mpool.first, mpool.second, alpha);
-    else // dimension == TWO, etc.
-        walk_on_surface_(mpool.first, mpool.second, alpha);
-}
-
-void StepEvent::walk_in_space_(
-        const MoleculePool* mpool, const coord_type& offset, const Real& alpha)
-{
-    const boost::shared_ptr<RandomNumberGenerator> rng(world_->rng());
-    MoleculePool::container_type targets;
-    copy(mpool->begin(), mpool->end(), back_inserter(targets));
-
-    std::size_t idx(0);
-    for (MoleculePool::container_type::iterator itr(targets.begin());
-         itr != targets.end(); ++itr, ++idx)
-    {
-        const coord_type source((*itr).coordinate += offset);
-
-        // skip when the voxel is not the target species.
-        // former reactions may change the voxel.
-        if (world_->get_voxel_pool_at(source) != mpool)
-            continue;
-
-        coord_type destination(world_->pick_neighbor(source));
-        if (world_->can_move(source, destination))
-        {
-            if (rng->uniform(0,1) < alpha)
-                world_->move(source, destination, /*candidate=*/idx);
-        }
-        else
-        {
-            attempt_reaction_(*itr, destination, alpha);
-        }
-    }
-}
-
-void StepEvent::walk_on_surface_(
-        const MoleculePool* mpool, const coord_type& offset, const Real& alpha)
-{
-    const boost::shared_ptr<RandomNumberGenerator>& rng(world_->rng());
-    MoleculePool::container_type targets;
-    copy(mpool->begin(), mpool->end(), back_inserter(targets));
-
-    const VoxelPool* location(mpool->location());
-    const Shape::dimension_kind dimension(mpool->get_dimension());
-
-    std::size_t idx(0);
-    for (MoleculePool::container_type::iterator itr(targets.begin());
-         itr != targets.end(); ++itr, ++idx)
-    {
-        const coord_type source((*itr).coordinate += offset);
-
-        // skip when the voxel is not the target species.
-        // former reactions may change the voxel.
-        if (world_->get_voxel_pool_at(source) != mpool)
-            continue;
-
-        // list up the neighbors whose location is ok.
-        std::vector<coord_type> neighbors;
-        for (unsigned int i(0); i < world_->num_neighbors(source); ++i)
-        {
-            const coord_type
-                neighbor(world_->get_neighbor_boundary(source, i));
-
-            if (world_->get_voxel_pool_at(neighbor)->get_dimension() <= dimension)
-                neighbors.push_back(neighbor);
-        }
-
-        if (neighbors.size() == 0)
-            continue;
-
-        coord_type destination(world_->pick_neighbor(source));
-        if (world_->can_move(source, destination))
-        {
-            if (rng->uniform(0,1) < alpha)
-                world_->move(source, destination, /*candidate=*/idx);
-        }
-        else
-        {
-            attempt_reaction_(*itr, destination, alpha);
-        }
-    }
-}
-
 void StepEvent::attempt_reaction_(const SpatiocyteWorld::coordinate_id_pair_type& info,
                                   const coord_type to_coord,
                                   const Real& alpha)
@@ -448,6 +323,147 @@ void StepEvent::attempt_reaction_(const SpatiocyteWorld::coordinate_id_pair_type
         break;
     }
 }
+
+
+StepEvent3D::StepEvent3D(
+        boost::shared_ptr<Model> model,
+        boost::shared_ptr<SpatiocyteWorld> world,
+        const Species& species, const Real& t, const Real& alpha)
+    : base(model, world, species, t, alpha)
+{
+    const Real R(world_->voxel_radius());
+    const Real D(world_->get_molecule_info(species).D);
+    if (D <= 0)
+        dt_ = inf;
+    else
+        dt_ = alpha_ * 2 * pow(R, 2.0) / D / 3;
+    time_ = t + dt_;
+}
+
+void StepEvent3D::walk(const Real& alpha)
+{
+    if (alpha < 0 || alpha > 1)
+        return;
+    // assert(alpha < 0 || alpha > 1);
+
+    std::pair<const MoleculePool*, coord_type> mpool_offset(world_->find_molecule_pool(species_));
+    const MoleculePool *mpool(mpool_offset.first);
+    const coord_type offset(mpool_offset.second);
+
+    const boost::shared_ptr<RandomNumberGenerator> rng(world_->rng());
+    MoleculePool::container_type targets;
+    copy(mpool->begin(), mpool->end(), back_inserter(targets));
+
+    std::size_t idx(0);
+    for (MoleculePool::container_type::iterator itr(targets.begin());
+         itr != targets.end(); ++itr, ++idx)
+    {
+        const coord_type source((*itr).coordinate += offset);
+
+        // skip when the voxel is not the target species.
+        // former reactions may change the voxel.
+        if (world_->get_voxel_pool_at(source) != mpool)
+            continue;
+
+        coord_type destination(world_->pick_neighbor(source));
+        if (world_->can_move(source, destination))
+        {
+            if (rng->uniform(0,1) < alpha)
+                world_->move(source, destination, /*candidate=*/idx);
+        }
+        else
+        {
+            attempt_reaction_(*itr, destination, alpha);
+        }
+    }
+}
+
+StepEvent2D::StepEvent2D(
+        boost::shared_ptr<Model> model,
+        boost::shared_ptr<SpatiocyteWorld> world,
+        const Species& species, const Real& t, const Real& alpha)
+    : base(model, world, species, t, alpha)
+{
+    const Real R(world_->voxel_radius());
+    const Real D(world_->get_molecule_info(species).D);
+    if (D <= 0)
+        dt_ = inf;
+    else
+        dt_ = alpha_ * pow(R, 2.0) / D;
+        // TODO: Regular Lattice
+        // dt_  = pow((2*sqrt(2.0)+4*sqrt(3.0)+3*sqrt(6.0)+sqrt(22.0))/
+        //           (6*sqrt(2.0)+4*sqrt(3.0)+3*sqrt(6.0)), 2) * sqRperD * alpha_;
+    time_ = t + dt_;
+}
+
+void StepEvent2D::walk(const Real& alpha)
+{
+    if (alpha < 0 || alpha > 1)
+        return;
+    // assert(alpha < 0 || alpha > 1);
+
+    std::pair<const MoleculePool*, coord_type> mpool_offset(world_->find_molecule_pool(species_));
+    const MoleculePool *mpool(mpool_offset.first);
+    const coord_type offset(mpool_offset.second);
+
+    const boost::shared_ptr<RandomNumberGenerator>& rng(world_->rng());
+    MoleculePool::container_type targets;
+    copy(mpool->begin(), mpool->end(), back_inserter(targets));
+
+    const VoxelPool* location(mpool->location());
+    const Shape::dimension_kind dimension(mpool->get_dimension());
+
+    std::size_t idx(0);
+    for (MoleculePool::container_type::iterator itr(targets.begin());
+         itr != targets.end(); ++itr, ++idx)
+    {
+        const coord_type source((*itr).coordinate += offset);
+
+        // skip when the voxel is not the target species.
+        // former reactions may change the voxel.
+        if (world_->get_voxel_pool_at(source) != mpool)
+            continue;
+
+        // list up the neighbors whose location is ok.
+        std::vector<coord_type> neighbors;
+        for (unsigned int i(0); i < world_->num_neighbors(source); ++i)
+        {
+            const coord_type
+                neighbor(world_->get_neighbor_boundary(source, i));
+
+            if (world_->get_voxel_pool_at(neighbor)->get_dimension() <= dimension)
+                neighbors.push_back(neighbor);
+        }
+
+        if (neighbors.size() == 0)
+            continue;
+
+        coord_type destination(world_->pick_neighbor(source));
+        if (world_->can_move(source, destination))
+        {
+            if (rng->uniform(0,1) < alpha)
+                world_->move(source, destination, /*candidate=*/idx);
+        }
+        else
+        {
+            attempt_reaction_(*itr, destination, alpha);
+        }
+    }
+}
+
+// StepEvent1D::StepEvent1D(
+//         boost::shared_ptr<Model> model,
+//         boost::shared_ptr<SpatiocyteWorld> world,
+//         const Species& species, const Real& t, const Real& alpha)
+//     : base(model, world, species, t, alpha)
+// {
+//     const Real R(world_->voxel_radius());
+//     const Real D(world_->get_molecule_info(species).D);
+//     if (D <= 0)
+//         dt_ = inf;
+//     else
+//         dt_ = alpha_ * 2 * pow(R, 2.0) / D;
+// }
 
 } // spatiocyte
 

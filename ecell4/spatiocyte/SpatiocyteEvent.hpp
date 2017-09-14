@@ -82,8 +82,10 @@ private:
 
 struct StepEvent : SpatiocyteEvent
 {
-    StepEvent(boost::shared_ptr<Model> model, boost::shared_ptr<SpatiocyteWorld> world,
-            const Species& species, const Real& t, const Real alpha=1.0);
+    StepEvent(boost::shared_ptr<Model> model,
+              boost::shared_ptr<SpatiocyteWorld> world,
+              const Species& species, const Real& t, const Real& alpha)
+        : SpatiocyteEvent(world, t), model_(model), species_(species), alpha_(alpha) {}
     virtual ~StepEvent() {}
 
     virtual void fire_()
@@ -110,14 +112,8 @@ struct StepEvent : SpatiocyteEvent
 
 protected:
 
-    void walk(const Real& alpha);
+    virtual void walk(const Real& alpha) = 0;
 
-    void walk_in_space_(const MoleculePool* mtype,
-                        const SpatiocyteWorld::coordinate_type& offset,
-                        const Real& alpha);
-    void walk_on_surface_(const MoleculePool* mtype,
-                          const SpatiocyteWorld::coordinate_type& offset,
-                          const Real& alpha);
     void attempt_reaction_(const SpatiocyteWorld::coordinate_id_pair_type& info,
                            const SpatiocyteWorld::coordinate_type to_coord,
                            const Real& alpha);
@@ -125,6 +121,32 @@ protected:
     boost::shared_ptr<Model> model_;
     Species species_;
     const Real alpha_;
+};
+
+struct StepEvent3D : StepEvent
+{
+protected:
+    typedef StepEvent base;
+
+public:
+    StepEvent3D(boost::shared_ptr<Model> model,
+                boost::shared_ptr<SpatiocyteWorld> world,
+                const Species& species, const Real& t, const Real& alpha);
+
+    virtual void walk(const Real& alpha);
+};
+
+struct StepEvent2D: StepEvent
+{
+protected:
+    typedef StepEvent base;
+
+public:
+    StepEvent2D(boost::shared_ptr<Model> model,
+                boost::shared_ptr<SpatiocyteWorld> world,
+                const Species& species, const Real& t, const Real& alpha);
+
+    virtual void walk(const Real& alpha);
 };
 
 struct ZerothOrderReactionEvent : SpatiocyteEvent

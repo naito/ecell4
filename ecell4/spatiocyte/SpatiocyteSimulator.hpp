@@ -73,8 +73,17 @@ protected:
     boost::shared_ptr<SpatiocyteEvent>
     create_step_event(const Species& species, const Real& t, const Real& alpha)
     {
-        return boost::shared_ptr<SpatiocyteEvent>(
-                new StepEvent(model_, world_, species, t, alpha));
+        const MoleculePool *mpool(world_->find_molecule_pool(species).first);
+        if (mpool->get_dimension() == Shape::THREE)
+        {
+            return boost::shared_ptr<SpatiocyteEvent>(
+                    new StepEvent3D(model_, world_, species, t, alpha));
+        }
+        else
+        {
+            return boost::shared_ptr<SpatiocyteEvent>(
+                    new StepEvent2D(model_, world_, species, t, alpha));
+        }
     }
 
     inline
