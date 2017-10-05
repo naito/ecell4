@@ -114,7 +114,7 @@ MoleculeInfo SpatiocyteWorld::get_molecule_info(const Species& sp) const
     return info;
 }
 
-std::pair<SpatiocyteWorld::coordinate_type, bool>
+boost::optional<SpatiocyteWorld::coordinate_type>
 SpatiocyteWorld::check_neighbor(const coordinate_type coord,
                                 const std::string& loc)
 {
@@ -155,10 +155,10 @@ SpatiocyteWorld::check_neighbor(const coordinate_type coord,
 
     if (tmp.size() == 0)
     {
-        return std::make_pair(coord, false);
+        return boost::none;
     }
 
-    return std::make_pair(pick(tmp, rng()), true);
+    return pick(tmp, rng());
 }
 
 /*

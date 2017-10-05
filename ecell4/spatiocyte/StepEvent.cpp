@@ -154,10 +154,7 @@ apply_ab2cd(boost::shared_ptr<SpatiocyteWorld> world,
         }
         else
         {
-            std::pair<coord_type, bool>
-                neighbor(world->check_neighbor(to_coord, dloc));
-
-            if (neighbor.second)
+            if (boost::optional<coord_type> neighbor = world->check_neighbor(to_coord, dloc))
             {
                 world->remove_voxel(p1.second.coordinate());
                 if (aserial != cloc)
@@ -167,7 +164,7 @@ apply_ab2cd(boost::shared_ptr<SpatiocyteWorld> world,
                 }
                 return apply_ab2cd_in_order(
                     world, p0, p1, product_species0, product_species1,
-                    from_coord, neighbor.first);
+                    from_coord, *neighbor);
             }
         }
     }
@@ -191,10 +188,7 @@ apply_ab2cd(boost::shared_ptr<SpatiocyteWorld> world,
         }
         else
         {
-            std::pair<coord_type, bool>
-                neighbor(world->check_neighbor(to_coord, cloc));
-
-            if (neighbor.second)
+            if (boost::optional<coord_type> neighbor = world->check_neighbor(to_coord, cloc))
             {
                 world->remove_voxel(p1.second.coordinate());
                 if (aserial != dloc)
@@ -204,16 +198,13 @@ apply_ab2cd(boost::shared_ptr<SpatiocyteWorld> world,
                 }
                 return apply_ab2cd_in_order(
                     world, p0, p1, product_species0, product_species1,
-                    neighbor.first, from_coord);
+                    *neighbor, from_coord);
             }
         }
     }
     else if (bserial == cloc || bloc == cloc)
     {
-        std::pair<coord_type, bool>
-            neighbor(world->check_neighbor(to_coord, dloc));
-
-        if (neighbor.second)
+        if (boost::optional<coord_type> neighbor = world->check_neighbor(to_coord, dloc))
         {
             world->remove_voxel(p0.second.coordinate());
             if (bserial != cloc)
@@ -223,15 +214,12 @@ apply_ab2cd(boost::shared_ptr<SpatiocyteWorld> world,
             }
             return apply_ab2cd_in_order(
                 world, p0, p1, product_species0, product_species1,
-                to_coord, neighbor.first);
+                to_coord, *neighbor);
         }
     }
     else if (bserial == dloc || bloc == dloc)
     {
-        std::pair<coord_type, bool>
-            neighbor(world->check_neighbor(to_coord, dloc));
-
-        if (neighbor.second)
+        if (boost::optional<coord_type> neighbor = world->check_neighbor(to_coord, dloc))
         {
             world->remove_voxel(p0.second.coordinate());
             if (bserial != dloc)
@@ -241,7 +229,7 @@ apply_ab2cd(boost::shared_ptr<SpatiocyteWorld> world,
             }
             return apply_ab2cd_in_order(
                 world, p0, p1, product_species0, product_species1,
-                neighbor.first, to_coord);
+                *neighbor, to_coord);
         }
     }
 

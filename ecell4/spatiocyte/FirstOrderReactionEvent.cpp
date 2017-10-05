@@ -44,7 +44,9 @@ apply_a2b(boost::shared_ptr<SpatiocyteWorld> world,
     rinfo.add_reactant(voxelA);
 
     if (serialLocationA == serialLocationB)
+    {
         react_a2b(world, rinfo, coordA, speciesB);
+    }
     else if (serialA == serialLocationB)
     {
         /* XXX: deprecated
@@ -63,16 +65,16 @@ apply_a2b(boost::shared_ptr<SpatiocyteWorld> world,
     }
     else
     {
-        std::pair<coord_type, bool> neighbor(world->check_neighbor(coordA, serialLocationB));
-
-        if (neighbor.second)
+        if (boost::optional<coord_type> neighbor = world->check_neighbor(coordA, serialLocationB))
         {
             rinfo.add_reactant(voxelA);
             world->remove_voxel(coordA);
-            rinfo.add_product(world->new_voxel(speciesB, neighbor.first).first);
+            rinfo.add_product(world->new_voxel(speciesB, *neighbor).first);
         }
         else
+        {
             return ReactionInfo(world->t());
+        }
     }
     return rinfo;
 }
@@ -94,41 +96,37 @@ apply_a2bc(boost::shared_ptr<SpatiocyteWorld> world,
 
     if (serialA == serialB)
     {
-        std::pair<coord_type, bool> neighbor(world->check_neighbor(coordA, serialLocationC));
-        if (neighbor.second)
+        if (boost::optional<coord_type> neighbor = world->check_neighbor(coordA, serialLocationC))
         {
             rinfo.add_reactant(voxelA);
             rinfo.add_product(voxelA);
-            rinfo.add_product(world->new_voxel(speciesC, neighbor.first).first);
+            rinfo.add_product(world->new_voxel(speciesC, *neighbor).first);
         }
     }
     else if (serialA == serialC)
     {
-        std::pair<coord_type, bool> neighbor(world->check_neighbor(coordA, serialLocationB));
-        if (neighbor.second)
+        if (boost::optional<coord_type> neighbor = world->check_neighbor(coordA, serialLocationB))
         {
             rinfo.add_reactant(voxelA);
             rinfo.add_product(voxelA);
-            rinfo.add_product(world->new_voxel(speciesB, neighbor.first).first);
+            rinfo.add_product(world->new_voxel(speciesB, *neighbor).first);
         }
     }
     else if (serialLocationA == serialLocationB)
     {
-        std::pair<coord_type, bool> neighbor(world->check_neighbor(coordA, serialLocationC));
-        if (neighbor.second)
+        if (boost::optional<coord_type> neighbor = world->check_neighbor(coordA, serialLocationC))
         {
             rinfo.add_reactant(voxelA);
             react_a2b(world, rinfo, coordA, speciesB);
-            rinfo.add_product(world->new_voxel(speciesC, neighbor.first).first);
+            rinfo.add_product(world->new_voxel(speciesC, *neighbor).first);
         }
     }
     else if (serialLocationA == serialLocationC)
     {
-        std::pair<coord_type, bool> neighbor(world->check_neighbor(coordA, serialLocationB));
-        if (neighbor.second)
+        if (boost::optional<coord_type> neighbor = world->check_neighbor(coordA, serialLocationB))
         {
             rinfo.add_reactant(voxelA);
-            rinfo.add_product(world->new_voxel(speciesB, neighbor.first).first);
+            rinfo.add_product(world->new_voxel(speciesB, *neighbor).first);
             react_a2b(world, rinfo, coordA, speciesC);
         }
     }
@@ -138,12 +136,11 @@ apply_a2bc(boost::shared_ptr<SpatiocyteWorld> world,
          *
          * have to use the a2b reaction not the a2bc reaction.
          */
-        std::pair<coord_type, bool> neighbor(world->check_neighbor(coordA, serialLocationC));
-        if (neighbor.second)
+        if (boost::optional<coord_type> neighbor = world->check_neighbor(coordA, serialLocationC))
         {
             rinfo.add_reactant(voxelA);
             vanish(world, rinfo, coordA);
-            rinfo.add_product(world->new_voxel(speciesC, neighbor.first).first);
+            rinfo.add_product(world->new_voxel(speciesC, *neighbor).first);
         }
     }
     else if (serialLocationA == serialC)
@@ -152,11 +149,10 @@ apply_a2bc(boost::shared_ptr<SpatiocyteWorld> world,
          *
          * have to use the a2b reaction not the a2bc reaction.
          */
-        std::pair<coord_type, bool> neighbor(world->check_neighbor(coordA, serialLocationB));
-        if (neighbor.second)
+        if (boost::optional<coord_type> neighbor = world->check_neighbor(coordA, serialLocationB))
         {
             rinfo.add_reactant(voxelA);
-            rinfo.add_product(world->new_voxel(speciesB, neighbor.first).first);
+            rinfo.add_product(world->new_voxel(speciesB, *neighbor).first);
             vanish(world, rinfo, coordA);
         }
     }
@@ -166,12 +162,11 @@ apply_a2bc(boost::shared_ptr<SpatiocyteWorld> world,
          *
          * B and C arise simultaneously. This is invalid reaction.
          */
-        std::pair<coord_type, bool> neighbor(world->check_neighbor(coordA, serialLocationC));
-        if (neighbor.second)
+        if (boost::optional<coord_type> neighbor = world->check_neighbor(coordA, serialLocationC))
         {
             rinfo.add_reactant(voxelA);
             rinfo.add_product(world->new_voxel(speciesB, coordA).first);
-            rinfo.add_product(world->new_voxel(speciesC, neighbor.first).first);
+            rinfo.add_product(world->new_voxel(speciesC, *neighbor).first);
         }
     }
     else if (serialA == serialLocationC)
@@ -180,11 +175,10 @@ apply_a2bc(boost::shared_ptr<SpatiocyteWorld> world,
          *
          * B and C arise simultaneously. This is invalid reaction.
          */
-        std::pair<coord_type, bool> neighbor(world->check_neighbor(coordA, serialLocationB));
-        if (neighbor.second)
+        if (boost::optional<coord_type> neighbor = world->check_neighbor(coordA, serialLocationB))
         {
             rinfo.add_reactant(voxelA);
-            rinfo.add_product(world->new_voxel(speciesB, neighbor.first).first);
+            rinfo.add_product(world->new_voxel(speciesB, *neighbor).first);
             rinfo.add_product(world->new_voxel(speciesC, coordA).first);
         }
     }

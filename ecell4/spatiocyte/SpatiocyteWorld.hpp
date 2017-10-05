@@ -108,7 +108,7 @@ public:
         return new_voxel(Voxel(sp, coord, minfo.radius, minfo.D, minfo.loc));
     }
 
-    std::pair<coordinate_type, bool>
+    boost::optional<coordinate_type>
     check_neighbor(const coordinate_type coord, const std::string& loc);
 
     coordinate_type
