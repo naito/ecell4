@@ -193,18 +193,13 @@ protected:
 inline const std::string
 get_serial(boost::shared_ptr<SpatiocyteWorld> world, const Integer coord)
 {
-    const VoxelPool* mtype(world->get_voxel_pool_at(coord));
-    return mtype->is_vacant() ? "" : mtype->species().serial();
+    return world->get_voxel_pool_at(coord)->get_serial();
 }
 
 inline const std::string
 get_location(boost::shared_ptr<SpatiocyteWorld> world, const Integer coord)
 {
-    const VoxelPool* mtype(world->get_voxel_pool_at(coord));
-    if (mtype->is_vacant())
-        return "";
-    const VoxelPool* ltype(mtype->location());
-    return ltype->is_vacant() ? "" : ltype->species().serial();
+    return world->get_voxel_pool_at(coord)->get_location_serial();
 }
 
 } // spatiocyte

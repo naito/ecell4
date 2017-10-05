@@ -151,6 +151,16 @@ public:
         return D_;
     }
 
+    Species::serial_type get_serial() const
+    {
+        return is_vacant() ? "" : species().serial();
+    }
+
+    Species::serial_type get_location_serial() const
+    {
+        return is_vacant() ? "" : location()->get_serial();
+    }
+
 public:
 
     virtual void add_voxel(const coordinate_id_pair_type& info)

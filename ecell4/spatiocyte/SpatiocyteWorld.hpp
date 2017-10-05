@@ -130,11 +130,13 @@ public:
     identified_voxel
     make_pid_voxel_pair(const VoxelPool* vpool, const coordinate_id_pair_type& info) const
     {
-        const std::string loc(vpool->location()->is_vacant() ?
-                "" : vpool->location()->species().serial());
         return identified_voxel(
             ParticleID(info.pid),
-            Voxel(vpool->species(), info.coordinate, vpool->radius(), vpool->D(), loc));
+            Voxel(vpool->species(),
+                  info.coordinate,
+                  vpool->radius(),
+                  vpool->D(),
+                  vpool->get_location_serial()));
     }
 
     identified_voxel
