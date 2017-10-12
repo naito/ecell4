@@ -15,6 +15,7 @@
 
 #include "SpatiocyteWorld.hpp"
 #include "SpatiocyteEvent.hpp"
+#include "FirstOrderReactionEvent.hpp"
 
 namespace ecell4
 {
@@ -98,19 +99,8 @@ protected:
     boost::shared_ptr<SpatiocyteEvent>
     create_first_order_reaction_event(const ReactionRule& reaction_rule, const Real& t)
     {
-        switch (reaction_rule.products().size())
-        {
-            case 0:
-                return boost::shared_ptr<SpatiocyteEvent>(
-                        new VanishmentEvent(world_, reaction_rule, t));
-            case 1:
-                return boost::shared_ptr<SpatiocyteEvent>(
-                        new RearrangementEvent(world_, reaction_rule, t));
-            case 2:
-                return boost::shared_ptr<SpatiocyteEvent>(
-                        new EliminationEvent(world_, reaction_rule, t));
-        }
-        throw NotSupported("The size of products is supported only for 0, 1 or 2.");
+        return boost::shared_ptr<SpatiocyteEvent>(
+                generate_first_order_reaction_event(world_, reaction_rule, t));
     }
 
     void step_();
