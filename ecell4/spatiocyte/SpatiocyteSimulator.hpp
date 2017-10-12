@@ -98,8 +98,19 @@ protected:
     boost::shared_ptr<SpatiocyteEvent>
     create_first_order_reaction_event(const ReactionRule& reaction_rule, const Real& t)
     {
-        return boost::shared_ptr<SpatiocyteEvent>(
-                new FirstOrderReactionEvent(world_, reaction_rule, t));
+        switch (reaction_rule.products().size())
+        {
+            case 0:
+                return boost::shared_ptr<SpatiocyteEvent>(
+                        new VanishmentEvent(world_, reaction_rule, t));
+            case 1:
+                return boost::shared_ptr<SpatiocyteEvent>(
+                        new RearrangementEvent(world_, reaction_rule, t));
+            case 2:
+                return boost::shared_ptr<SpatiocyteEvent>(
+                        new EliminationEvent(world_, reaction_rule, t));
+        }
+        throw NotSupported("The size of products is supported only for 0, 1 or 2.");
     }
 
     void step_();

@@ -35,225 +35,179 @@ vanish(boost::shared_ptr<SpatiocyteWorld>& world,
     rinfo.add_product(world->get_voxel_at(coord));
 }
 
-ReactionInfo
-apply_a2b(boost::shared_ptr<SpatiocyteWorld> world,
-          const ReactionInfo::identified_voxel& voxelA,
-          const Species& speciesB)
+
+/*
+ * VanishmentEvent
+ */
+
+ReactionInfo VanishmentEvent::react(const ReactionInfo::identified_voxel& voxel)
 {
-    const coord_type coordA(voxelA.second.coordinate());
-    const std::string serialA(get_serial(world, coordA)),
-                      serialB(speciesB.serial()),
-                      serialLocationA(get_location(world, coordA)),
-                      serialLocationB(world->get_molecule_info(speciesB).loc);
+    ReactionInfo rinfo(world_->t());
+    rinfo.add_reactant(voxel);
+    world_->remove_voxel(voxel.second.coordinate());
+    return rinfo;
+}
 
-    ReactionInfo rinfo(world->t());
 
-    if (serialLocationA == serialLocationB)
+/*
+ * RearrangementEvent
+ */
+
+ReactionInfo RearrangementEvent::react(const ReactionInfo::identified_voxel& voxel)
+{
+    const std::string serialLocationReactant(world_->get_molecule_info(reactant_).loc);
+    const std::string serialLocationProduct(world_->get_molecule_info(product_).loc);
+
+    ReactionInfo rinfo(world_->t());
+
+    if (serialLocationReactant == serialLocationProduct)
     {
-        react_a2b(world, rinfo, voxelA, speciesB);
+        react_a2b(world_, rinfo, voxel, product_);
     }
-    else if (serialA == serialLocationB)
+    else if (reactant_.serial() == serialLocationProduct)
     {
         /* XXX: deprecated
          *
-         * have to use the 0th order reaction not the 1st order reaction
+         * should use ZerothOrderReactionEvent
          */
-        rinfo.add_reactant(voxelA);
-        rinfo.add_product(world->new_voxel(speciesB, coordA).first);
+        rinfo.add_reactant(voxel);
+        rinfo.add_product(world_->new_voxel(product_, voxel.second.coordinate()).first);
     }
-    else if (serialLocationA == serialB)
+    else if (serialLocationReactant == product_.serial())
     {
         /* XXX: deprecated
          *
-         * have to use the vanishment reaction not the a2b reaction.
+         * should use VanishmentEvent
          */
-        vanish(world, rinfo, voxelA);
+        vanish(world_, rinfo, voxel);
     }
     else
     {
-        if (boost::optional<coord_type> neighbor = world->check_neighbor(coordA, serialLocationB))
+        const coord_type coord(voxel.second.coordinate());
+        if (boost::optional<coord_type> neighbor
+                = world_->check_neighbor(coord, serialLocationProduct))
         {
-            rinfo.add_reactant(voxelA);
-            rinfo.add_reactant(voxelA);
-            world->remove_voxel(coordA);
-            rinfo.add_product(world->new_voxel(speciesB, *neighbor).first);
+            rinfo.add_reactant(voxel);
+            world_->remove_voxel(coord);
+            rinfo.add_product(world_->new_voxel(product_, *neighbor).first);
         }
         else
         {
-            return ReactionInfo(world->t());
+            return ReactionInfo(world_->t());
         }
     }
+
+    push_product(product_);
     return rinfo;
 }
 
-ReactionInfo
-apply_a2bc(boost::shared_ptr<SpatiocyteWorld> world,
-           const ReactionInfo::identified_voxel& voxelA,
-           const Species& speciesB, const Species& speciesC)
+
+/*
+ * EliminationEvent
+ */
+
+ReactionInfo EliminationEvent::react(const ReactionInfo::identified_voxel& voxel)
 {
-    const coord_type coordA(voxelA.second.coordinate());
-    const std::string serialA(get_serial(world, coordA)),
-                      serialB(speciesB.serial()),
-                      serialC(speciesC.serial()),
-                      serialLocationA(get_location(world, coordA)),
-                      serialLocationB(world->get_molecule_info(speciesB).loc),
-                      serialLocationC(world->get_molecule_info(speciesC).loc);
+    // ReactionInfo rinfo(apply_a2bc(world_, voxel, product1_, product2_));
 
-    ReactionInfo rinfo(world->t());
+    const std::string serialReactant(reactant_.serial());
+    const std::string serialLocationReactant(world_->get_molecule_info(reactant_).loc);
+    const std::string serialLocationProduct1(world_->get_molecule_info(product1_).loc);
+    const std::string serialLocationProduct2(world_->get_molecule_info(product2_).loc);
 
-    if (serialA == serialB)
+    ReactionInfo rinfo(world_->t());
+
+    if (serialReactant == product1_.serial())
     {
-        if (boost::optional<coord_type> neighbor = world->check_neighbor(coordA, serialLocationC))
+        if (boost::optional<coord_type> neighbor
+                = world_->check_neighbor(voxel.second.coordinate(), serialLocationProduct2))
         {
-            rinfo.add_reactant(voxelA);
-            rinfo.add_product(voxelA);
-            rinfo.add_product(world->new_voxel(speciesC, *neighbor).first);
+            rinfo.add_reactant(voxel);
+            rinfo.add_product(voxel);
+            rinfo.add_product(world_->new_voxel(product2_, *neighbor).first);
         }
     }
-    else if (serialA == serialC)
+    else if (serialReactant == product2_.serial())
     {
-        if (boost::optional<coord_type> neighbor = world->check_neighbor(coordA, serialLocationB))
+        if (boost::optional<coord_type> neighbor
+                = world_->check_neighbor(voxel.second.coordinate(), serialLocationProduct1))
         {
-            rinfo.add_reactant(voxelA);
-            rinfo.add_product(voxelA);
-            rinfo.add_product(world->new_voxel(speciesB, *neighbor).first);
+            rinfo.add_reactant(voxel);
+            rinfo.add_product(voxel);
+            rinfo.add_product(world_->new_voxel(product1_, *neighbor).first);
         }
     }
-    else if (serialLocationA == serialLocationB)
+    else if (serialLocationReactant == serialLocationProduct1)
     {
-        if (boost::optional<coord_type> neighbor = world->check_neighbor(coordA, serialLocationC))
+        if (boost::optional<coord_type> neighbor
+                = world_->check_neighbor(voxel.second.coordinate(), serialLocationProduct2))
         {
-            react_a2b(world, rinfo, voxelA, speciesB);
-            rinfo.add_product(world->new_voxel(speciesC, *neighbor).first);
+            react_a2b(world_, rinfo, voxel, product1_);
+            rinfo.add_product(world_->new_voxel(product2_, *neighbor).first);
         }
     }
-    else if (serialLocationA == serialLocationC)
+    else if (serialLocationReactant == serialLocationProduct2)
     {
-        if (boost::optional<coord_type> neighbor = world->check_neighbor(coordA, serialLocationB))
+        if (boost::optional<coord_type> neighbor
+                = world_->check_neighbor(voxel.second.coordinate(), serialLocationProduct1))
         {
-            rinfo.add_product(world->new_voxel(speciesB, *neighbor).first);
-            react_a2b(world, rinfo, voxelA, speciesC);
+            react_a2b(world_, rinfo, voxel, product2_);
+            rinfo.add_product(world_->new_voxel(product1_, *neighbor).first);
         }
     }
-    else if (serialLocationA == serialB)
-    {
-        /* XXX: deprecated
-         *
-         * have to use the a2b reaction not the a2bc reaction.
-         */
-        if (boost::optional<coord_type> neighbor = world->check_neighbor(coordA, serialLocationC))
-        {
-            vanish(world, rinfo, voxelA);
-            rinfo.add_product(world->new_voxel(speciesC, *neighbor).first);
-        }
-    }
-    else if (serialLocationA == serialC)
+    else if (serialLocationReactant == product1_.serial())
     {
         /* XXX: deprecated
          *
-         * have to use the a2b reaction not the a2bc reaction.
+         * should use RearrangementEvent
          */
-        if (boost::optional<coord_type> neighbor = world->check_neighbor(coordA, serialLocationB))
+        if (boost::optional<coord_type> neighbor
+                = world_->check_neighbor(voxel.second.coordinate(), serialLocationProduct2))
         {
-            rinfo.add_product(world->new_voxel(speciesB, *neighbor).first);
-            vanish(world, rinfo, voxelA);
+            vanish(world_, rinfo, voxel);
+            rinfo.add_product(world_->new_voxel(product2_, *neighbor).first);
         }
     }
-    else if (serialA == serialLocationB)
+    else if (serialLocationReactant == product2_.serial())
     {
         /* XXX: deprecated
          *
-         * B and C arise simultaneously. This is invalid reaction.
+         * should use RearrangementEvent
          */
-        if (boost::optional<coord_type> neighbor = world->check_neighbor(coordA, serialLocationC))
+        if (boost::optional<coord_type> neighbor
+                = world_->check_neighbor(voxel.second.coordinate(), serialLocationProduct1))
         {
-            rinfo.add_reactant(voxelA);
-            rinfo.add_product(world->new_voxel(speciesB, coordA).first);
-            rinfo.add_product(world->new_voxel(speciesC, *neighbor).first);
+            rinfo.add_product(world_->new_voxel(product1_, *neighbor).first);
+            vanish(world_, rinfo, voxel);
         }
     }
-    else if (serialA == serialLocationC)
+    else if (serialReactant == serialLocationProduct1)
     {
-        /* XXX: deprecated
-         *
-         * B and C arise simultaneously. This is invalid reaction.
-         */
-        if (boost::optional<coord_type> neighbor = world->check_neighbor(coordA, serialLocationB))
+        const coord_type coord(voxel.second.coordinate());
+        if (boost::optional<coord_type> neighbor
+                = world_->check_neighbor(coord, serialLocationProduct2))
         {
-            rinfo.add_reactant(voxelA);
-            rinfo.add_product(world->new_voxel(speciesB, *neighbor).first);
-            rinfo.add_product(world->new_voxel(speciesC, coordA).first);
+            rinfo.add_reactant(voxel);
+            rinfo.add_product(world_->new_voxel(product1_, coord).first);
+            rinfo.add_product(world_->new_voxel(product2_, *neighbor).first);
         }
     }
+    else if (serialReactant == serialLocationProduct2)
+    {
+        const coord_type coord(voxel.second.coordinate());
+        if (boost::optional<coord_type> neighbor
+                = world_->check_neighbor(coord, serialLocationProduct1))
+        {
+            rinfo.add_reactant(voxel);
+            rinfo.add_product(world_->new_voxel(product1_, *neighbor).first);
+            rinfo.add_product(world_->new_voxel(product2_, coord).first);
+        }
+    }
+
+    push_product(product1_);
+    push_product(product2_);
 
     return rinfo;
-}
-
-FirstOrderReactionEvent::FirstOrderReactionEvent(boost::shared_ptr<SpatiocyteWorld> world,
-                                                 const ReactionRule& rule, const Real& t)
-    : SpatiocyteEvent(world, t), rule_(rule)
-{
-    //assert(rule_.reactants().size() == 1);
-    time_ = t + draw_dt();
-}
-
-void FirstOrderReactionEvent::fire_()
-{
-    if (world_->num_voxels_exact(reactant_()) == 0)
-    {
-        time_ += draw_dt();
-        return;
-    }
-
-    const ReactionInfo::identified_voxel& voxel(world_->choice(reactant_()));
-    const ReactionRule::product_container_type& products(rule_.products());
-
-    switch (products.size())
-    {
-        case 0:
-            {
-                ReactionInfo rinfo(world_->t());
-                rinfo.add_reactant(voxel);
-                world_->remove_voxel(voxel.second.coordinate());
-                push_reaction(std::make_pair(rule_, rinfo));
-            }
-            break;
-        case 1:
-            {
-                push_product(products.at(0));
-                ReactionInfo rinfo(apply_a2b(world_, voxel, products.at(0)));
-                if (rinfo.has_occurred())
-                    push_reaction(std::make_pair(rule_, rinfo));
-            }
-            break;
-        case 2:
-            {
-                push_product(products.at(0));
-                push_product(products.at(1));
-                ReactionInfo rinfo(apply_a2bc(world_, voxel, products.at(0), products.at(1)));
-                if (rinfo.has_occurred())
-                {
-                    push_reaction(std::make_pair(rule_, rinfo));
-                }
-            }
-            break;
-    }
-    time_ += draw_dt();
-}
-
-Real FirstOrderReactionEvent::draw_dt()
-{
-    const Integer num(world_->num_voxels_exact(reactant_()));
-    const Real k(rule_.k());
-    const Real p = k * num;
-    Real dt(inf);
-    if (p != 0.)
-    {
-        const Real rnd(world_->rng()->uniform(0.,1.));
-        dt = - log(1 - rnd) / p;
-    }
-    prev_num_voxels_ = num;
-    return dt;
 }
 
 } // spatiocyte
