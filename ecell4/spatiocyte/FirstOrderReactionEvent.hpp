@@ -1,6 +1,7 @@
 #ifndef ECELL4_SPATIOCYTE_FIRST_ORDER_REACTION_EVENT_HPP
 #define ECELL4_SPATIOCYTE_FIRST_ORDER_REACTION_EVENT_HPP
 
+#include <boost/optional.hpp>
 #include "SpatiocyteEvent.hpp"
 
 namespace ecell4
@@ -22,19 +23,18 @@ struct FirstOrderReactionEvent : SpatiocyteEvent
 
     virtual ~FirstOrderReactionEvent() {}
 
-    virtual ReactionInfo react(const ReactionInfo::identified_voxel& voxel) = 0;
+    virtual boost::optional<ReactionInfo> react(const ReactionInfo::identified_voxel& voxel) = 0;
 
     virtual void fire_()
     {
         if (world_->num_voxels_exact(reactant_) != 0)
         {
-            const ReactionInfo rinfo(react(world_->choice(reactant_)));
-            if (rinfo.has_occurred())
+            if (boost::optional<ReactionInfo> rinfo = react(world_->choice(reactant_)))
             {
-                push_reaction(std::make_pair(rule_, rinfo));
+                push_reaction(std::make_pair(rule_, *rinfo));
 
-                for (ReactionInfo::container_type::const_iterator itr(rinfo.products().begin());
-                        itr != rinfo.products().end(); ++itr)
+                for (ReactionInfo::container_type::const_iterator itr(rinfo->products().begin());
+                        itr != rinfo->products().end(); ++itr)
                 {
                     push_product((*itr).second.species());
                 }
@@ -85,7 +85,7 @@ struct VanishmentEvent : FirstOrderReactionEvent
         // assert(rule_.products().size() == 0);
     }
 
-    virtual ReactionInfo react(const ReactionInfo::identified_voxel& voxel);
+    virtual boost::optional<ReactionInfo> react(const ReactionInfo::identified_voxel& voxel);
 };
 
 
@@ -100,7 +100,7 @@ struct RearrangementEvent : FirstOrderReactionEvent
         // assert(rule_.products().size() == 1);
     }
 
-    virtual ReactionInfo react(const ReactionInfo::identified_voxel& voxel);
+    virtual boost::optional<ReactionInfo> react(const ReactionInfo::identified_voxel& voxel);
 
 protected:
 
@@ -119,7 +119,7 @@ struct GenerationEvent : FirstOrderReactionEvent
         // assert(rule_.products().size() == 1);
     }
 
-    virtual ReactionInfo react(const ReactionInfo::identified_voxel& voxel);
+    virtual boost::optional<ReactionInfo> react(const ReactionInfo::identified_voxel& voxel);
 
 protected:
 
@@ -141,7 +141,7 @@ struct DesorptionEvent : FirstOrderReactionEvent
         // assert(rule_.products().size() == 1);
     }
 
-    virtual ReactionInfo react(const ReactionInfo::identified_voxel& voxel);
+    virtual boost::optional<ReactionInfo> react(const ReactionInfo::identified_voxel& voxel);
 
 protected:
 
@@ -166,7 +166,7 @@ struct EliminationEvent : FirstOrderReactionEvent
         // assert(rule_.products().size() == 2)
     }
 
-    virtual ReactionInfo react(const ReactionInfo::identified_voxel& voxel);
+    virtual boost::optional<ReactionInfo> react(const ReactionInfo::identified_voxel& voxel);
 
 protected:
 
@@ -190,7 +190,7 @@ struct GenerationBesideEvent : FirstOrderReactionEvent
         // assert(rule_.products().size() == 2)
     }
 
-    virtual ReactionInfo react(const ReactionInfo::identified_voxel& voxel);
+    virtual boost::optional<ReactionInfo> react(const ReactionInfo::identified_voxel& voxel);
 
 protected:
 
@@ -215,7 +215,7 @@ struct GenerationTwoEvent : FirstOrderReactionEvent
         // assert(rule_.products().size() == 2)
     }
 
-    virtual ReactionInfo react(const ReactionInfo::identified_voxel& voxel);
+    virtual boost::optional<ReactionInfo> react(const ReactionInfo::identified_voxel& voxel);
 
 protected:
 

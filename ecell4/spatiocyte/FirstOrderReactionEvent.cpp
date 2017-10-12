@@ -117,7 +117,8 @@ vanish(boost::shared_ptr<SpatiocyteWorld>& world,
 }
 
 
-ReactionInfo VanishmentEvent::react(const ReactionInfo::identified_voxel& voxel)
+boost::optional<ReactionInfo>
+VanishmentEvent::react(const ReactionInfo::identified_voxel& voxel)
 {
     ReactionInfo rinfo(world_->t());
     rinfo.add_reactant(voxel);
@@ -125,92 +126,86 @@ ReactionInfo VanishmentEvent::react(const ReactionInfo::identified_voxel& voxel)
     return rinfo;
 }
 
-ReactionInfo RearrangementEvent::react(const ReactionInfo::identified_voxel& voxel)
+boost::optional<ReactionInfo>
+RearrangementEvent::react(const ReactionInfo::identified_voxel& voxel)
 {
     ReactionInfo rinfo(world_->t());
-
     react_a2b(world_, rinfo, voxel, product_);
-
     return rinfo;
 }
 
-ReactionInfo GenerationEvent::react(const ReactionInfo::identified_voxel& voxel)
+boost::optional<ReactionInfo>
+GenerationEvent::react(const ReactionInfo::identified_voxel& voxel)
 {
     ReactionInfo rinfo(world_->t());
-
     rinfo.add_reactant(voxel);
     rinfo.add_product(world_->new_voxel(product_, voxel.second.coordinate()).first);
-
     return rinfo;
 }
 
-ReactionInfo DesorptionEvent::react(const ReactionInfo::identified_voxel& voxel)
+boost::optional<ReactionInfo>
+DesorptionEvent::react(const ReactionInfo::identified_voxel& voxel)
 {
     const coord_type coord(voxel.second.coordinate());
     if (boost::optional<coord_type> neighbor
             = world_->check_neighbor(coord, serial_location_product_))
     {
         ReactionInfo rinfo(world_->t());
-
         rinfo.add_reactant(voxel);
         world_->remove_voxel(coord);
         rinfo.add_product(world_->new_voxel(product_, *neighbor).first);
-
         return rinfo;
     }
 
-    return ReactionInfo(world_->t());
+    return boost::none;
 }
 
-ReactionInfo EliminationEvent::react(const ReactionInfo::identified_voxel& voxel)
+boost::optional<ReactionInfo>
+EliminationEvent::react(const ReactionInfo::identified_voxel& voxel)
 {
     if (boost::optional<coord_type> neighbor
             = world_->check_neighbor(voxel.second.coordinate(), serial_location_product_))
     {
         ReactionInfo rinfo(world_->t());
-
         react_a2b(world_, rinfo, voxel, product1_);
         rinfo.add_product(world_->new_voxel(product2_, *neighbor).first);
-
         return rinfo;
     }
 
-    return ReactionInfo(world_->t());
+    return boost::none;
 }
 
-ReactionInfo GenerationBesideEvent::react(const ReactionInfo::identified_voxel& voxel)
+boost::optional<ReactionInfo>
+GenerationBesideEvent::react(const ReactionInfo::identified_voxel& voxel)
 {
     if (boost::optional<coord_type> neighbor
             = world_->check_neighbor(voxel.second.coordinate(), serial_location_product_))
     {
         ReactionInfo rinfo(world_->t());
-
         rinfo.add_reactant(voxel);
         rinfo.add_product(voxel);
         rinfo.add_product(world_->new_voxel(product_, *neighbor).first);
-
         return rinfo;
     }
 
-    return ReactionInfo(world_->t());
+    return boost::none;
 }
 
-ReactionInfo GenerationTwoEvent::react(const ReactionInfo::identified_voxel& voxel)
+boost::optional<ReactionInfo>
+GenerationTwoEvent::react(const ReactionInfo::identified_voxel& voxel)
 {
     const coord_type coord(voxel.second.coordinate());
     if (boost::optional<coord_type> neighbor
             = world_->check_neighbor(coord, serial_location_product_))
     {
         ReactionInfo rinfo(world_->t());
-
         rinfo.add_reactant(voxel);
         rinfo.add_product(world_->new_voxel(product1_, coord).first);
         rinfo.add_product(world_->new_voxel(product2_, *neighbor).first);
-
         return rinfo;
     }
 
-    return ReactionInfo(world_->t());
+    return boost::none;
 }
 
 } // spatiocyte
