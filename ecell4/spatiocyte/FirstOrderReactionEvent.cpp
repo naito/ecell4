@@ -100,22 +100,6 @@ react_a2b(boost::shared_ptr<SpatiocyteWorld>& world,
     rinfo.add_product(world->new_voxel(speciesB, coordA).first);
 }
 
-/* Deprecated function
- *
- * If this function is needed, the reaction is invalid.
- */
-static inline void
-vanish(boost::shared_ptr<SpatiocyteWorld>& world,
-       ReactionInfo& rinfo,
-       const ReactionInfo::identified_voxel& voxel)
-{
-    const coord_type coord(voxel.second.coordinate());
-
-    rinfo.add_reactant(voxel);
-    world->remove_voxel(coord);
-    rinfo.add_product(world->get_voxel_at(coord));
-}
-
 
 boost::optional<ReactionInfo>
 VanishmentEvent::react(const ReactionInfo::identified_voxel& voxel)
