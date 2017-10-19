@@ -33,12 +33,12 @@ apply_ab2c(boost::shared_ptr<SpatiocyteWorld> world,
            const ReactionInfo::identified_voxel& reactantB,
            const Species& product_species)
 {
-    const std::string& serialA(get_serial(world, reactantA.second.coordinate()));
-    const std::string& serialB(get_serial(world, reactantB.second.coordinate()));
+    const std::string serialA(get_serial(world, reactantA.second.coordinate()));
+    const std::string serialB(get_serial(world, reactantB.second.coordinate()));
 
-    const std::string& locationA(get_location(world, reactantA.second.coordinate()));
-    const std::string& locationB(get_location(world, reactantB.second.coordinate()));
-    const std::string& locationC(world->get_molecule_info(product_species).loc);
+    const std::string locationA(get_location(world, reactantA.second.coordinate()));
+    const std::string locationB(get_location(world, reactantB.second.coordinate()));
+    const std::string locationC(world->get_molecule_info(product_species).loc);
 
     coord_type new_coordinate;
 
@@ -127,23 +127,23 @@ apply_ab2cd(boost::shared_ptr<SpatiocyteWorld> world,
 {
     const coord_type from_coord(p0.second.coordinate());
     const coord_type to_coord(p1.second.coordinate());
-    const std::string aserial(get_serial(world, from_coord));
-    const std::string aloc(get_location(world, from_coord));
-    const std::string bserial(get_serial(world, to_coord));
-    const std::string bloc(get_location(world, to_coord));
-    const std::string cloc(world->get_molecule_info(product_species0).loc);
-    const std::string dloc(world->get_molecule_info(product_species1).loc);
+    const std::string serialA(get_serial(world, from_coord));
+    const std::string locationA(get_location(world, from_coord));
+    const std::string serialB(get_serial(world, to_coord));
+    const std::string locationB(get_location(world, to_coord));
+    const std::string locationC(world->get_molecule_info(product_species0).loc);
+    const std::string locationD(world->get_molecule_info(product_species1).loc);
 
-    if (aserial == cloc || aloc == cloc)
+    if (serialA == locationC || locationA == locationC)
     {
-        if (bserial == dloc || bloc == dloc)
+        if (serialB == locationD || locationB == locationD)
         {
-            if (aserial != cloc)
+            if (serialA != locationC)
             {
                 // Remove A once if A is not the location of C
                 world->remove_voxel(p0.second.coordinate());
             }
-            if (bserial != dloc)
+            if (serialB != locationD)
             {
                 // Remove B once if B is not the location of D
                 world->remove_voxel(p1.second.coordinate());
@@ -154,10 +154,10 @@ apply_ab2cd(boost::shared_ptr<SpatiocyteWorld> world,
         }
         else
         {
-            if (boost::optional<coord_type> neighbor = world->check_neighbor(to_coord, dloc))
+            if (boost::optional<coord_type> neighbor = world->check_neighbor(to_coord, locationD))
             {
                 world->remove_voxel(p1.second.coordinate());
-                if (aserial != cloc)
+                if (serialA != locationC)
                 {
                     // Remove A once if A is not the location of C
                     world->remove_voxel(p0.second.coordinate());
@@ -168,16 +168,16 @@ apply_ab2cd(boost::shared_ptr<SpatiocyteWorld> world,
             }
         }
     }
-    else if (aserial == dloc || aloc == dloc)
+    else if (serialA == locationD || locationA == locationD)
     {
-        if (bserial == cloc || bloc == dloc)
+        if (serialB == locationC || locationB == locationD)
         {
-            if (aserial != dloc)
+            if (serialA != locationD)
             {
                 // Remove A once if A is not the location of D
                 world->remove_voxel(p0.second.coordinate());
             }
-            if (bserial != cloc)
+            if (serialB != locationC)
             {
                 // Remove B once if B is not the location of C
                 world->remove_voxel(p1.second.coordinate());
@@ -188,10 +188,10 @@ apply_ab2cd(boost::shared_ptr<SpatiocyteWorld> world,
         }
         else
         {
-            if (boost::optional<coord_type> neighbor = world->check_neighbor(to_coord, cloc))
+            if (boost::optional<coord_type> neighbor = world->check_neighbor(to_coord, locationC))
             {
                 world->remove_voxel(p1.second.coordinate());
-                if (aserial != dloc)
+                if (serialA != locationD)
                 {
                     // Remove A once if A is not the location of D
                     world->remove_voxel(p0.second.coordinate());
@@ -202,12 +202,12 @@ apply_ab2cd(boost::shared_ptr<SpatiocyteWorld> world,
             }
         }
     }
-    else if (bserial == cloc || bloc == cloc)
+    else if (serialB == locationC || locationB == locationC)
     {
-        if (boost::optional<coord_type> neighbor = world->check_neighbor(to_coord, dloc))
+        if (boost::optional<coord_type> neighbor = world->check_neighbor(to_coord, locationD))
         {
             world->remove_voxel(p0.second.coordinate());
-            if (bserial != cloc)
+            if (serialB != locationC)
             {
                 // Remove B once if B is not the location of C
                 world->remove_voxel(p1.second.coordinate());
@@ -217,12 +217,12 @@ apply_ab2cd(boost::shared_ptr<SpatiocyteWorld> world,
                 to_coord, *neighbor);
         }
     }
-    else if (bserial == dloc || bloc == dloc)
+    else if (serialB == locationD || locationB == locationD)
     {
-        if (boost::optional<coord_type> neighbor = world->check_neighbor(to_coord, dloc))
+        if (boost::optional<coord_type> neighbor = world->check_neighbor(to_coord, locationD))
         {
             world->remove_voxel(p0.second.coordinate());
-            if (bserial != dloc)
+            if (serialB != locationD)
             {
                 // Remove B once if B is not the location of D
                 world->remove_voxel(p1.second.coordinate());
@@ -416,8 +416,7 @@ void StepEvent2D::walk(const Real& alpha)
         std::vector<coord_type> neighbors;
         for (unsigned int i(0); i < world_->num_neighbors(source); ++i)
         {
-            const coord_type
-                neighbor(world_->get_neighbor_boundary(source, i));
+            const coord_type neighbor(world_->get_neighbor_boundary(source, i));
 
             if (world_->get_voxel_pool_at(neighbor)->get_dimension() <= dimension)
                 neighbors.push_back(neighbor);
