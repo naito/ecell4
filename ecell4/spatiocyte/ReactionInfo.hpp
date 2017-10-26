@@ -1,5 +1,5 @@
-#ifndef __ECELL4_SPATIOCYTE_REACTIONS_HPP
-#define __ECELL4_SPATIOCYTE_REACTIONS_HPP
+#ifndef ECELL4_SPATIOCYTE_REACTIONS_HPP
+#define ECELL4_SPATIOCYTE_REACTIONS_HPP
 
 #include <boost/shared_ptr.hpp>
 #include <ecell4/core/VoxelPool.hpp>
@@ -73,4 +73,4 @@ protected:
 
 } // ecell4
 
-#endif /* __ECELL4_SPATIOCYTE_REACTIONS_HPP */
+#endif /* ECELL4_SPATIOCYTE_REACTIONS_HPP */

@@ -1,5 +1,5 @@
-#ifndef __ECELL4_SPATIOCYTE_OFFSET_SPACE_HPP
-#define __ECELL4_SPATIOCYTE_OFFSET_SPACE_HPP
+#ifndef ECELL4_SPATIOCYTE_OFFSET_SPACE_HPP
+#define ECELL4_SPATIOCYTE_OFFSET_SPACE_HPP
 
 #include <boost/shared_ptr.hpp>
 #include <ecell4/core/Identifier.hpp>
@@ -201,4 +201,4 @@ public:
 
 } // ns ecell4
 
-#endif // __ECELL4_SPATIOCYTE_OFFSET_SPACE_HPP
+#endif // ECELL4_SPATIOCYTE_OFFSET_SPACE_HPP
