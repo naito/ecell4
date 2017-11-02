@@ -947,6 +947,21 @@ inline SpatiocyteWorld* create_spatiocyte_world_offlattice_impl_alias(
     return create_spatiocyte_world_offlattice_impl(edge_lengths, voxel_radius, rng);
 }
 
+inline void add_offlattice_space(
+    SpatiocyteWorld *world,
+    const OffLatticeSpace::position_container positions,
+    const OffLatticeSpace::coordinate_pair_list_type adjoining_pairs,
+    const Species& species)
+{
+    const Real radius = world->voxel_radius();
+    OffLatticeSpace* space(new OffLatticeSpace(radius));
+    space->reset(positions, adjoining_pairs);
+    space->make_structure_type(species, Shape::TWO, ""); // TODO
+    for (Integer coord(0); coord < space->size(); ++coord)
+        space->update_voxel(ParticleID(), Voxel(species, coord, radius, 0.0, ""));
+    world->add_space(space);
+}
+
 } // spatiocyte
 
 } // ecell4
