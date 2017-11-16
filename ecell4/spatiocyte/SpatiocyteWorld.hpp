@@ -119,7 +119,7 @@ public:
         assert(num_neighbors != 0);
         if (num_neighbors == 1)
             return item.get_neighbor_boundary(coordinate, 0);
-        return item.get_neighbor_boundary(coordinate, rng()->uniform_int(1, num_neighbors-1));
+        return item.get_neighbor_boundary(coordinate, rng()->uniform_int(0, num_neighbors-1));
     }
 
     boost::shared_ptr<RandomNumberGenerator> rng()
