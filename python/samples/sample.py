@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import numpy
 import time
 from ecell4.core import *
@@ -51,7 +53,7 @@ def singlerun(seed):
     def log(mode="a"):
         t, N1, N2, N3 = (sim.t(),
             w.num_molecules(sp1), w.num_molecules(sp2), w.num_molecules(sp3))
-        print "%e\t%g\t%g\t%g" % (t, N1, N2, N3)
+        print("%e\t%g\t%g\t%g" % (t, N1, N2, N3))
         data.append(numpy.array([t, N1, N2, N3]))
 
     next_time, dt = 0.0, 0.05
