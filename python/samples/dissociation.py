@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from ecell4.core import *
 from ecell4.ode import *
 
@@ -22,15 +24,15 @@ def singlerun():
     next_time = 0.0
     dt = 0.01
 
-    print "t = %g\t A = %g\t B = %g\t C = %g" % (
-        target.t(), w.num_molecules(sp1), w.num_molecules(sp2),
-        w.num_molecules(sp3))
+    print("t = %g\t A = %g\t B = %g\t C = %g" % (
+        target.t(), w.get_value_exact(sp1), w.get_value_exact(sp2),
+        w.get_value_exact(sp3)))
     for i in range(200):
         next_time += dt
         target.step(next_time)
-        print "t = %g\t A = %g\t B = %g\t C = %g" % (
-            target.t(), w.num_molecules(sp1), w.num_molecules(sp2),
-            w.num_molecules(sp3))
+        print("t = %g\t A = %g\t B = %g\t C = %g" % (
+            target.t(), w.get_value_exact(sp1), w.get_value_exact(sp2),
+            w.get_value_exact(sp3)))
 
 
 if __name__ == "__main__":

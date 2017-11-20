@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from ecell4.core import *
 from ecell4.ode import *
 
@@ -63,7 +65,7 @@ def singlerun():
     for r in [rr1, rr2, rr3, rr4, rr5]:
         m.add_reaction_rule(r)
     for r in m.ode_reaction_rules():
-        print r.as_string()
+        print(r.as_string())
     
     w = ODEWorld(edge_length)
     w.set_value(A, init_A)
@@ -76,15 +78,19 @@ def singlerun():
     sim = ODESimulator(m, w)
     next_time, dt = 0.0, 0.01
     
-    print "{:5f},{:e},{:e},{:e}".format(
-        sim.t(), w.get_value(X), w.get_value(Y), w.get_value(Z))
-    for i in xrange(200000):
-        next_time += dt
-        sim.step(next_time)
-        if i % show_interval_steps == 0:
-            #sys.stderr.write("{}\n".format(sim.t()) )    
-            print "{:5f},{:e},{:e},{:e}".format(
-                sim.t(), w.get_value(X), w.get_value(Y), w.get_value(Z))
+    for _ in range(100):
+        sim.run(3)
+        print("{:5f},{:e},{:e},{:e}".format(
+            sim.t(), w.get_value(X), w.get_value(Y), w.get_value(Z)))
+    # print("{:5f},{:e},{:e},{:e}".format(
+    #     sim.t(), w.get_value(X), w.get_value(Y), w.get_value(Z)))
+    # for i in range(200000):
+    #     next_time += dt
+    #     sim.step(next_time)
+    #     if i % show_interval_steps == 0:
+    #         #sys.stderr.write("{}\n".format(sim.t()) )    
+    #         print("{:5f},{:e},{:e},{:e}".format(
+    #             sim.t(), w.get_value(X), w.get_value(Y), w.get_value(Z)))
 
 singlerun()
-print "done"
+print("done")
