@@ -1,6 +1,5 @@
 set(TEST_NAMES
     OneToManyMap_test
-    Diffusion_test
     SpatiocyteSimulator_test
     SpatiocyteWorld_test)
 
