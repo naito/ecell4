@@ -341,8 +341,7 @@ LatticeSpaceVectorImpl::identified_voxel
 LatticeSpaceVectorImpl::get_voxel_at(const coordinate_type& coord) const
 {
     const VoxelPool* vp(voxels_[coord]);
-    const std::string loc((vp->location()->is_vacant())
-        ? "" : vp->location()->species().serial());
+    const std::string loc(get_location_serial(vp));
     return std::make_pair(
         vp->get_particle_id(coord),
         Voxel(vp->species(), coord, vp->radius(), vp->D(), loc));

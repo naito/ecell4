@@ -407,6 +407,11 @@ public:
         return root_->actual_lengths();
     }
 
+    Real actual_volume() const
+    {
+        return root_->actual_volume();
+    }
+
     Integer num_particles() const
     {
         Integer num_particles(root_->num_particles());

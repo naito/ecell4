@@ -492,13 +492,6 @@ VoxelPool* VoxelSpaceBase::get_voxel_pool(const Voxel& v)
 /*
  * private functions
  */
-std::string
-VoxelSpaceBase::get_location_serial(const boost::shared_ptr<VoxelPool>& voxel_pool) const
-{
-    return voxel_pool->location()->is_vacant() ?
-        "" : voxel_pool->location()->species().serial();
-}
-
 void VoxelSpaceBase::push_voxels(std::vector<identified_voxel>& voxels,
                                  const boost::shared_ptr<MoleculePool>& voxel_pool) const
 {

@@ -1,7 +1,10 @@
 E-Cell System version 4
 =======================
 
+<a href="https://notebooks.azure.com/import/gh/ecell/ecell4-notebooks"><img src="https://notebooks.azure.com/launch.png" /></a>
+
 [![Build Status](https://travis-ci.org/ecell/ecell4.svg?branch=develop)](https://travis-ci.org/ecell/ecell4)
+[![CircleCI](https://circleci.com/gh/ecell/ecell4.svg?style=svg)](https://circleci.com/gh/ecell/ecell4)
 [![Build status](https://ci.appveyor.com/api/projects/status/github/ecell/ecell4?svg=true)](https://ci.appveyor.com/project/kaizu/ecell4)
 [![Documentation Status](https://readthedocs.org/projects/ecell4/badge/?version=latest)](http://ecell4.readthedocs.org/en/latest/?badge=latest)
 [![PyPI](https://img.shields.io/pypi/v/ecell.svg)](https://pypi.python.org/pypi/ecell)

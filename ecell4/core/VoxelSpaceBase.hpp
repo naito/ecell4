@@ -19,6 +19,45 @@
 namespace ecell4
 {
 
+inline
+std::string
+get_location_serial(const VoxelPool* vp)
+{
+    if (vp == NULL) {
+        return "";
+    }
+
+    if (vp->location() == NULL) {
+        return "";
+    }
+
+    if (vp->location()->is_vacant()) {
+        return "";
+    }
+
+    return vp->location()->species().serial();
+}
+
+inline
+std::string
+get_location_serial(const boost::shared_ptr<VoxelPool>& vp)
+{
+    if (vp == NULL) {
+        return "";
+    }
+
+    if (vp->location() == NULL) {
+        return "";
+    }
+
+    if (vp->location()->is_vacant()) {
+        return "";
+    }
+
+    return vp->location()->species().serial();
+}
+
+
 class VoxelSpaceBase : public Space
 {
 public:
@@ -83,6 +122,11 @@ public:
         return voxel_volume() * num_voxels_exact(species);
     }
 
+    Real actual_volume() const
+    {
+        return inner_size() * voxel_volume();
+    }
+
     std::vector<Species> list_species() const;
 
     Integer num_voxels() const;
@@ -140,7 +184,6 @@ protected:
     VoxelPool* get_voxel_pool(const Voxel& voxel);
 
 private:
-    std::string get_location_serial(const boost::shared_ptr<VoxelPool>& voxel_pool) const;
     void push_voxels(std::vector<identified_voxel>& voxels,
                      const boost::shared_ptr<MoleculePool>& voxel_pool) const;
     void push_voxels(std::vector<identified_voxel>& voxels,
@@ -171,13 +214,13 @@ public:
     virtual void save_hdf5(H5::Group* root) const
     {
         throw NotSupported(
-            "load(H5::Group* root) is not supported by this space class");
+            "save_hdf5(H5::Group* root) is not supported by this space class");
     }
 
     virtual void load_hdf5(const H5::Group& root)
     {
         throw NotSupported(
-            "load(const H5::Group& root) is not supported by this space class");
+            "load_hdf5(const H5::Group& root) is not supported by this space class");
     }
 #endif
 

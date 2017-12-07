@@ -44,6 +44,33 @@ BOOST_FIXTURE_TEST_SUITE( LatticeSpaceVectorTest, LatticeSpaceVectorFixture )
 
 BOOST_AUTO_TEST_CASE( TestConstructor ) {}
 
+BOOST_AUTO_TEST_CASE( GetVoxel )
+{
+    const Real3 position(1.25e-8, 1.25e-8, 1.25e-8);
+    const Integer coordinate(space.position2coordinate(position));
+
+    {
+        std::pair<ParticleID, Voxel> voxel(space.get_voxel_at(coordinate));
+        BOOST_CHECK_EQUAL(voxel.first, ParticleID());
+        BOOST_CHECK(voxel.second.species() != sp);
+    }
+
+    ParticleID id(sidgen());
+    BOOST_CHECK(space.update_voxel(id, Voxel(sp, coordinate, radius, D)));
+
+    {
+        std::pair<ParticleID, Voxel> voxel(space.get_voxel_at(coordinate));
+        BOOST_CHECK_EQUAL(voxel.first, id);
+        BOOST_CHECK_EQUAL(voxel.second.species(), sp);
+    }
+
+    {
+        std::pair<ParticleID, Voxel> voxel(space.get_voxel(id));
+        BOOST_CHECK_EQUAL(voxel.first, id);
+        BOOST_CHECK_EQUAL(voxel.second.species(), sp);
+    }
+}
+
 BOOST_AUTO_TEST_CASE( TestValues )
 {
     BOOST_CHECK( space.inner_size() < space.size() );
