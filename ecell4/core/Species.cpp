@@ -130,6 +130,12 @@ public:
         initialize();
     }
 
+    unit_species_comparerator(const std::vector<UnitSpecies>& units)
+        : root_(units)
+    {
+        initialize();
+    }
+
     const std::vector<UnitSpecies>& units() const
     {
         return root_;
@@ -310,6 +316,18 @@ protected:
 
 Species format_species(const Species& sp)
 {
+    const std::vector<UnitSpecies> units = format_species(sp.units());
+    Species newsp;
+    for (std::vector<UnitSpecies>::const_iterator i(units.begin());
+        i != units.end(); ++i)
+    {
+        newsp.add_unit(*i);
+    }
+    return newsp;
+}
+
+std::vector<UnitSpecies> format_species(const std::vector<UnitSpecies>& sp)
+{
     unit_species_comparerator comp(sp);
     const std::vector<UnitSpecies>::size_type num_units = comp.units().size();
 
@@ -334,14 +352,15 @@ Species format_species(const Species& sp)
         units[next[i]] = i;
     }
 
-    Species newsp;
+    std::vector<UnitSpecies> res;
+    res.reserve(sp.size());
     utils::get_mapper_mf<std::string, std::string>::type cache;
     stride = 1;
     std::stringstream ss;
     for (std::vector<unit_species_comparerator::index_type>::const_iterator
         i(units.begin()); i != units.end(); ++i)
     {
-        UnitSpecies usp(sp.units().at(*i));
+        UnitSpecies usp(sp.at(*i));
         for (UnitSpecies::container_type::size_type j(0);
             j < static_cast<UnitSpecies::container_type::size_type>(usp.num_sites()); ++j)
         {
@@ -367,9 +386,9 @@ Species format_species(const Species& sp)
                 site.second.second = (*it).second;
             }
         }
-        newsp.add_unit(usp);
+        res.push_back(usp);
     }
-    return newsp;
+    return res;
 }
 
 } // ecell4

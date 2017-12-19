@@ -220,6 +220,7 @@ inline void Species::set_attribute(const std::string& name_attr, const char* val
     attributes_[name_attr] = std::string(value);
 }
 
+std::vector<UnitSpecies> format_species(const std::vector<UnitSpecies>& sp);
 Species format_species(const Species& sp);
 
 inline Species::serial_type unique_serial(const Species& sp)
