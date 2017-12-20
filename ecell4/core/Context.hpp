@@ -435,8 +435,8 @@ public:
     {
         element_container_type reactants;
         reactants.push_back(sp);
-        permutation_.clear();
-        permutation_.push_back(0);
+        // permutation_.clear();
+        // permutation_.push_back(0);
         return __match(reactants);
     }
 
@@ -445,39 +445,28 @@ public:
         element_container_type reactants;
         reactants.push_back(sp1);
         reactants.push_back(sp2);
-        permutation_.clear();
-        permutation_.push_back(0);
-        permutation_.push_back(1);
+        // permutation_.clear();
+        // permutation_.push_back(0);
+        // permutation_.push_back(1);
         return __match(reactants);
     }
 
-    bool match_reversed(const element_type& sp1, const element_type& sp2)
-    {
-        element_container_type reactants;
-        reactants.push_back(sp2);
-        reactants.push_back(sp1);
-        permutation_.clear();
-        permutation_.push_back(1);
-        permutation_.push_back(0);
-        return __match(reactants);
-    }
-
-    bool match(const element_container_type& reactants,
-               const std::vector<typename element_container_type::size_type>& permutation)
-    {
-        permutation_ = permutation;
-        return __match(reactants);
-    }
+    // bool match(const element_container_type& reactants,
+    //            const std::vector<typename element_container_type::size_type>& permutation)
+    // {
+    //     permutation_ = permutation;
+    //     return __match(reactants);
+    // }
 
     bool match(const element_container_type& reactants)
     {
-        permutation_.clear();
-        permutation_.reserve(reactants.size());
-        for (typename std::vector<typename element_container_type::size_type>::size_type i(0);
-            i != reactants.size(); ++i)
-        {
-            permutation_.push_back(i);
-        }
+        // permutation_.clear();
+        // permutation_.reserve(reactants.size());
+        // for (typename std::vector<typename element_container_type::size_type>::size_type i(0);
+        //     i != reactants.size(); ++i)
+        // {
+        //     permutation_.push_back(i);
+        // }
         return __match(reactants);
     }
 
@@ -614,7 +603,8 @@ public:
             i(matchers_.begin()); i != matchers_.end(); ++i)
         {
             const unsigned int idx1 = std::distance(matchers_.begin(), i);  // a position in matcher_
-            const unsigned int idx2 = permutation_[idx1];  // a position in reactants
+            // const unsigned int idx2 = permutation_[idx1];  // a position in reactants
+            const unsigned int idx2 = idx1;  // a position in reactants
             const unsigned int stride = strides[idx2];
 
             for (context_type::iterator_container_type::const_iterator
@@ -627,40 +617,6 @@ public:
                 ctx.iterators.push_back(idx4 + stride);
             }
         }
-
-        // Species::container_type::difference_type stride(0);
-        // for (std::vector<SpeciesExpressionMatcher>::const_iterator
-        //     i(matchers_.begin()); i != matchers_.end(); ++i)
-        // {
-        //     for (context_type::iterator_container_type::const_iterator
-        //         j((*i).context().iterators.begin());
-        //         j != (*i).context().iterators.end(); ++j)
-        //     {
-        //         ctx.iterators.push_back((*j) + stride);
-        //     }
-        //     stride += target_[std::distance(matchers_.begin(), i)].units().size();
-        // }
-        //XXX: Species::container_type::difference_type totstride(0);
-        //XXX: std::vector<Species::container_type::difference_type> strides(matchers_.size());
-        //XXX: for (std::vector<element_container_type::size_type>::const_iterator
-        //XXX:     i(permutation_.begin()); i != permutation_.end(); ++i)
-        //XXX: {
-        //XXX:     strides[(*i)] = totstride;
-        //XXX:     totstride += target_[(*i)].units().size();
-        //XXX: }
-
-        //XXX: for (std::vector<SpeciesExpressionMatcher>::const_iterator
-        //XXX:     i(matchers_.begin()); i != matchers_.end(); ++i)
-        //XXX: {
-        //XXX:     const Species::container_type::difference_type stride
-        //XXX:         = strides[std::distance(matchers_.begin(), i)];
-        //XXX:     for (context_type::iterator_container_type::const_iterator
-        //XXX:         j((*i).context().iterators.begin());
-        //XXX:         j != (*i).context().iterators.end(); ++j)
-        //XXX:     {
-        //XXX:         ctx.iterators.push_back((*j) + stride);
-        //XXX:     }
-        //XXX: }
 
         return ctx;
     }
@@ -792,11 +748,6 @@ public:
 
         int bond_stride = 0;
 
-        //XXX: for (std::vector<element_container_type::size_type>::const_iterator
-        //XXX:     i(permutation_.begin()); i != permutation_.end(); ++i)
-        //XXX: {
-        //XXX:     bond_stride += concatenate_units(units, target_[*i].units(), bond_stride);
-        //XXX: }
         for (typename element_container_type::const_iterator
             i(target_.begin()); i != target_.end(); ++i)
         {
@@ -1160,7 +1111,7 @@ protected:
     const ReactionRule::policy_type& policy_;
 
     element_container_type target_;
-    std::vector<typename element_container_type::size_type> permutation_;
+    // std::vector<typename element_container_type::size_type> permutation_;
     std::vector<SpeciesExpressionMatcher> matchers_;
     std::vector<SpeciesExpressionMatcher>::iterator itr_;
 };
