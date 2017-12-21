@@ -407,6 +407,214 @@ struct DummyBinder
     }
 };
 
+// template <typename Element>
+// class MultiSpeciesMatcher
+// {
+// public:
+// 
+//     typedef Element element_type;
+// 
+//     typedef MatchObject::context_type context_type;
+//     typedef std::vector<element_type> element_container_type;
+// 
+// public:
+// 
+//     MultiSpeciesMatcher(const element_container_type& patterns)
+//         : patterns_(patterns)
+//     {
+//         ;
+//     }
+// 
+//     virtual ~MultiSpeciesMatcher()
+//     {
+//         ;
+//     }
+// 
+//     bool match(const element_type& sp)
+//     {
+//         element_container_type targets;
+//         targets.push_back(sp);
+//         return __match(targets);
+//     }
+// 
+//     bool match(const element_type& sp1, const element_type& sp2)
+//     {
+//         element_container_type targets;
+//         targets.push_back(sp1);
+//         targets.push_back(sp2);
+//         return __match(targets);
+//     }
+// 
+//     bool match(const element_container_type& targets)
+//     {
+//         return __match(targets);
+//     }
+// 
+//     bool __match(const element_container_type& targets)
+//     {
+//         if (patterns_.size() != targets.size())
+//         {
+//             return false;
+//         }
+// 
+//         matchers_.clear();
+//         for (typename element_container_type::const_iterator
+//             i(patterns_.begin()); i != patterns_.end(); ++i)
+//         {
+//             matchers_.push_back(SpeciesExpressionMatcher((*i).units()));
+//         }
+// 
+//         targets_ = targets; //XXX: copy?
+//         itr_ = matchers_.begin();
+//         context_type::variable_container_type globals;
+//         return __submatch(globals);
+//     }
+// 
+//     bool __submatch(const context_type::variable_container_type& globals)
+//     {
+//         if (itr_ == matchers_.end())
+//         {
+//             return true;
+//         }
+// 
+//         bool retval((*itr_).match(
+//             targets_[std::distance(matchers_.begin(), itr_)].units(),
+//             globals));
+//         while (retval)
+//         {
+//             const context_type::variable_container_type&
+//                 globals_prev((*itr_).context().globals);
+//             ++itr_;
+//             const bool succeeded(__submatch(globals_prev));
+//             if (succeeded)
+//             {
+//                 return true;
+//             }
+//             --itr_;
+//             retval = (*itr_).next();
+//         }
+//         return false;
+//     }
+// 
+//     bool next()
+//     {
+//         if (itr_ != matchers_.end() || patterns_.size() == 0)
+//         {
+//             return false;
+//         }
+//         else if (matchers_.size() == 0)
+//         {
+//             return true;
+//         }
+// 
+//         do
+//         {
+//             --itr_;
+//             bool retval((*itr_).next());
+//             while (retval)
+//             {
+//                 const context_type::variable_container_type&
+//                     globals_prev((*itr_).context().globals);
+//                 ++itr_;
+//                 const bool succeeded(__submatch(globals_prev));
+//                 if (succeeded)
+//                 {
+//                     return true;
+//                 }
+//                 --itr_;
+//                 retval = (*itr_).next();
+//             }
+//         }
+//         while (itr_ != matchers_.begin());
+//         return false;
+//     }
+// 
+//     std::pair<bool, context_type> __match(
+//         const context_type::variable_container_type& globals,
+//         typename element_container_type::const_iterator i,
+//         typename element_container_type::const_iterator j)
+//     {
+//         SpeciesExpressionMatcher m((*i).units());
+//         if (!m.match(*j, globals))
+//         {
+//             return std::make_pair(false, context_type());
+//         }
+// 
+//         ++i;
+//         ++j;
+//         if (i == patterns_.end() || j == targets_.end())
+//         {
+//             return std::make_pair(true, m.context());
+//         }
+// 
+//         do
+//         {
+//             if (__match(m.context().globals, i, j).first)
+//             {
+//                 return std::make_pair(true, m.context());
+//             }
+//         } while (m.next());
+//         return std::make_pair(false, context_type());
+//     }
+// 
+//     context_type context() const
+//     {
+//         context_type ctx;
+//         if (matchers_.size() == 0)
+//         {
+//             return ctx;
+//         }
+// 
+//         ctx.globals = matchers_.back().context().globals;
+// 
+//         std::vector<unsigned int> strides;
+//         strides.reserve(targets_.size());
+//         {
+//             unsigned int stride = 0;
+//             for (typename element_container_type::const_iterator
+//                 i(targets_.begin()); i != targets_.end(); ++i)
+//             {
+//                 strides.push_back(stride);
+//                 stride += (*i).units().size();
+//             }
+//         }
+// 
+//         for (std::vector<SpeciesExpressionMatcher>::const_iterator
+//             i(matchers_.begin()); i != matchers_.end(); ++i)
+//         {
+//             const unsigned int idx1 = std::distance(matchers_.begin(), i);  // a position in matcher_
+//             // const unsigned int idx2 = permutation_[idx1];  // a position in targets
+//             const unsigned int idx2 = idx1;  // a position in targets
+//             const unsigned int stride = strides[idx2];
+// 
+//             for (context_type::iterator_container_type::const_iterator
+//                 j((*i).context().iterators.begin());
+//                 j != (*i).context().iterators.end(); ++j)
+//             {
+//                 // const unsigned int idx3 = std::distance((*i).context().iterators.begin(), j);  // a position in context.iterators
+//                 const unsigned int idx4 = (*j);  // a position in units of a Species
+// 
+//                 ctx.iterators.push_back(idx4 + stride);
+//             }
+//         }
+// 
+//         return ctx;
+//     }
+// 
+//     const element_container_type& targets() const
+//     {
+//         return targets_;
+//     }
+// 
+// protected:
+// 
+//     const element_container_type& patterns_;
+//     element_container_type targets_;
+// 
+//     std::vector<SpeciesExpressionMatcher> matchers_;
+//     std::vector<SpeciesExpressionMatcher>::iterator itr_;
+// };
+
 template <typename Element>
 class ReactionRuleExpressionMatcher
 {

@@ -394,13 +394,13 @@ std::vector<DummyReactionRule> generate_reaction_rules(
     reactants[1] = sp2;
     std::vector<DummyReactionRule> res = org.generate(reactants);
 
-    if (org.reactants()[0] != org.reactants()[1])
-    {
-        reactants[0] = sp2;
-        reactants[1] = sp1;
-        std::vector<DummyReactionRule> _res = org.generate(reactants);
-        std::copy(_res.begin(), _res.end(), back_inserter(res));
-    }
+    // if (org.reactants()[0] != org.reactants()[1])
+    // {
+    //     reactants[0] = sp2;
+    //     reactants[1] = sp1;
+    //     std::vector<DummyReactionRule> _res = org.generate(reactants);
+    //     std::copy(_res.begin(), _res.end(), back_inserter(res));
+    // }
     return res;
 }
 
@@ -469,12 +469,63 @@ void __apply_reaction_rules(
     const std::vector<DummyReactionRule>& rules,
     std::vector<DummyReactionRule>& reactions,
     std::vector<Dummy>& allseeds,
-    const std::map<Dummy, Integer>& max_stoich)
+    const std::map<Dummy, Integer>& max_stoich,
+    std::vector<std::vector<std::vector<Dummy>::size_type> >& candidates)
 {
-    allseeds.insert(allseeds.begin(), seeds.begin(), seeds.end());
+    std::vector<Dummy>::size_type stride = allseeds.size();
+
+    std::vector<std::vector<std::vector<Dummy>::size_type> >::size_type count = 0;
+    for (std::vector<DummyReactionRule>::const_iterator
+        i(rules.begin()); i != rules.end(); ++i)
+    {
+        const DummyReactionRule& rr(*i);
+
+        switch (rr.reactants().size())
+        {
+        case 0:
+            continue;
+        case 1:
+            continue;
+        case 2:
+            {
+                if (candidates.size() < count + 2 + 1)
+                {
+                    candidates.resize(count + 2 + 1);
+                }
+
+                SpeciesExpressionMatcher reactant0(rr.reactants()[0].units());
+                SpeciesExpressionMatcher reactant1(rr.reactants()[1].units());
+
+                std::vector<Dummy>::size_type idx = stride;
+                for (std::vector<Dummy>::const_iterator j(seeds.begin());
+                    j != seeds.end(); ++j, ++idx)
+                {
+                    if (reactant0.match((*j).units()))
+                    {
+                        candidates[count].push_back(idx);
+                    }
+                    if (reactant1.match((*j).units()))
+                    {
+                        candidates[count + 1].push_back(idx);
+                    }
+                }
+                count += 2;
+            }
+            break;
+        default:
+            throw NotImplemented(
+                "No reaction rule with more than two reactants is accepted.");
+        }
+    }
+
+    // allseeds.insert(allseeds.begin(), seeds.begin(), seeds.end());
+    allseeds.insert(allseeds.end(), seeds.begin(), seeds.end());
 
     std::vector<Dummy> newseeds;
 
+    // std::cout << "Start Generations: " << stride << ", " << seeds.size() << std::endl;
+
+    count = 0;
     for (std::vector<DummyReactionRule>::const_iterator
         i(rules.begin()); i != rules.end(); ++i)
     {
@@ -494,20 +545,50 @@ void __apply_reaction_rules(
             }
             break;
         case 2:
-            for (std::vector<Dummy>::const_iterator j(seeds.begin());
-                j != seeds.end(); ++j)
             {
-                const std::vector<Dummy>::const_iterator start(
-                    allseeds.begin()
-                    + std::distance<std::vector<Dummy>::const_iterator>(
-                        seeds.begin(), j));
-                for (std::vector<Dummy>::const_iterator
-                    k(start); k != allseeds.end(); ++k)
+                for (std::vector<std::vector<Dummy>::size_type>::const_iterator j(candidates[count].begin());
+                    j != candidates[count].end(); ++j)
                 {
-                    __add_reaction_rules(
-                        generate_reaction_rules(rr, *j, *k),
-                        reactions, newseeds, allseeds, max_stoich);
+                    for (std::vector<std::vector<Dummy>::size_type>::const_iterator k(candidates[count + 1].begin());
+                        k != candidates[count + 1].end(); ++k)
+                    {
+                        // std::cout << "Reaction [" << count << "]: " << (*j) << ", " << (*k) << std::endl;
+
+                        if ((*j) < stride && (*k) < stride)
+                        {
+                            continue;
+                        }
+
+                        // std::cout << "Generate Reaction [" << count << ":" << rr.data.as_string() << "]: ";
+
+                        const Dummy& reactant0(allseeds[(*j)]);
+                        const Dummy& reactant1(allseeds[(*k)]);
+
+                        // std::cout << reactant0.serial() << " + " << reactant1.serial() << std::endl;
+
+                        __add_reaction_rules(
+                            generate_reaction_rules(rr, reactant0, reactant1),
+                            reactions, newseeds, allseeds, max_stoich);
+                    }
                 }
+
+                // for (std::vector<Dummy>::const_iterator j(seeds.begin());
+                //     j != seeds.end(); ++j)
+                // {
+                //     const std::vector<Dummy>::const_iterator start(
+                //         allseeds.begin()
+                //         + std::distance<std::vector<Dummy>::const_iterator>(
+                //             seeds.begin(), j));
+                //     for (std::vector<Dummy>::const_iterator
+                //         k(start); k != allseeds.end(); ++k)
+                //     {
+                //         __add_reaction_rules(
+                //             generate_reaction_rules(rr, *j, *k),
+                //             reactions, newseeds, allseeds, max_stoich);
+                //     }
+                // }
+
+                count += 2;
             }
             break;
         default:
@@ -516,6 +597,11 @@ void __apply_reaction_rules(
         }
     }
 
+    // for (std::vector<Dummy>::const_iterator j(newseeds.begin());
+    //     j != newseeds.end(); ++j)
+    // {
+    //     std::cout << "NEW: " << (*j).serial() << std::endl;
+    // }
     seeds.swap(newseeds);
 }
 
@@ -558,10 +644,12 @@ std::pair<std::vector<ReactionRule>, bool> apply_reaction_rules(
     }
 
     {
+        std::vector<std::vector<std::vector<Dummy>::size_type> > _candidates;
+
         Integer iteration_count(0);
         while (_seeds.size() > 0 && iteration_count < max_itr)
         {
-            __apply_reaction_rules(_seeds, _rules, _reactions, _allseeds, _max_stoich);
+            __apply_reaction_rules(_seeds, _rules, _reactions, _allseeds, _max_stoich, _candidates);
             iteration_count += 1;
         }
     }
