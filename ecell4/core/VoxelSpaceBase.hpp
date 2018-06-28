@@ -238,7 +238,18 @@ public:
     virtual std::vector<std::pair<ParticleID, ParticleVoxel> > list_voxels_exact(const Species& sp) const;
 
     boost::optional<ParticleVoxel> find_voxel(const ParticleID& pid) const;
-    virtual std::pair<ParticleID, ParticleVoxel> get_voxel_at(const coordinate_type& coord) const = 0;
+
+    std::pair<ParticleID, ParticleVoxel> get_voxel_at(const coordinate_type& coord) const
+    {
+        boost::shared_ptr<const VoxelPool> vp(get_voxel_pool_at(coord));
+        return std::make_pair(vp->get_particle_id(coord),
+                              ParticleVoxel(
+                                  vp->species(),
+                                  coord,
+                                  vp->radius(),
+                                  vp->D(),
+                                  get_location_serial(vp)));
+    }
 
     boost::shared_ptr<VoxelPool> find_voxel_pool(const Species& sp);
     boost::shared_ptr<const VoxelPool> find_voxel_pool(const Species& sp) const;
