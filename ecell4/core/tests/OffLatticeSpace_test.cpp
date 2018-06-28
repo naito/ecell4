@@ -55,14 +55,6 @@ BOOST_AUTO_TEST_CASE(CheckVacantSize)
     BOOST_CHECK_EQUAL(space.actual_size(), space.vacant()->size());
 }
 
-BOOST_AUTO_TEST_CASE(OffLatticeSpace_test_molecules)
-{
-    const ParticleID pid(sidgen());
-    space.update_voxel(pid, voxel);
-
-    BOOST_CHECK_EQUAL(space.num_molecules(species), 1);
-}
-
 BOOST_AUTO_TEST_CASE(OffLatticeSpace_test_voxelspacebase)
 {
     const ParticleID pid(sidgen());

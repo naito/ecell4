@@ -196,13 +196,6 @@ public:
                 || molecule_pools_.find(sp) != molecule_pools_.end());
     }
 
-    virtual Integer num_molecules(const Species& sp) const;
-
-    virtual Integer num_molecules_exact(const Species& sp) const
-    {
-        return num_voxels_exact(sp);
-    }
-
     /*
      * VoxelSpace Traits
      */

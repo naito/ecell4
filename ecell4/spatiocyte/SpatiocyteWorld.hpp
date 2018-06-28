@@ -193,23 +193,28 @@ public:
     Integer num_molecules(const Species& sp) const
     {
         Integer total(0);
+        SpeciesExpressionMatcher sexp(sp);
+
         for (space_container_type::const_iterator itr(spaces_.begin());
              itr != spaces_.end(); ++itr)
         {
-            total += (*itr)->num_molecules(sp);
+            const std::vector<Species> species((*itr)->list_species());
+            for (std::vector<Species>::const_iterator sp_itr(species.begin());
+                 sp_itr != species.end(); ++sp_itr)
+            {
+                const Integer count(sexp.count(*sp_itr));
+                if (count > 0)
+                {
+                    total += (*itr)->num_voxels_exact(*sp_itr) * count;
+                }
+            }
         }
         return total;
     }
 
     Integer num_molecules_exact(const Species& sp) const
     {
-        Integer total(0);
-        for (space_container_type::const_iterator itr(spaces_.begin());
-             itr != spaces_.end(); ++itr)
-        {
-            total += (*itr)->num_molecules_exact(sp);
-        }
-        return total;
+        return num_voxels_exact(sp);
     }
 
     Real get_value(const Species& sp) const

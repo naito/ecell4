@@ -16,35 +16,6 @@ std::vector<Species> VoxelSpaceBase::list_species() const
     return keys;
 }
 
-Integer VoxelSpaceBase::num_molecules(const Species& sp) const
-{
-    Integer count(0);
-    SpeciesExpressionMatcher sexp(sp);
-
-    for (voxel_pool_map_type::const_iterator itr(voxel_pools_.begin());
-         itr != voxel_pools_.end(); ++itr)
-    {
-        const Integer cnt(sexp.count((*itr).first));
-        if (cnt > 0)
-        {
-            count += itr->second->size() * cnt;
-        }
-    }
-
-    for (molecule_pool_map_type::const_iterator itr(molecule_pools_.begin());
-         itr != molecule_pools_.end(); ++itr)
-    {
-        const Integer cnt(sexp.count((*itr).first));
-        if (cnt > 0)
-        {
-            const boost::shared_ptr<MoleculePool>& vp((*itr).second);
-            count += vp->size() * cnt;
-        }
-    }
-    return count;
-}
-
-
 /*
  * VoxelSpace Traits
  */
