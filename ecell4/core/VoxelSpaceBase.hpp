@@ -213,65 +213,6 @@ public:
         return static_cast<Real>(num_molecules_exact(sp));
     }
 
-
-    /*
-     * ParticleSpace Traits
-     */
-    Integer num_particles() const
-    {
-        return num_voxels();
-    }
-
-    Integer num_particles(const Species& sp) const
-    {
-        return num_voxels(sp);
-    }
-
-    Integer num_particles_exact(const Species& sp) const
-    {
-        return num_voxels_exact(sp);
-    }
-
-    bool has_particle(const ParticleID& pid) const
-    {
-        return has_voxel(pid);
-    }
-
-    virtual
-    std::vector<std::pair<ParticleID, Particle> >
-    list_particles() const;
-
-    virtual
-    std::vector<std::pair<ParticleID, Particle> >
-    list_particles(const Species& sp) const;
-
-    virtual
-    std::vector<std::pair<ParticleID, Particle> >
-    list_particles_exact(const Species& sp) const;
-
-    virtual
-    std::pair<ParticleID, Particle>
-    get_particle(const ParticleID& pid) const
-    {
-        if (boost::optional<ParticleVoxel> v = find_voxel(pid))
-        {
-            ParticleVoxel voxel(v.get());
-            return std::make_pair(pid, Particle(
-                voxel.species, coordinate2position(voxel.coordinate), voxel.radius, voxel.D));
-        }
-        else
-        {
-            throw NotFound("");
-        }
-    }
-
-    virtual const Particle particle_at(const coordinate_type& coord) const = 0;
-
-    virtual bool remove_particle(const ParticleID& pid)
-    {
-        return remove_voxel(pid);
-    }
-
     /*
      * VoxelSpace Traits
      */
