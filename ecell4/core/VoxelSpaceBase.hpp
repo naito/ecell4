@@ -292,7 +292,6 @@ public:
     = 0;
 
     virtual Integer size() const = 0;
-    virtual Integer3 shape() const = 0;
     virtual Integer actual_size() const = 0;
 
     bool

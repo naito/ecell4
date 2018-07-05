@@ -111,11 +111,6 @@ public:
         return voxels_.size();
     }
 
-    Integer3 shape() const
-    {
-        throw NotSupported("OffLatticeSpace::shape() is not supported.");
-    }
-
     Integer actual_size() const
     {
         return size();

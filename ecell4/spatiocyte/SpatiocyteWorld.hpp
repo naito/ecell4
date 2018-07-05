@@ -558,11 +558,6 @@ public:
         return size_;
     }
 
-    const Integer3 shape() const
-    {
-        return get_root()->shape();
-    }
-
     /*
      * SpatiocyteWorld API
      */

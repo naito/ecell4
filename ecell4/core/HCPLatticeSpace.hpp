@@ -196,11 +196,6 @@ public:
         return row_size_ * col_size_ * layer_size_;
     }
 
-    virtual Integer3 shape() const
-    {
-        return Integer3(col_size_, row_size_, layer_size_);
-    }
-
     virtual Integer actual_size() const
     {
         return col_size() * row_size() * layer_size();

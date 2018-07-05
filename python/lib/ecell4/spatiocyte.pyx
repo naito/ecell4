@@ -900,16 +900,6 @@ cdef class SpatiocyteWorld:
         """Return the size of voxels."""
         return self.thisptr.get().size()
 
-    def shape(self):
-        """shape() -> Integer3
-
-        Return the triplet of sizes of column, row and layer.
-
-        """
-        cdef Cpp_Integer3 sizes = self.thisptr.get().shape()
-        return Integer3_from_Cpp_Integer3(address(sizes))
-
-
     def bind_to(self, m):
         """bind_to(m)
 

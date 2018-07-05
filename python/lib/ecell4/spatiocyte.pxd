@@ -107,7 +107,6 @@ cdef extern from "ecell4/spatiocyte/SpatiocyteWorld.hpp" namespace "ecell4::spat
         Real voxel_radius()
 
         Integer size()
-        Cpp_Integer3 shape()
 
         void bind_to(shared_ptr[Cpp_Model])
         shared_ptr[Cpp_RandomNumberGenerator] rng()
