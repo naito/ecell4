@@ -106,10 +106,6 @@ struct StepEvent2D : StepEvent
                 const Real alpha=1.0);
 
     void walk(const Real& alpha);
-
-protected:
-
-    std::vector<unsigned int> nids_; // neighbor indexes
 };
 
 struct ZerothOrderReactionEvent : SpatiocyteEvent

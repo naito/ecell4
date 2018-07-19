@@ -96,10 +96,6 @@ StepEvent2D::StepEvent2D(boost::shared_ptr<Model> model,
         dt_ = R * R / D * alpha_;
 
     time_ = t + dt_;
-
-    nids_.clear();
-    for (unsigned int i(0); i < 12; ++i)
-        nids_.push_back(i);
 }
 
 void StepEvent2D::walk(const Real& alpha)
@@ -129,15 +125,16 @@ void StepEvent2D::walk(const Real& alpha)
             continue;
         }
 
-        const std::size_t num_neighbors(voxel.num_neighbors());
-
-        ecell4::shuffle(*(rng.get()), nids_);
-        for (std::vector<unsigned int>::const_iterator itr(nids_.begin());
-             itr != nids_.end(); ++itr)
+        std::vector<std::size_t> nids;
+        for (std::size_t i(0); i < voxel.num_neighbors(); ++i)
         {
-            if (*itr >= num_neighbors)
-                continue;
+            nids.push_back(i);
+        }
+        ecell4::shuffle(*(rng.get()), nids);
 
+        for (std::vector<std::size_t>::const_iterator itr(nids.begin());
+             itr != nids.end(); ++itr)
+        {
             const Voxel neighbor(voxel.get_neighbor(*itr));
             boost::shared_ptr<const VoxelPool> target(neighbor.get_voxel_pool());
 
