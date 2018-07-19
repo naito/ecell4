@@ -73,7 +73,8 @@ struct StepEvent : SpatiocyteEvent
 protected:
 
     void attempt_reaction_(
-        const SpatiocyteWorld::coordinate_id_pair_type& info,
+        const ParticleID& pid,
+        const Voxel& src,
         const Voxel& dst,
         const Real& alpha);
 

@@ -72,7 +72,7 @@ void StepEvent3D::walk(const Real& alpha)
         }
         else
         {
-            attempt_reaction_(info, neighbor, alpha);
+            attempt_reaction_(info.pid, voxel, neighbor, alpha);
         }
 
         ++idx;
@@ -148,7 +148,7 @@ void StepEvent2D::walk(const Real& alpha)
             }
             else
             {
-                attempt_reaction_(info, neighbor, alpha);
+                attempt_reaction_(info.pid, voxel, neighbor, alpha);
             }
             break;
         }
@@ -157,13 +157,12 @@ void StepEvent2D::walk(const Real& alpha)
 }
 
 void StepEvent::attempt_reaction_(
-    const SpatiocyteWorld::coordinate_id_pair_type& info,
+    const ParticleID& pid,
+    const Voxel& src,
     const Voxel& dst,
     const Real& alpha)
 {
-    // TODO: Calling coordiante2voxel is invalid
-    const Voxel voxel(world_->coordinate2voxel(info.coordinate));
-    boost::shared_ptr<const VoxelPool> from_mt(voxel.get_voxel_pool());
+    boost::shared_ptr<const VoxelPool> from_mt(src.get_voxel_pool());
     boost::shared_ptr<const VoxelPool> to_mt(dst.get_voxel_pool());
 
     if (to_mt->is_vacant())
@@ -200,7 +199,7 @@ void StepEvent::attempt_reaction_(
         {
             ReactionInfo rinfo(apply_second_order_reaction(
                         world_, *itr,
-                        ReactionInfo::Item(info.pid, from_mt->species(), voxel),
+                        ReactionInfo::Item(pid, from_mt->species(), src),
                         ReactionInfo::Item(to_mt->get_particle_id(dst.coordinate),
                                            to_mt->species(), dst)));
             if (rinfo.has_occurred())
