@@ -9,38 +9,41 @@ namespace ecell4
 namespace spatiocyte
 {
 
-void SpatiocyteWorld::add_space(VoxelSpaceBase *space)
+void SpatiocyteWorld::add_space(space_type space)
 {
+    spaces_.push_back(space);
+
     for (std::size_t i(0); i < space->size(); ++i)
     {
         const Real3 position(space->coordinate2position(i));
-        const coordinate_type nearest(get_root()->position2coordinate(position));
+        const Voxel nearest(get_root(), get_root()->position2coordinate(position));
 
-        for (Integer j(0); j < get_root()->num_neighbors(nearest); ++j)
+        if (length(nearest.position() - position) < voxel_radius()*2)
         {
-            const coordinate_type neighbor(get_root()->get_neighbor(nearest, j));
-            if (length(get_root()->coordinate2position(neighbor) - position) < voxel_radius() * 2)
-                interfaces_.add(neighbor, i + size_);
+            interfaces_.add(nearest, Voxel(space, i));
         }
     }
 
-    for (OneToManyMap<coordinate_type>::const_iterator itr(interfaces_.begin());
+    for (OneToManyMap<Voxel>::const_iterator itr(interfaces_.begin());
          itr != interfaces_.end(); ++itr)
     {
-        std::vector<coordinate_type> neighbors;
-        for (Integer i(0); i < get_root()->num_neighbors((*itr).first); ++i)
+        const Voxel& interface((*itr).first);
+        const std::vector<Voxel>& targets((*itr).second);
+
+        std::vector<Voxel> neighbors;
+        for (Integer i(0); i < interface.num_neighbors(); ++i)
         {
-            const coordinate_type neighbor(get_root()->get_neighbor((*itr).first, i));
+            const Voxel neighbor(interface.get_neighbor(i));
             if (! interfaces_.find(neighbor))
                 neighbors.push_back(neighbor);
         }
 
-        for (std::vector<coordinate_type>::const_iterator jtr((*itr).second.begin());
-             jtr != (*itr).second.end(); ++jtr)
+        for (std::vector<Voxel>::const_iterator jtr(targets.begin());
+             jtr != targets.end(); ++jtr)
+        {
             neighbors_.extend(*jtr, neighbors);
+        }
     }
-
-    spaces_.push_back(space_type(space));
 
     size_ += space->size();
 }
