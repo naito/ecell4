@@ -25,7 +25,7 @@ T = np.linspace(0, duration, 21)
 V = 8
 
 obs = run_simulation(np.linspace(0, duration, 101), y0, volume=V,
-                     model=ode.ODENetworkModel(model),
+                     model=model,
                      return_type='observer',
                      solver='ode')
 

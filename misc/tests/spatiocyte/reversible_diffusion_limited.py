@@ -34,7 +34,7 @@ def main():
     T = np.linspace(0, duration, 21)
 
     obs = run_simulation(np.linspace(0, duration, 101), y0,
-                         model=ode.ODENetworkModel(m),
+                         model=m,
                          return_type='observer',
                          solver='ode')
 
