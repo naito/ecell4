@@ -47,7 +47,6 @@ class VoxelSpaceBase
 public:
 
     typedef ParticleVoxel::coordinate_type coordinate_type;
-    typedef VoxelPool::coordinate_id_pair_type coordinate_id_pair_type;
 
 protected:
 

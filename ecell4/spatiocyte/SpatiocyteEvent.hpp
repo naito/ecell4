@@ -151,7 +151,7 @@ protected:
         boost::shared_ptr<const MoleculePool> mt(world_->find_molecule_pool(species));
 
         const Integer i(rng_.lock()->uniform_int(0, mt->size() - 1));
-        const SpatiocyteWorld::coordinate_id_pair_type& info(mt->at(i));
+        const VoxelPool::coordinate_id_pair_type& info(mt->at(i));
 
         // TODO: Calling coordinate2voxel() is invalid
         return ReactionInfo::Item(info.pid, species, world_->coordinate2voxel(info.coordinate));

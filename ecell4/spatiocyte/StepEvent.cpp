@@ -52,7 +52,7 @@ void StepEvent3D::walk(const Real& alpha)
     for (MoleculePool::container_type::iterator itr(voxels.begin());
          itr != voxels.end(); ++itr)
     {
-        const SpatiocyteWorld::coordinate_id_pair_type& info(*itr);
+        const VoxelPool::coordinate_id_pair_type& info(*itr);
         const Voxel voxel(world_->coordinate2voxel(info.coordinate));
         const Integer rnd(rng->uniform_int(0, voxel.num_neighbors()-1));
 
@@ -120,7 +120,7 @@ void StepEvent2D::walk(const Real& alpha)
     for (MoleculePool::container_type::iterator itr(voxels.begin());
          itr != voxels.end(); ++itr)
     {
-        const SpatiocyteWorld::coordinate_id_pair_type& info(*itr);
+        const VoxelPool::coordinate_id_pair_type& info(*itr);
 
         // TODO: Calling coordinate2voxel is invalid
         const Voxel voxel(world_->coordinate2voxel(info.coordinate));

@@ -25,7 +25,6 @@ public:
 
     typedef HCPLatticeSpace base_type;
 
-    typedef base_type::coordinate_id_pair_type coordinate_id_pair_type;
     typedef base_type::coordinate_type coordinate_type;
 
     typedef std::vector<std::pair<boost::shared_ptr<VoxelPool>, coordinate_type> >

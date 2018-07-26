@@ -43,7 +43,6 @@ public:
 
     typedef MoleculeInfo molecule_info_type;
 
-    typedef VoxelSpaceBase::coordinate_id_pair_type coordinate_id_pair_type;
     typedef VoxelSpaceBase::coordinate_type coordinate_type;
 
     typedef boost::shared_ptr<VoxelSpaceBase> space_type;
