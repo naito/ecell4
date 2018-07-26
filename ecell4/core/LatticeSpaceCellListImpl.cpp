@@ -57,7 +57,7 @@ bool LatticeSpaceCellListImpl::update_voxel(const ParticleID& pid, ParticleVoxel
             //XXX: use location?
             dest_vp->replace_voxel(to_coord, from_coord);
 
-            new_vp->add_voxel(coordinate_id_pair_type(pid, to_coord));
+            new_vp->add_voxel(pid, to_coord);
 
             if (!dest_vp->is_vacant())
             {
@@ -75,7 +75,7 @@ bool LatticeSpaceCellListImpl::update_voxel(const ParticleID& pid, ParticleVoxel
     // new
     dest_vp->remove_voxel_if_exists(to_coord);
 
-    new_vp->add_voxel(coordinate_id_pair_type(pid, to_coord));
+    new_vp->add_voxel(pid, to_coord);
     update_matrix(to_coord, new_vp);
     return true;
 }
@@ -90,7 +90,7 @@ bool LatticeSpaceCellListImpl::add_voxel(
         return false;
 
     location->remove_voxel_if_exists(coord);
-    vpool->add_voxel(coordinate_id_pair_type(pid, coord));
+    vpool->add_voxel(pid, coord);
     update_matrix(coord, vpool);
 
     return true;

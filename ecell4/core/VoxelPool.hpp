@@ -156,7 +156,7 @@ public:
 
     virtual const Integer size() const = 0;
 
-    virtual void add_voxel(const coordinate_id_pair_type& info) = 0;
+    virtual void add_voxel(const ParticleID& pid, const coordinate_type& coordinate) = 0;
 
     virtual void replace_voxel(
         const coordinate_type& from_coord, const coordinate_type& to_coord,

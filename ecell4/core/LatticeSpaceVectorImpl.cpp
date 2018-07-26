@@ -41,18 +41,18 @@ void LatticeSpaceVectorImpl::initialize_voxels(const bool is_periodic)
             if (is_periodic)
             {
                 voxels_.push_back(periodic_);
-                periodic_->add_voxel(coordinate_id_pair_type(ParticleID(), coord));
+                periodic_->add_voxel(ParticleID(), coord);
             }
             else
             {
                 voxels_.push_back(border_);
-                border_->add_voxel(coordinate_id_pair_type(ParticleID(), coord));
+                border_->add_voxel(ParticleID(), coord);
             }
         }
         else
         {
             voxels_.push_back(vacant_);
-            vacant_->add_voxel(coordinate_id_pair_type(ParticleID(), coord));
+            vacant_->add_voxel(ParticleID(), coord);
         }
     }
 }
@@ -327,8 +327,7 @@ bool LatticeSpaceVectorImpl::remove_voxel(const ParticleID& pid)
 
             voxels_.at(coord) = vp->location();
 
-            vp->location()->add_voxel(
-                coordinate_id_pair_type(ParticleID(), coord));
+            vp->location()->add_voxel(ParticleID(), coord);
             return true;
         }
     }
@@ -345,8 +344,7 @@ bool LatticeSpaceVectorImpl::remove_voxel(const coordinate_type& coord)
     if (vp->remove_voxel_if_exists(coord))
     {
         voxels_.at(coord) = vp->location();
-        vp->location()->add_voxel(
-            coordinate_id_pair_type(ParticleID(), coord));
+        vp->location()->add_voxel(ParticleID(), coord);
         return true;
     }
     return false;
@@ -462,7 +460,7 @@ bool LatticeSpaceVectorImpl::update_voxel(const ParticleID& pid, ParticleVoxel v
         dest_vp->replace_voxel(to_coord, from_coord);
         voxels_.at(from_coord) = dest_vp;
 
-        new_vp->add_voxel(coordinate_id_pair_type(pid, to_coord));
+        new_vp->add_voxel(pid, to_coord);
         voxels_.at(to_coord) = new_vp;
         return false;
     }
@@ -470,7 +468,7 @@ bool LatticeSpaceVectorImpl::update_voxel(const ParticleID& pid, ParticleVoxel v
     // new
     dest_vp->remove_voxel_if_exists(to_coord);
 
-    new_vp->add_voxel(coordinate_id_pair_type(pid, to_coord));
+    new_vp->add_voxel(pid, to_coord);
     voxels_.at(to_coord) = new_vp;
     return true;
 }
@@ -488,7 +486,7 @@ LatticeSpaceVectorImpl::add_voxel(
         return false;
 
     location->remove_voxel_if_exists(coordinate);
-    vpool->add_voxel(coordinate_id_pair_type(pid, coordinate));
+    vpool->add_voxel(pid, coordinate);
     voxels_.at(coordinate) = vpool;
 
     return true;
@@ -516,7 +514,7 @@ LatticeSpaceVectorImpl::add_voxels(
         const ParticleID pid((*itr).first);
         const coordinate_type coord((*itr).second);
         get_voxel_pool_at(coord)->remove_voxel_if_exists(coord);
-        mtb->add_voxel(coordinate_id_pair_type(pid, coord));
+        mtb->add_voxel(pid, coord);
         voxels_.at(coord) = mtb;
     }
     return true;

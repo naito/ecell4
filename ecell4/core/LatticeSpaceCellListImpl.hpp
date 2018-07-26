@@ -59,7 +59,7 @@ public:
 
         for (coordinate_type coord(0); coord < actual_size(); ++coord)
         {
-            vacant_->add_voxel(coordinate_id_pair_type(ParticleID(), coord));
+            vacant_->add_voxel(ParticleID(), coord);
         }
 
         std::stringstream ss;
@@ -234,7 +234,7 @@ public:
                 return false;
             }
 
-            vp->location()->add_voxel(coordinate_id_pair_type(ParticleID(), coord));
+            vp->location()->add_voxel(ParticleID(), coord);
             update_matrix(coord, vp->location());
             return true;
         }

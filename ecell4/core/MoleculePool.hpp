@@ -43,9 +43,9 @@ public:
 
 public:
 
-    virtual void add_voxel(const coordinate_id_pair_type& info)
+    virtual void add_voxel(const ParticleID& pid, const coordinate_type& coordinate)
     {
-        voxels_.push_back(info);
+        voxels_.push_back(coordinate_id_pair_type(pid, coordinate));
     }
 
     virtual void replace_voxel(

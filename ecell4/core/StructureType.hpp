@@ -55,9 +55,9 @@ public:
         return size_;
     }
 
-    void add_voxel(const coordinate_id_pair_type& info)
+    void add_voxel(const ParticleID& pid, const coordinate_type& coordinate)
     {
-        if (info.pid != ParticleID())
+        if (pid != ParticleID())
         {
             throw NotSupported("No ParticleID is allowed.");
         }
