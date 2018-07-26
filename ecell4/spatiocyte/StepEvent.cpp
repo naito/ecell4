@@ -56,19 +56,26 @@ void StepEvent3D::walk(const Real& alpha)
         const Voxel voxel(world_->coordinate2voxel(info.coordinate));
         const Integer rnd(rng->uniform_int(0, voxel.num_neighbors()-1));
 
+        // should skip if a voxel is not the target species.
+        // when reaction has occured before, a voxel can be changed.
         if (voxel.get_voxel_pool() != mpool_)
         {
-            // should skip if a voxel is not the target species.
-            // when reaction has occured before, a voxel can be changed.
             continue;
         }
 
         const Voxel neighbor(voxel.get_neighbor(rnd));
 
-        if (world_->can_move(voxel, neighbor))
+        if (boost::optional<const std::vector<Voxel>&> targets = world_->find_interface(neighbor))
+        {
+            const Voxel new_neighbor(targets->at(rng->uniform_int(0, targets->size()-1)));
+            attempt_reaction_(info.pid, voxel, new_neighbor, alpha);
+        }
+        else if (world_->can_move(voxel, neighbor))
         {
             if (rng->uniform(0,1) <= alpha)
+            {
                 world_->move(voxel, neighbor, /*candidate=*/idx);
+            }
         }
         else
         {
@@ -118,10 +125,10 @@ void StepEvent2D::walk(const Real& alpha)
         // TODO: Calling coordinate2voxel is invalid
         const Voxel voxel(world_->coordinate2voxel(info.coordinate));
 
+        // should skip if a voxel is not the target species.
+        // when reaction has occured before, a voxel can be changed.
         if (voxel.get_voxel_pool() != mpool_)
         {
-            // should skip if a voxel is not the target species.
-            // when reaction has occured before, a voxel can be changed.
             continue;
         }
 
@@ -141,7 +148,12 @@ void StepEvent2D::walk(const Real& alpha)
             if (target->get_dimension() > mpool_->get_dimension())
                 continue;
 
-            if (world_->can_move(voxel, neighbor))
+            if (boost::optional<const std::vector<Voxel>&> targets = world_->find_interface(neighbor))
+            {
+                const Voxel new_neighbor(targets->at(rng->uniform_int(0, targets->size()-1)));
+                attempt_reaction_(info.pid, voxel, new_neighbor, alpha);
+            }
+            else if (world_->can_move(voxel, neighbor))
             {
                 if (rng->uniform(0,1) <= alpha)
                     world_->move(voxel, neighbor, /*candidate=*/idx);

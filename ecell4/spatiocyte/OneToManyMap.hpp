@@ -50,8 +50,9 @@ public:
     {
         const_iterator itr(container_.find(key));
 
-        if (itr != container_.end())
-            return (*itr).second;
+        if (itr != container_.end() && itr->second.size() > 0)
+            return itr->second;
+
         return boost::none;
     }
 

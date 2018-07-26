@@ -98,6 +98,16 @@ public:
 
     void add_space(space_type space);
 
+    boost::optional<const std::vector<Voxel>&> find_interface(const Voxel& voxel)
+    {
+        return interfaces_.find(voxel);
+    }
+
+    boost::optional<const std::vector<Voxel>&> find_neighbors(const Voxel& voxel)
+    {
+        return neighbors_.find(voxel);
+    }
+
     const Real t() const
     {
         Real time(0.0);

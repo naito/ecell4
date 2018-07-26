@@ -322,12 +322,33 @@ SpatiocyteWorld::check_neighbor(const Voxel& voxel, const std::string& loc)
         }
     }
 
-    if (tmp.size() == 0)
+    if (tmp.size() != 0)
     {
-        return boost::none;
+        return tmp[rng()->uniform_int(0, tmp.size()-1)];
     }
 
-    return tmp[rng()->uniform_int(0, tmp.size()-1)];
+    if (boost::optional<const std::vector<Voxel>&> neighbors = find_neighbors(voxel))
+    {
+        tmp.reserve(neighbors->size());
+
+        for (std::vector<Voxel>::const_iterator itr(neighbors->begin());
+             itr != neighbors->end(); ++itr)
+        {
+            boost::shared_ptr<const VoxelPool> mt(itr->get_voxel_pool());
+            const std::string serial(mt->is_vacant() ? "" : mt->species().serial());
+            if (serial == loc)
+            {
+                tmp.push_back(*itr);
+            }
+        }
+
+        if (tmp.size() != 0)
+        {
+            return tmp[rng()->uniform_int(0, tmp.size()-1)];
+        }
+    }
+
+    return boost::none;
 }
 
 } // spatiocyte
