@@ -49,7 +49,7 @@ void ZerothOrderReactionEvent::fire_()
             }
         }
     }
-    push_reaction(std::make_pair(rule_, rinfo));
+    push_reaction(rule_, rinfo);
     time_ += draw_dt();
 }
 
@@ -89,19 +89,19 @@ void FirstOrderReactionEvent::fire_()
                 reactant_item.voxel.clear();
                 ReactionInfo rinfo(world_->t());
                 rinfo.add_reactant(reactant_item);
-                push_reaction(std::make_pair(rule_, rinfo));
+                push_reaction(rule_, rinfo);
             }
             break;
         case 1:
-            push_reaction(std::make_pair(rule_,
-                                         apply_a2b(world_, reactant_item, *(products.begin()))));
+            push_reaction(rule_,
+                          apply_a2b(world_, reactant_item, products.at(0)));
             break;
         case 2:
             {
-                ReactionInfo rinfo(apply_a2bc(world_, reactant_item,
-                            *(products.begin()), (*(++products.begin()))));
+                const ReactionInfo rinfo(apply_a2bc(world_, reactant_item,
+                                                    products.at(0), products.at(1)));
                 if (rinfo.has_occurred())
-                    push_reaction(std::make_pair(rule_, rinfo));
+                    push_reaction(rule_, rinfo);
             }
             break;
     }

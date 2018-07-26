@@ -34,9 +34,9 @@ public:
 protected:
     virtual void fire_() = 0;
 
-    void push_reaction(const reaction_type& reaction)
+    void push_reaction(const ReactionRule& rule, const ReactionInfo& info)
     {
-        reactions_.push_back(reaction);
+        reactions_.push_back(std::make_pair(rule, info));
     }
 
     std::vector<reaction_type> reactions_;

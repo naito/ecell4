@@ -216,8 +216,7 @@ void StepEvent::attempt_reaction_(
                                            to_mt->species(), dst)));
             if (rinfo.has_occurred())
             {
-                reaction_type reaction(std::make_pair(*itr, rinfo));
-                push_reaction(reaction);
+                push_reaction(*itr, rinfo);
             }
             return;
         }
