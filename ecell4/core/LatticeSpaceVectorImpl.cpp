@@ -425,49 +425,6 @@ LatticeSpaceVectorImpl::move_(
     return std::pair<coordinate_type, bool>(to, true);
 }
 
-std::pair<coordinate_type, bool>
-LatticeSpaceVectorImpl::move_(
-        coordinate_id_pair_type& info,
-        coordinate_type to)
-{
-    const coordinate_type from(info.coordinate);
-    if (from == to)
-    {
-        return std::pair<coordinate_type, bool>(from, false);
-    }
-
-    boost::shared_ptr<VoxelPool> from_vp(voxels_.at(from));
-    if (from_vp->is_vacant())
-    {
-        return std::pair<coordinate_type, bool>(from, true);
-    }
-
-    boost::shared_ptr<VoxelPool> to_vp(voxels_.at(to));
-
-    if (to_vp == border_)
-    {
-        return std::pair<coordinate_type, bool>(from, false);
-    }
-    else if (to_vp == periodic_)
-    {
-        to = apply_boundary_(to);
-        to_vp = voxels_.at(to);
-    }
-
-    if (to_vp != from_vp->location())
-    {
-        return std::pair<coordinate_type, bool>(to, false);
-    }
-
-    info.coordinate = to;
-    voxels_.at(from) = to_vp;
-
-    // to_vp->replace_voxel(to, coordinate_id_pair_type(ParticleID(), from));
-    to_vp->replace_voxel(to, from);
-    voxels_.at(to) = from_vp;
-
-    return std::pair<coordinate_type, bool>(to, true);
-}
 
 /*
  * Change the Species and coordinate of a ParticleVoxel with ParticleID, pid, to

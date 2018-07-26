@@ -119,10 +119,6 @@ protected:
           coordinate_type to,
           const std::size_t candidate=0);
 
-    std::pair<coordinate_type, bool>
-    move_(coordinate_id_pair_type& info,
-          coordinate_type to);
-
     coordinate_type get_coord(const ParticleID& pid) const;
 
 protected:
