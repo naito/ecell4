@@ -703,6 +703,7 @@ public:
         {
             const molecule_info_type minfo(get_molecule_info(sp));
             space->make_molecular_type(sp, minfo.radius, minfo.D, minfo.loc);
+            new_species_.push_back(std::make_pair(space, sp));
         }
 
         ParticleID pid(sidgen_());
@@ -721,6 +722,7 @@ public:
         {
             const molecule_info_type minfo(get_molecule_info(sp));
             space->make_molecular_type(sp, minfo.radius, minfo.D, minfo.loc);
+            new_species_.push_back(std::make_pair(space, sp));
         }
 
         ParticleID pid;
@@ -798,6 +800,17 @@ public:
         return VoxelSpaceBase::calculate_volume(edge_lengths, voxel_radius, true);
     }
 
+    void clear_new_species()
+    {
+        new_species_.clear();
+    }
+
+    const std::vector<std::pair<space_type, Species> >&
+    get_new_species() const
+    {
+        return new_species_;
+    }
+
 protected:
 
     space_type get_root() const
@@ -867,6 +880,8 @@ protected:
 
     boost::shared_ptr<RandomNumberGenerator> rng_;
     SerialIDGenerator<ParticleID> sidgen_;
+
+    std::vector<std::pair<space_type, Species> > new_species_;
 
     boost::weak_ptr<Model> model_;
 };

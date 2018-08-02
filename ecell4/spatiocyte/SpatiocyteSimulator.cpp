@@ -14,8 +14,6 @@ namespace spatiocyte
 void SpatiocyteSimulator::initialize()
 {
     last_reactions_.clear();
-    species_list_.clear();  //XXX:FIXME: Messy patch
-
 
     scheduler_.clear();
     update_alpha_map();
@@ -72,8 +70,6 @@ void SpatiocyteSimulator::update_alpha_map()
 
 void SpatiocyteSimulator::register_events(const Species& sp)
 {
-    species_list_.push_back(sp);  //XXX:FIXME: Messy patch
-
     if (world_->has_molecule_pool(sp))
     {
         //TODO: Call steps only if sp is assigned not to StructureType.
@@ -186,23 +182,11 @@ void SpatiocyteSimulator::step_()
     scheduler_type::value_type top(scheduler_.pop());
     const Real time(top.second->time());
     world_->set_t(time);
+    world_->clear_new_species();
     top.second->fire(); // top.second->time_ is updated in fire()
     set_last_event_(boost::const_pointer_cast<const SpatiocyteEvent>(top.second));
 
     last_reactions_ = last_event_->reactions();
-
-    std::vector<Species> new_species;
-    for (std::vector<reaction_type>::const_iterator itr(last_reactions().begin());
-            itr != last_reactions().end(); ++itr)
-        for (ReactionInfo::container_type::const_iterator
-                product((*itr).second.products().begin());
-                product != (*itr).second.products().end(); ++product)
-        {
-            const Species& species((*product).species);
-            // if (!world_->has_species(species))
-            if (std::find(species_list_.begin(), species_list_.end(), species) == species_list_.end())  //XXX:FIXME: Messy patch
-                new_species.push_back(species);
-        }
 
     scheduler_type::events_range events(scheduler_.events());
     for (scheduler_type::events_range::iterator itr(events.begin());
@@ -214,10 +198,12 @@ void SpatiocyteSimulator::step_()
     scheduler_.add(top.second);
 
     // update_alpha_map(); // may be performance cost
-    for (std::vector<Species>::const_iterator itr(new_species.begin());
-        itr != new_species.end(); ++itr)
+    const std::vector<std::pair<SpatiocyteWorld::space_type, Species> >&
+        new_species(world_->get_new_species());
+    for (std::vector<std::pair<SpatiocyteWorld::space_type, Species> >::const_iterator itr(new_species.begin());
+         itr != new_species.end(); ++itr)
     {
-        register_events(*itr);
+        register_events((*itr).second);
     }
 
     num_steps_++;

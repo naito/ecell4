@@ -95,8 +95,6 @@ protected:
 
     std::vector<reaction_type> last_reactions_;
 
-    std::vector<Species> species_list_;
-
     Real dt_;
 };
 
