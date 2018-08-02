@@ -73,6 +73,7 @@ public:
 protected:
 
     boost::shared_ptr<SpatiocyteEvent> create_step_event(
+        const SpatiocyteWorld::space_type space,
         const Species& species, const Real& t, const Real& alpha);
     boost::shared_ptr<SpatiocyteEvent> create_zeroth_order_reaction_event(
         const ReactionRule& reaction_rule, const Real& t);
@@ -80,7 +81,7 @@ protected:
         const ReactionRule& reaction_rule, const Real& t);
 
     void step_();
-    void register_events(const Species& species);
+    void register_events(const std::pair<SpatiocyteWorld::space_type, Species>& space_species_pair);
     void update_alpha_map();
 
     void set_last_event_(boost::shared_ptr<const SpatiocyteEvent> event)

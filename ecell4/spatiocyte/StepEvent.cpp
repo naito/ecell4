@@ -7,12 +7,18 @@ namespace ecell4
 namespace spatiocyte
 {
 
-StepEvent::StepEvent(boost::shared_ptr<Model> model, boost::shared_ptr<SpatiocyteWorld> world,
-        const Species& species, const Real& t, const Real alpha)
+StepEvent::StepEvent(
+        boost::shared_ptr<Model> model,
+        boost::shared_ptr<SpatiocyteWorld> world,
+        SpatiocyteWorld::space_type space,
+        const Species& species,
+        const Real& t,
+        const Real alpha)
     : SpatiocyteEvent(t),
       model_(model),
       world_(world),
-      mpool_(world_->find_molecule_pool(species)),
+      space_(space),
+      mpool_(space_->find_molecule_pool(species)),
       alpha_(alpha)
 {
     time_ = t;
@@ -20,10 +26,11 @@ StepEvent::StepEvent(boost::shared_ptr<Model> model, boost::shared_ptr<Spatiocyt
 
 StepEvent3D::StepEvent3D(boost::shared_ptr<Model> model,
                          boost::shared_ptr<SpatiocyteWorld> world,
+                         SpatiocyteWorld::space_type space,
                          const Species& species,
                          const Real& t,
                          const Real alpha)
-    : StepEvent(model, world, species, t, alpha)
+    : StepEvent(model, world, space, species, t, alpha)
 {
     const SpatiocyteWorld::molecule_info_type minfo(world_->get_molecule_info(species));
     const Real D(minfo.D);
@@ -53,7 +60,7 @@ void StepEvent3D::walk(const Real& alpha)
          itr != voxels.end(); ++itr)
     {
         const VoxelPool::coordinate_id_pair_type& info(*itr);
-        const Voxel voxel(world_->coordinate2voxel(info.coordinate));
+        const Voxel voxel(space_, info.coordinate);
         const Integer rnd(rng->uniform_int(0, voxel.num_neighbors()-1));
 
         // should skip if a voxel is not the target species.
@@ -88,10 +95,11 @@ void StepEvent3D::walk(const Real& alpha)
 
 StepEvent2D::StepEvent2D(boost::shared_ptr<Model> model,
                          boost::shared_ptr<SpatiocyteWorld> world,
+                         SpatiocyteWorld::space_type space,
                          const Species& species,
                          const Real& t,
                          const Real alpha)
-    : StepEvent(model, world, species, t, alpha)
+    : StepEvent(model, world, space, species, t, alpha)
 {
     const SpatiocyteWorld::molecule_info_type minfo(world_->get_molecule_info(species));
     const Real D(minfo.D);
@@ -121,9 +129,7 @@ void StepEvent2D::walk(const Real& alpha)
          itr != voxels.end(); ++itr)
     {
         const VoxelPool::coordinate_id_pair_type& info(*itr);
-
-        // TODO: Calling coordinate2voxel is invalid
-        const Voxel voxel(world_->coordinate2voxel(info.coordinate));
+        const Voxel voxel(space_, info.coordinate);
 
         // should skip if a voxel is not the target species.
         // when reaction has occured before, a voxel can be changed.

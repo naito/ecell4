@@ -800,6 +800,7 @@ public:
         return VoxelSpaceBase::calculate_volume(edge_lengths, voxel_radius, true);
     }
 
+
     void clear_new_species()
     {
         new_species_.clear();
@@ -809,6 +810,23 @@ public:
     get_new_species() const
     {
         return new_species_;
+    }
+
+    const std::vector<std::pair<space_type, Species> >
+    list_space_species() const
+    {
+        std::vector<std::pair<space_type, Species> > list;
+        for (space_container_type::const_iterator space_itr(spaces_.begin());
+             space_itr != spaces_.end(); ++space_itr)
+        {
+            const std::vector<Species> species((*space_itr)->list_species());
+            for (std::vector<Species>::const_iterator species_itr(species.begin());
+                 species_itr != species.end(); ++species_itr)
+            {
+                list.push_back(std::make_pair(*space_itr, *species_itr));
+            }
+        }
+        return list;
     }
 
 protected:

@@ -47,6 +47,7 @@ struct StepEvent : SpatiocyteEvent
 {
     StepEvent(boost::shared_ptr<Model> model,
               boost::shared_ptr<SpatiocyteWorld> world,
+              SpatiocyteWorld::space_type space,
               const Species& species,
               const Real& t,
               const Real alpha=1.0);
@@ -82,6 +83,7 @@ protected:
 
     boost::shared_ptr<Model> model_;
     boost::shared_ptr<SpatiocyteWorld> world_;
+    SpatiocyteWorld::space_type space_;
     boost::shared_ptr<MoleculePool> mpool_;
 
     const Real alpha_;
@@ -91,6 +93,7 @@ struct StepEvent3D : StepEvent
 {
     StepEvent3D(boost::shared_ptr<Model> model,
                 boost::shared_ptr<SpatiocyteWorld> world,
+                SpatiocyteWorld::space_type space,
                 const Species& species,
                 const Real& t,
                 const Real alpha=1.0);
@@ -102,6 +105,7 @@ struct StepEvent2D : StepEvent
 {
     StepEvent2D(boost::shared_ptr<Model> model,
                 boost::shared_ptr<SpatiocyteWorld> world,
+                SpatiocyteWorld::space_type space,
                 const Species& species,
                 const Real& t,
                 const Real alpha=1.0);
