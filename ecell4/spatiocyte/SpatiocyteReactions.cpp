@@ -11,8 +11,7 @@ namespace spatiocyte
 
 inline
 const std::string
-get_serial(boost::shared_ptr<SpatiocyteWorld> world,
-           const Voxel& voxel)
+get_serial(const Voxel& voxel)
 {
     boost::shared_ptr<const VoxelPool> mtype(voxel.get_voxel_pool());
     return mtype->is_vacant() ? "" : mtype->species().serial();
@@ -20,14 +19,9 @@ get_serial(boost::shared_ptr<SpatiocyteWorld> world,
 
 inline
 const std::string
-get_location(boost::shared_ptr<SpatiocyteWorld> world,
-             const Voxel& voxel)
+get_location(const Voxel& voxel)
 {
-    boost::shared_ptr<const VoxelPool> mtype(voxel.get_voxel_pool());
-    if (mtype->is_vacant())
-        return "";
-    boost::shared_ptr<const VoxelPool> ltype(mtype->location());
-    return ltype->is_vacant() ? "" : ltype->species().serial();
+    return get_location_serial(voxel.get_voxel_pool());
 }
 
 static inline void
@@ -61,8 +55,8 @@ apply_a2b(boost::shared_ptr<SpatiocyteWorld> world,
 {
     const Voxel voxel(reactant_item.voxel);
     const std::string bloc(world->get_molecule_info(product_species).loc);
-    const std::string aserial(get_serial(world, voxel));
-    const std::string aloc(get_location(world, voxel));
+    const std::string aserial(get_serial(voxel));
+    const std::string aloc(get_location(voxel));
     const std::string bserial(product_species.serial());
 
     ReactionInfo rinfo(world->t());
@@ -125,8 +119,8 @@ ReactionInfo apply_a2bc(
                       cserial(product_species1.serial()),
                       bloc(world->get_molecule_info(product_species0).loc),
                       cloc(world->get_molecule_info(product_species1).loc);
-    const std::string aserial(get_serial(world, voxel));
-    const std::string aloc(get_location(world, voxel));
+    const std::string aserial(get_serial(voxel));
+    const std::string aloc(get_location(voxel));
 
     ReactionInfo rinfo(world->t());
 
@@ -145,8 +139,8 @@ ReactionInfo apply_a2bc(
             return rinfo;
         }
 
-        const std::string nserial(get_serial(world, *neighbor));
-        const std::string nloc(get_location(world, *neighbor));
+        const std::string nserial(get_serial(*neighbor));
+        const std::string nloc(get_location(*neighbor));
 
         rinfo.add_reactant(reactant_item);
 
@@ -192,8 +186,8 @@ ReactionInfo apply_a2bc(
             return rinfo;
         }
 
-        const std::string nserial(get_serial(world, *neighbor));
-        const std::string nloc(get_location(world, *neighbor));
+        const std::string nserial(get_serial(*neighbor));
+        const std::string nloc(get_location(*neighbor));
 
         rinfo.add_reactant(reactant_item);
 
@@ -253,10 +247,10 @@ ReactionInfo apply_ab2c(
 
     // A and B (from_info and to_info) become C (product_species)
     const std::string location(world->get_molecule_info(product_species).loc);
-    const std::string fserial(get_serial(world, voxel0));
-    const std::string floc(get_location(world, voxel0));
-    const std::string tserial(get_serial(world, voxel1));
-    const std::string tloc(get_location(world, voxel1));
+    const std::string fserial(get_serial(voxel0));
+    const std::string floc(get_location(voxel0));
+    const std::string tserial(get_serial(voxel1));
+    const std::string tloc(get_location(voxel1));
 
     ReactionInfo rinfo(world->t());
 
@@ -325,10 +319,10 @@ ReactionInfo apply_ab2cd(
     const Voxel& src(reactant_item0.voxel);
     const Voxel& dst(reactant_item1.voxel);
 
-    const std::string aserial(get_serial(world, src));
-    const std::string aloc(get_location(world, src));
-    const std::string bserial(get_serial(world, dst));
-    const std::string bloc(get_location(world, dst));
+    const std::string aserial(get_serial(src));
+    const std::string aloc(get_location(src));
+    const std::string bserial(get_serial(dst));
+    const std::string bloc(get_location(dst));
     const std::string cloc(world->get_molecule_info(product_species0).loc);
     const std::string dloc(world->get_molecule_info(product_species1).loc);
 
