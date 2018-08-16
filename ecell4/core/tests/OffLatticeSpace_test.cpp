@@ -14,6 +14,21 @@
 
 using namespace ecell4;
 
+OffLatticeSpace
+initialize(const Real voxel_radius)
+{
+    OffLatticeSpace::position_container positions;
+    const Real unit(voxel_radius / sqrt(3.0));
+    for (int i(0); i < 10; ++i)
+        positions.push_back(
+                Real3(unit * i, unit * i, unit * i));
+    OffLatticeSpace::coordinate_pair_list_type adjoining_pairs;
+    for (int i(1); i < 10; ++i )
+        adjoining_pairs.push_back(
+                std::make_pair(i-1, i));
+    return OffLatticeSpace(voxel_radius, positions, adjoining_pairs);
+}
+
 struct Fixture
 {
     const Real voxel_radius;
@@ -31,18 +46,8 @@ struct Fixture
               /* coordinate = */ 3,
               /* radius = */     2.5e-9,
               /* D = */          1e-12),
-        space(voxel_radius)
+        space(initialize(voxel_radius))
     {
-        OffLatticeSpace::position_container positions;
-        const Real unit(voxel_radius / sqrt(3.0));
-        for (int i(0); i < 10; ++i)
-            positions.push_back(
-                    Real3(unit * i, unit * i, unit * i));
-        OffLatticeSpace::coordinate_pair_list_type adjoining_pairs;
-        for (int i(1); i < 10; ++i )
-            adjoining_pairs.push_back(
-                    std::make_pair(i-1, i));
-        space = OffLatticeSpace(voxel_radius, positions, adjoining_pairs);
     }
 };
 

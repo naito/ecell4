@@ -149,7 +149,7 @@ void StepEvent2D::walk(const Real& alpha)
              itr != nids.end(); ++itr)
         {
             const Voxel neighbor(voxel.get_neighbor(*itr));
-            boost::shared_ptr<const VoxelPool> target(neighbor.get_voxel_pool());
+            const VoxelPool* target(neighbor.get_voxel_pool());
 
             if (target->get_dimension() > mpool_->get_dimension())
                 continue;
@@ -180,8 +180,8 @@ void StepEvent::attempt_reaction_(
     const Voxel& dst,
     const Real& alpha)
 {
-    boost::shared_ptr<const VoxelPool> from_mt(src.get_voxel_pool());
-    boost::shared_ptr<const VoxelPool> to_mt(dst.get_voxel_pool());
+    const VoxelPool* from_mt(src.get_voxel_pool());
+    const VoxelPool* to_mt(dst.get_voxel_pool());
 
     if (to_mt->is_vacant())
     {

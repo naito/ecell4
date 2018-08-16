@@ -11,7 +11,7 @@ class LatticeSpaceVectorImpl
 public:
 
     typedef HCPLatticeSpace base_type;
-    typedef std::vector<boost::shared_ptr<VoxelPool> > voxel_container;
+    typedef std::vector<VoxelPool*> voxel_container;
 
 public:
 
@@ -52,7 +52,12 @@ public:
     std::vector<coordinate_type> list_coords(const Species& sp) const;
     std::vector<coordinate_type> list_coords_exact(const Species& sp) const;
 
-    boost::shared_ptr<VoxelPool> get_voxel_pool_at(const coordinate_type& coord) const
+    VoxelPool* get_voxel_pool_at(const coordinate_type& coord)
+    {
+        return voxels_.at(coord);
+    }
+
+    const VoxelPool* get_voxel_pool_at(const coordinate_type& coord) const
     {
         return voxels_.at(coord);
     }
@@ -67,7 +72,7 @@ public:
     {
         coordinate_type const dest = get_neighbor_(coord, nrand);
 
-        if (voxels_.at(dest) != periodic_)
+        if (voxels_.at(dest) != &periodic_)
         {
             return dest;
         }
@@ -127,8 +132,8 @@ protected:
 
     voxel_container voxels_;
 
-    boost::shared_ptr<VoxelPool> border_;
-    boost::shared_ptr<VoxelPool> periodic_;
+    MoleculePool border_;
+    MoleculePool periodic_;
 };
 
 } // ecell4

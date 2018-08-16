@@ -73,7 +73,7 @@ get_dimension_info(
 {
     try
     {
-        boost::shared_ptr<const VoxelPool> pool = world->find_voxel_pool(species);
+        const VoxelPool* pool = world->find_voxel_pool(species);
         return DimensionInfo(pool->get_dimension(), pool->D(), pool->is_structure());
     }
     catch (NotFound e) {}
@@ -84,7 +84,7 @@ get_dimension_info(
     {
         try
         {
-            boost::shared_ptr<const VoxelPool> location = world->find_voxel_pool(Species(info.loc));
+            const VoxelPool* location = world->find_voxel_pool(Species(info.loc));
             return DimensionInfo(location->get_dimension(), info.D, false);
         } catch (NotFound e) {}
     }

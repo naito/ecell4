@@ -13,7 +13,7 @@ inline
 const std::string
 get_serial(const Voxel& voxel)
 {
-    boost::shared_ptr<const VoxelPool> mtype(voxel.get_voxel_pool());
+    const VoxelPool* mtype(voxel.get_voxel_pool());
     return mtype->is_vacant() ? "" : mtype->species().serial();
 }
 
@@ -67,6 +67,7 @@ apply_a2b(boost::shared_ptr<SpatiocyteWorld> world,
         // or A is on the location of B,
         // or A is on B.
         rinfo.add_reactant(reactant_item);
+
 
         if (aserial != bloc)
         {

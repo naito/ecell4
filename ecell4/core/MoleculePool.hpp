@@ -19,7 +19,7 @@ public:
 public:
 
     MoleculePool(
-        const Species& species, boost::weak_ptr<VoxelPool> location,
+        const Species& species, VoxelPool* location,
         const Real& radius=0.0, const Real& D=0.0)
         : base_type(species, location, radius, D)
     {

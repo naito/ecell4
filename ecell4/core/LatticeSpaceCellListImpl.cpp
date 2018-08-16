@@ -16,7 +16,7 @@ Integer LatticeSpaceCellListImpl::num_molecules(const Species& sp) const
         const Integer cnt(sexp.count((*itr).first));
         if (cnt > 0)
         {
-            const boost::shared_ptr<MoleculePool>& vp((*itr).second);
+            const MoleculePool* vp((*itr).second);
             count += vp->size() * cnt;
         }
     }
@@ -36,8 +36,8 @@ bool LatticeSpaceCellListImpl::update_voxel(const ParticleID& pid, ParticleVoxel
         throw NotSupported("Out of bounds");
     }
 
-    boost::shared_ptr<VoxelPool> new_vp(get_voxel_pool(v)); //XXX: need MoleculeInfo
-    boost::shared_ptr<VoxelPool> dest_vp(get_voxel_pool_at(to_coord));
+    VoxelPool* new_vp(get_voxel_pool(v)); //XXX: need MoleculeInfo
+    VoxelPool* dest_vp(get_voxel_pool_at(to_coord));
 
     if (dest_vp != new_vp->location())
     {
@@ -46,7 +46,7 @@ bool LatticeSpaceCellListImpl::update_voxel(const ParticleID& pid, ParticleVoxel
 
     if (pid != ParticleID())
     {
-        const std::pair<boost::shared_ptr<VoxelPool>, coordinate_type>
+        const std::pair<VoxelPool*, coordinate_type>
             target(__get_coordinate(pid));
         const coordinate_type& from_coord(target.second);
         if (from_coord != -1)
@@ -83,8 +83,8 @@ bool LatticeSpaceCellListImpl::update_voxel(const ParticleID& pid, ParticleVoxel
 bool LatticeSpaceCellListImpl::add_voxel(
         const Species& sp, const ParticleID& pid, const coordinate_type& coord)
 {
-    boost::shared_ptr<VoxelPool> vpool(find_voxel_pool(sp));
-    boost::shared_ptr<VoxelPool> location(get_voxel_pool_at(coord));
+    VoxelPool* vpool(find_voxel_pool(sp));
+    VoxelPool* location(get_voxel_pool_at(coord));
 
     if (vpool->location() != location)
         return false;
@@ -96,39 +96,39 @@ bool LatticeSpaceCellListImpl::add_voxel(
     return true;
 }
 
-std::pair<boost::shared_ptr<VoxelPool>, LatticeSpaceCellListImpl::coordinate_type>
+std::pair<VoxelPool*, LatticeSpaceCellListImpl::coordinate_type>
     LatticeSpaceCellListImpl::__get_coordinate(const ParticleID& pid)
 {
     for (molecule_pool_map_type::iterator itr(molecule_pools_.begin());
          itr != molecule_pools_.end(); ++itr)
     {
-        const boost::shared_ptr<MoleculePool>& vp((*itr).second);
+        MoleculePool* vp((*itr).second);
         MoleculePool::container_type::const_iterator j(vp->find(pid));
         if (j != vp->end())
         {
             return std::make_pair(vp, (*j).coordinate);
         }
     }
-    return std::make_pair(boost::shared_ptr<VoxelPool>(), -1); //XXX: a bit dirty way
+    return std::make_pair((VoxelPool*)NULL, -1); //XXX: a bit dirty way
 }
 
-std::pair<boost::shared_ptr<const VoxelPool>, LatticeSpaceCellListImpl::coordinate_type>
+std::pair<const VoxelPool*, LatticeSpaceCellListImpl::coordinate_type>
     LatticeSpaceCellListImpl::__get_coordinate(const ParticleID& pid) const
 {
     for (molecule_pool_map_type::const_iterator itr(molecule_pools_.begin());
          itr != molecule_pools_.end(); ++itr)
     {
-        const boost::shared_ptr<MoleculePool>& vp((*itr).second);
+        const MoleculePool* vp((*itr).second);
         MoleculePool::container_type::const_iterator j(vp->find(pid));
         if (j != vp->end())
         {
         }
     }
-    return std::make_pair(boost::shared_ptr<VoxelPool>(), -1); //XXX: a bit dirty way
+    return std::make_pair((const VoxelPool*)NULL, -1); //XXX: a bit dirty way
 }
 
-boost::shared_ptr<VoxelPool> LatticeSpaceCellListImpl::get_voxel_pool_at(
-    const LatticeSpaceCellListImpl::coordinate_type& coord) const
+VoxelPool* LatticeSpaceCellListImpl::get_voxel_pool_at(
+    const LatticeSpaceCellListImpl::coordinate_type& coord)
 {
     /**
      XXX: This may not work
@@ -142,11 +142,11 @@ boost::shared_ptr<VoxelPool> LatticeSpaceCellListImpl::get_voxel_pool_at(
     {
         if (is_periodic_)
         {
-            return periodic_;
+            return &periodic_;
         }
         else
         {
-            return border_;
+            return &border_;
         }
     }
 
@@ -169,7 +169,7 @@ boost::shared_ptr<VoxelPool> LatticeSpaceCellListImpl::get_voxel_pool_at(
     const cell_type& cell(matrix_[coordinate2index(coord)]);
     if (cell.size() == 0)
     {
-        return vacant_;
+        return &vacant_;
     }
 
     cell_type::const_iterator i(find_from_cell(coord, cell));
@@ -178,7 +178,61 @@ boost::shared_ptr<VoxelPool> LatticeSpaceCellListImpl::get_voxel_pool_at(
         return (*i).first;
     }
 
-    return vacant_;
+    return &vacant_;
+}
+
+const VoxelPool* LatticeSpaceCellListImpl::get_voxel_pool_at(
+    const LatticeSpaceCellListImpl::coordinate_type& coord) const
+{
+    /**
+     XXX: This may not work
+     */
+    if (!is_in_range(coord))
+    {
+        throw NotSupported("Out of bounds");
+    }
+
+    if (!is_inside(coord))
+    {
+        if (is_periodic_)
+        {
+            return &periodic_;
+        }
+        else
+        {
+            return &border_;
+        }
+    }
+
+    // for (spmap::iterator itr(spmap_.begin());
+    //     itr != spmap_.end(); ++itr)
+    // {
+    //     VoxelPool& vp((*itr).second);
+    //     if (vp.is_vacant())
+    //     {
+    //         continue;
+    //     }
+
+    //     VoxelPool::container_type::const_iterator j(vp.find(coord));
+    //     if (j != vp.end())
+    //     {
+    //         return (&vp);
+    //     }
+    // }
+
+    const cell_type& cell(matrix_[coordinate2index(coord)]);
+    if (cell.size() == 0)
+    {
+        return &vacant_;
+    }
+
+    cell_type::const_iterator i(find_from_cell(coord, cell));
+    if (i != cell.end())
+    {
+        return (*i).first;
+    }
+
+    return &vacant_;
 }
 
 void LatticeSpaceCellListImpl::add_structure(const Species& sp,

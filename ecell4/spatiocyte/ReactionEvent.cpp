@@ -24,7 +24,7 @@ void ZerothOrderReactionEvent::fire_()
         const Species& sp(*i);
         const MoleculeInfo info(world_->get_molecule_info(sp));
 
-        if (boost::shared_ptr<VoxelPool> location = world_->find_voxel_pool(Species(info.loc)))
+        if (VoxelPool* location = world_->find_voxel_pool(Species(info.loc)))
         {
             if (location->size() == 0)
             {

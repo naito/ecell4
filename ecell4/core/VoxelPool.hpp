@@ -2,8 +2,6 @@
 #define ECELL4_MOLECULAR_TYPE_BASE_HPP
 
 #include <vector>
-#include <boost/shared_ptr.hpp>
-#include <boost/weak_ptr.hpp>
 #include "Species.hpp"
 #include "Shape.hpp"
 #include "Identifier.hpp"
@@ -84,7 +82,7 @@ public:
 public:
 
     VoxelPool(
-        const Species& species, boost::weak_ptr<VoxelPool> location,
+        const Species& species, VoxelPool* location,
         const Real& radius, const Real& D)
         : species_(species), location_(location),
         radius_(radius), D_(D)
@@ -127,9 +125,9 @@ public:
         return species_;
     }
 
-    boost::shared_ptr<VoxelPool> location() const
+    VoxelPool* location() const
     {
-        return location_.lock();
+        return location_;
     }
 
     Real& radius()
@@ -177,7 +175,7 @@ public:
 protected:
 
     const Species species_;
-    boost::weak_ptr<VoxelPool> location_;
+    VoxelPool* location_;
     Real radius_, D_;
 };
 

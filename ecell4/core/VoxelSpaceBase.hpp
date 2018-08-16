@@ -50,10 +50,10 @@ public:
 
 protected:
 
-    typedef utils::get_mapper_mf<Species, boost::shared_ptr<VoxelPool> >::type
+    typedef utils::get_mapper_mf<Species, VoxelPool*>::type
             voxel_pool_map_type;
 
-    typedef utils::get_mapper_mf<Species, boost::shared_ptr<MoleculePool> >::type
+    typedef utils::get_mapper_mf<Species, MoleculePool*>::type
             molecule_pool_map_type;
 
 public:
@@ -62,14 +62,27 @@ public:
      * Constructor and Destructor
      */
     VoxelSpaceBase(const Real& voxel_radius) :
-        t_(0.0), voxel_radius_(voxel_radius), vacant_(VacantType::allocate())
+        t_(0.0), voxel_radius_(voxel_radius), vacant_(VacantType())
     {}
 
     VoxelSpaceBase(const Real& voxel_radius, const Shape::dimension_kind& dimension) :
-        t_(0.0), voxel_radius_(voxel_radius), vacant_(VacantType::allocate(dimension))
+        t_(0.0), voxel_radius_(voxel_radius), vacant_(VacantType(dimension))
     {}
 
-    virtual ~VoxelSpaceBase() {}
+    virtual ~VoxelSpaceBase()
+    {
+        for (voxel_pool_map_type::iterator itr(voxel_pools_.begin());
+             itr != voxel_pools_.end(); ++itr)
+        {
+            delete itr->second;
+        }
+
+        for (molecule_pool_map_type::iterator itr(molecule_pools_.begin());
+             itr != molecule_pools_.end(); ++itr)
+        {
+            delete itr->second;
+        }
+    }
 
     /*
      * Static Members
@@ -219,12 +232,12 @@ public:
         return 2.0 * sqrt(3.0) * r * r;
     }
 
-    boost::shared_ptr<VoxelPool> vacant() {
-        return vacant_;
+    VoxelPool* vacant() {
+        return &vacant_;
     }
 
-    boost::shared_ptr<const VoxelPool> vacant() const {
-        return vacant_;
+    const VoxelPool* vacant() const {
+        return &vacant_;
     }
 
     bool has_voxel(const ParticleID& pid) const;
@@ -240,7 +253,7 @@ public:
 
     std::pair<ParticleID, ParticleVoxel> get_voxel_at(const coordinate_type& coord) const
     {
-        boost::shared_ptr<const VoxelPool> vp(get_voxel_pool_at(coord));
+        const VoxelPool* vp(get_voxel_pool_at(coord));
         return std::make_pair(vp->get_particle_id(coord),
                               ParticleVoxel(
                                   vp->species(),
@@ -250,15 +263,16 @@ public:
                                   get_location_serial(vp)));
     }
 
-    boost::shared_ptr<VoxelPool> find_voxel_pool(const Species& sp);
-    boost::shared_ptr<const VoxelPool> find_voxel_pool(const Species& sp) const;
+    VoxelPool* find_voxel_pool(const Species& sp);
+    const VoxelPool* find_voxel_pool(const Species& sp) const;
 
     bool has_molecule_pool(const Species& sp) const;
 
-    boost::shared_ptr<MoleculePool> find_molecule_pool(const Species& sp);
-    boost::shared_ptr<const MoleculePool> find_molecule_pool(const Species& sp) const;
+    MoleculePool* find_molecule_pool(const Species& sp);
+    const MoleculePool* find_molecule_pool(const Species& sp) const;
 
-    virtual boost::shared_ptr<VoxelPool> get_voxel_pool_at(const coordinate_type& coord) const = 0;
+    virtual VoxelPool* get_voxel_pool_at(const coordinate_type& coord) = 0;
+    virtual const VoxelPool* get_voxel_pool_at(const coordinate_type& coord) const = 0;
 
     /*
      * Coordinate Transformation
@@ -301,10 +315,10 @@ public:
 
 protected:
 
-    boost::shared_ptr<VoxelPool> get_voxel_pool(ParticleVoxel v);
+    VoxelPool* get_voxel_pool(ParticleVoxel v);
 
     void push_voxels(std::vector<std::pair<ParticleID, ParticleVoxel> >& voxels,
-                     const boost::shared_ptr<MoleculePool>& voxel_pool,
+                     const MoleculePool* voxel_pool,
                      const Species& species) const;
 
 protected:
@@ -312,7 +326,7 @@ protected:
     Real t_;
     Real voxel_radius_;
 
-    boost::shared_ptr<VoxelPool> vacant_;
+    VacantType vacant_;
 
     voxel_pool_map_type    voxel_pools_;
     molecule_pool_map_type molecule_pools_;

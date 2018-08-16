@@ -76,7 +76,7 @@ void SpatiocyteSimulator::register_events(
     const SpatiocyteWorld::space_type space(space_species_pair.first);
     const Species& sp(space_species_pair.second);
 
-    boost::shared_ptr<VoxelPool> pool(space->find_voxel_pool(sp));
+    const VoxelPool* pool(space->find_voxel_pool(sp));
     if (!pool->is_structure())
     {
         alpha_map_type::const_iterator itr(alpha_map_.find(sp));
@@ -96,7 +96,7 @@ boost::shared_ptr<SpatiocyteEvent> SpatiocyteSimulator::create_step_event(
         const SpatiocyteWorld::space_type space,
         const Species& species, const Real& t, const Real& alpha)
 {
-    boost::shared_ptr<MoleculePool> mpool(world_->find_molecule_pool(species));
+    const MoleculePool* mpool(world_->find_molecule_pool(species));
 
     if (mpool->get_dimension() == Shape::THREE)
     {

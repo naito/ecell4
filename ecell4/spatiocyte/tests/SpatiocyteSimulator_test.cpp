@@ -26,32 +26,7 @@ BOOST_AUTO_TEST_CASE(SpatiocyteSimulator_test_constructor)
 
     const std::string D("1e-12"), radius("2.5e-9");
 
-    ecell4::Species sp1("A", radius, D),
-        sp2("B", radius, D),
-        sp3("C", radius, D);
-    boost::shared_ptr<NetworkModel> model(new NetworkModel());
-    (*model).add_species_attribute(sp1);
-    (*model).add_species_attribute(sp2);
-    (*model).add_species_attribute(sp3);
-
-    boost::shared_ptr<GSLRandomNumberGenerator>
-        rng(new GSLRandomNumberGenerator());
-    boost::shared_ptr<SpatiocyteWorld> world(
-            new SpatiocyteWorld(edge_lengths, voxel_radius, rng));
-
-    SpatiocyteSimulator sim(model, world);
-}
-
-BOOST_AUTO_TEST_CASE(SpatiocyteSimulator_test_hdf5_save)
-{
-    const Real L(1e-6);
-    const Real3 edge_lengths(L, L, L);
-    const Real voxel_radius(DEFAULT_VOXEL_RADIUS);
-    const Integer N(60);
-
-    const std::string D("1e-12"), radius("2.5e-9");
-
-    ecell4::Species sp("A", radius, D);
+    const ecell4::Species sp("A", radius, D);
     boost::shared_ptr<NetworkModel> model(new NetworkModel());
     (*model).add_species_attribute(sp);
 
@@ -60,9 +35,7 @@ BOOST_AUTO_TEST_CASE(SpatiocyteSimulator_test_hdf5_save)
     boost::shared_ptr<SpatiocyteWorld> world(
             new SpatiocyteWorld(edge_lengths, voxel_radius, rng));
 
-    world->add_molecules(sp, N);
-    BOOST_ASSERT(world->num_molecules(sp) == N);
-
+    world->add_molecules(sp, 10);
     SpatiocyteSimulator sim(model, world);
 }
 
@@ -86,8 +59,6 @@ BOOST_AUTO_TEST_CASE(SpatiocyteSimulator_test_step_with_single_particle)
     BOOST_CHECK(world->new_voxel(sp, world->position2voxel(Real3(1.0e-8, 1.0e-8, 1.0e-8))));
 
     SpatiocyteSimulator sim(model, world);
-
-    const std::string hdf5path("/");
 
     for (int i(0); i < 50; ++i)
     {
@@ -149,8 +120,6 @@ BOOST_AUTO_TEST_CASE(SpatiocyteSimulator_test_save_step_with_single_species)
     world->add_molecules(sp, N);
     sim.initialize();
 
-    const std::string hdf5path("/");
-
     for (int i(0); i < 50; ++i)
     {
         sim.step();
@@ -179,8 +148,6 @@ BOOST_AUTO_TEST_CASE(SpatiocyteSimulator_test_save_step_with_periodic)
 
     world->add_molecules(sp, N);
     sim.initialize();
-
-    const std::string hdf5path("/");
 
     for (int i(0); i < 50; ++i)
     {
@@ -216,10 +183,11 @@ BOOST_AUTO_TEST_CASE(SpatiocyteSimulator_test_unimolecular_reaction)
     BOOST_CHECK(world->add_molecules(sp2, 25));
     sim.initialize();
 
-    for (Integer i(0); i < 10; ++i)
-    {
-        sim.step();
-    }
+    sim.step();
+    // for (Integer i(0); i < 10; ++i)
+    // {
+    //     sim.step();
+    // }
     BOOST_ASSERT(world->num_molecules(sp3) > 0);
     BOOST_ASSERT(25 - world->num_molecules(sp1) == world->num_molecules(sp3));
 }

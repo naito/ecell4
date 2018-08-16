@@ -216,11 +216,11 @@ BOOST_AUTO_TEST_CASE(LatticeSpace_test_add_remove_molecule)
         pid, ParticleVoxel(sp, coord, radius, D)));
     BOOST_CHECK_EQUAL(space.num_voxels(sp), 1);
 
-    boost::shared_ptr<const VoxelPool> mt(space.get_voxel_pool_at(coord));
+    const VoxelPool* mt(space.get_voxel_pool_at(coord));
     BOOST_CHECK(!mt->is_vacant());
 
     BOOST_CHECK(space.remove_voxel(coord));
-    boost::shared_ptr<const VoxelPool> vacant(space.get_voxel_pool_at(coord));
+    const VoxelPool* vacant(space.get_voxel_pool_at(coord));
     BOOST_CHECK(vacant->is_vacant());
 }
 
@@ -234,7 +234,7 @@ BOOST_AUTO_TEST_CASE(LatticeSpace_test_move)
     BOOST_CHECK(space.update_voxel(
         pid, ParticleVoxel(sp, coord, radius, D)));
 
-    boost::shared_ptr<VoxelPool> from_mt(space.get_voxel_pool_at(coord));
+    VoxelPool* from_mt(space.get_voxel_pool_at(coord));
     BOOST_CHECK(!from_mt->is_vacant());
 
     const Integer3 global1(2,4,4);
@@ -243,7 +243,7 @@ BOOST_AUTO_TEST_CASE(LatticeSpace_test_move)
 
     BOOST_CHECK(space.move(coord, to_coord));
 
-    boost::shared_ptr<VoxelPool> mt(space.get_voxel_pool_at(to_coord));
+    VoxelPool* mt(space.get_voxel_pool_at(to_coord));
     BOOST_CHECK(!mt->is_vacant());
 
     BOOST_CHECK(space.update_voxel(
@@ -269,7 +269,7 @@ BOOST_AUTO_TEST_CASE(LatticeSpace_test_update_molecule)
     BOOST_CHECK(space.update_voxel(
         pid, ParticleVoxel(product, coord, radius, D)));
 
-    boost::shared_ptr<const VoxelPool> mt(space.get_voxel_pool_at(coord));
+    const VoxelPool* mt(space.get_voxel_pool_at(coord));
     BOOST_ASSERT(mt->species() == product);
 }
 
@@ -627,15 +627,15 @@ BOOST_AUTO_TEST_CASE(LatticeSpace_test_save_and_load)
     {
         const Species species((*itr).serial());
 
-        boost::shared_ptr<const VoxelPool> vp1(space.find_voxel_pool(species));
-        boost::shared_ptr<const VoxelPool> vp2(space2.find_voxel_pool(species));
+        const VoxelPool* vp1(space.find_voxel_pool(species));
+        const VoxelPool* vp2(space2.find_voxel_pool(species));
 
         BOOST_CHECK_EQUAL(vp1->radius(), vp2->radius());
         BOOST_CHECK_EQUAL(vp1->D(), vp2->D());
         BOOST_CHECK_EQUAL(vp1->get_dimension(), vp2->get_dimension());
 
-        const MoleculePool* mtb1(dynamic_cast<const MoleculePool*>(vp1.get()));
-        const MoleculePool* mtb2(dynamic_cast<const MoleculePool*>(vp2.get()));
+        const MoleculePool* mtb1(dynamic_cast<const MoleculePool*>(vp1));
+        const MoleculePool* mtb2(dynamic_cast<const MoleculePool*>(vp2));
         BOOST_ASSERT((mtb1 && mtb2) || (!mtb1 && !mtb2));
 
         if (!mtb1 || !mtb2)

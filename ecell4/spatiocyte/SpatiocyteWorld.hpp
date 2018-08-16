@@ -445,7 +445,7 @@ public:
         return std::make_pair(id_voxel_pair.first, id_voxel_pair.second.species);
     }
 
-    boost::shared_ptr<VoxelPool> find_voxel_pool(const Species& species)
+    VoxelPool* find_voxel_pool(const Species& species)
     {
         for (space_container_type::iterator itr(spaces_.begin());
              itr != spaces_.end(); ++itr)
@@ -458,7 +458,7 @@ public:
         // throw "No VoxelPool corresponding to a given Species is found";
     }
 
-    boost::shared_ptr<const VoxelPool> find_voxel_pool(const Species& species) const
+    const VoxelPool* find_voxel_pool(const Species& species) const
     {
         for (space_container_type::const_iterator itr(spaces_.begin());
              itr != spaces_.end(); ++itr)
@@ -480,7 +480,7 @@ public:
         return false;
     }
 
-    boost::shared_ptr<MoleculePool> find_molecule_pool(const Species& species)
+    MoleculePool* find_molecule_pool(const Species& species)
     {
         for (space_container_type::iterator itr(spaces_.begin());
              itr != spaces_.end(); ++itr)
@@ -491,7 +491,7 @@ public:
         throw "No MoleculePool corresponding to a given Species is found";
     }
 
-    boost::shared_ptr<const MoleculePool> find_molecule_pool(const Species& species) const
+    const MoleculePool* find_molecule_pool(const Species& species) const
     {
         for (space_container_type::const_iterator itr(spaces_.begin());
              itr != spaces_.end(); ++itr)
@@ -745,7 +745,7 @@ public:
         return rng_;
     }
 
-    const MoleculeInfo get_molecule_info(boost::shared_ptr<const VoxelPool> mt) const
+    const MoleculeInfo get_molecule_info(const VoxelPool* mt) const
     {
         const MoleculeInfo info = {mt->radius(), mt->D(), get_location_serial(mt)};
         return info;

@@ -285,7 +285,7 @@ void SpatiocyteWorld::remove_molecules(const Species& sp, const Integer& num)
         throw std::invalid_argument("The number of molecules must be positive.");
     }
 
-    boost::shared_ptr<const MoleculePool> mtype(find_molecule_pool(sp));
+    const MoleculePool* mtype(find_molecule_pool(sp));
     if (mtype->size() < num)
     {
         throw std::invalid_argument(
@@ -314,7 +314,7 @@ SpatiocyteWorld::check_neighbor(const Voxel& voxel, const std::string& loc)
     for (unsigned int rnd(0); rnd < num_neighbors; ++rnd)
     {
         const Voxel neighbor(voxel.get_neighbor(rnd));
-        boost::shared_ptr<const VoxelPool> mt(neighbor.get_voxel_pool());
+        const VoxelPool* mt(neighbor.get_voxel_pool());
         const std::string serial(mt->is_vacant() ? "" : mt->species().serial());
         if (serial == loc)
         {
@@ -334,7 +334,7 @@ SpatiocyteWorld::check_neighbor(const Voxel& voxel, const std::string& loc)
         for (std::vector<Voxel>::const_iterator itr(neighbors->begin());
              itr != neighbors->end(); ++itr)
         {
-            boost::shared_ptr<const VoxelPool> mt(itr->get_voxel_pool());
+            const VoxelPool* mt(itr->get_voxel_pool());
             const std::string serial(mt->is_vacant() ? "" : mt->species().serial());
             if (serial == loc)
             {
