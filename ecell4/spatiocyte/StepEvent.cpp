@@ -198,7 +198,14 @@ void StepEvent::attempt_reaction_(
         return;
     }
 
-    const Real factor(calculate_dimensional_factor(from_mt, to_mt, world_));
+    const Real factor(calculate_dimensional_factor(
+                from_mt->get_dimension(),
+                from_mt->D(),
+                from_mt->is_structure(),
+                to_mt->get_dimension(),
+                to_mt->D(),
+                to_mt->is_structure(),
+                world_));
     const Real rnd(world_->rng()->uniform(0,1));
     Real accp(0.0);
 

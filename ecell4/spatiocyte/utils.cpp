@@ -8,97 +8,106 @@ namespace spatiocyte
 {
 
 const Real calculate_dimensional_factor(
-    boost::shared_ptr<const VoxelPool> mt0, boost::shared_ptr<const VoxelPool> mt1,
+    const Shape::dimension_kind dimensionA,
+    const Real D_A,
+    bool is_structureA,
+    const Shape::dimension_kind dimensionB,
+    const Real D_B,
+    bool is_structureB,
     boost::shared_ptr<const SpatiocyteWorld> world)
 {
     const Real voxel_radius(world->voxel_radius());
-    const Real unit_area(world->unit_area());
+    const Real sqrt2(sqrt(2.0));
 
-    const Species
-        speciesA(mt0->species()),
-        speciesB(mt1->species());
-    const Real
-        D_A(mt0->D()),
-        D_B(mt1->D());
-    const Shape::dimension_kind
-        dimensionA(mt0->get_dimension()),
-        dimensionB(mt1->get_dimension());
-    const Real Dtot(D_A + D_B);
-    const Real gamma(pow(2 * sqrt(2.0) + 4 * sqrt(3.0) + 3 * sqrt(6.0) + sqrt(22.0), 2) /
-        (72 * (6 * sqrt(2.0) + 4 * sqrt(3.0) + 3 * sqrt(6.0))));
-    Real factor(0);
     if (dimensionA == Shape::THREE && dimensionB == Shape::THREE)
     {
-        // if (speciesA != speciesB)
-        //     factor = 1. / (6 * sqrt(2.0) * Dtot * voxel_radius);
-        // else
-        //     factor = 1. / (6 * sqrt(2.0) * D_A * voxel_radius);
-        factor = 1. / (6 * sqrt(2.0) * Dtot * voxel_radius);
+        return 1. / (6 * sqrt2 * (D_A + D_B) * voxel_radius);
     }
-    else if (dimensionA == Shape::TWO && dimensionB == Shape::TWO)
+
+    if (dimensionA == Shape::TWO && dimensionB == Shape::TWO)
     {
-        // if (speciesA != speciesB)
-        //     factor = gamma / Dtot;
-        // else
-        //     factor = gamma / D_A;
-        factor = gamma / Dtot;
+        const Real sqrt3(sqrt(3.0));
+        const Real sqrt6(sqrt(6.0));
+        const Real gamma(pow(2*sqrt2 + 4*sqrt3 + 3*sqrt6 + sqrt(22.0), 2) /
+                        (72*(6*sqrt2 + 4*sqrt3 + 3*sqrt6)));
+        return gamma / (D_A + D_B);
     }
-    else if (dimensionA == Shape::THREE && dimensionB == Shape::TWO)
+
+    if (dimensionA == Shape::THREE && dimensionB == Shape::TWO)
     {
-        factor = sqrt(2.0) / (3 * D_A * voxel_radius);
-        if (mt1->is_structure()) // B is Surface
+        Real factor = sqrt2 / (3 * D_A * voxel_radius);
+        if (is_structureB)
         {
-            factor *= unit_area;
+            factor *= world->unit_area();
         }
+        return factor;
     }
-    else if (dimensionA == Shape::TWO && dimensionB == Shape::THREE)
+
+    if (dimensionA == Shape::TWO && dimensionB == Shape::THREE)
     {
-        factor = sqrt(2.0) / (3 * D_B * voxel_radius);
-        if (mt0->is_structure()) // A is Surface
+        Real factor = sqrt2 / (3 * D_B * voxel_radius);
+        if (is_structureA)
         {
-            factor *= unit_area;
+            factor *= world->unit_area();
         }
+        return factor;
     }
-    else
-        throw NotSupported("The dimension of a structure must be two or three.");
-    return factor;
+
+    throw NotSupported("The dimension of a structure must be two or three.");
 }
 
-const Real calculate_alpha(const ReactionRule& rr, const boost::shared_ptr<SpatiocyteWorld>& world)
+struct DimensionInfo
+{
+    DimensionInfo (Shape::dimension_kind dimension, Real D, bool is_structure)
+        : dimension(dimension), D(D), is_structure(is_structure) {}
+
+    Shape::dimension_kind dimension;
+    Real D;
+    bool is_structure;
+};
+
+inline DimensionInfo
+get_dimension_info(
+    boost::shared_ptr<const SpatiocyteWorld> world,
+    const Species& species)
+{
+    try
+    {
+        boost::shared_ptr<const VoxelPool> pool = world->find_voxel_pool(species);
+        return DimensionInfo(pool->get_dimension(), pool->D(), pool->is_structure());
+    }
+    catch (NotFound e) {}
+
+    const MoleculeInfo info = world->get_molecule_info(species);
+
+    if (info.loc != "")
+    {
+        try
+        {
+            boost::shared_ptr<const VoxelPool> location = world->find_voxel_pool(Species(info.loc));
+            return DimensionInfo(location->get_dimension(), info.D, false);
+        } catch (NotFound e) {}
+    }
+
+    return DimensionInfo(Shape::THREE, info.D, false);
+}
+
+const Real calculate_alpha(const ReactionRule& rr, boost::shared_ptr<const SpatiocyteWorld> world)
 {
     const ReactionRule::reactant_container_type& reactants(rr.reactants());
     if (reactants.size() != 2)
         return 1.0;
 
-    const Species species[2] = {reactants.at(0), reactants.at(1)};
-    const MoleculeInfo info[2] = {
-        world->get_molecule_info(species[0]),
-        world->get_molecule_info(species[1])
-    };
-    boost::shared_ptr<VoxelPool> mt[2];
-    for (int i(0); i < 2; ++i) {
-        try
-        {
-            mt[i] = world->find_voxel_pool(species[i]);
-        }
-        catch(NotFound e)
-        {
-            boost::weak_ptr<VoxelPool> location(world->vacant());
-            if (info[i].loc != "") {
-                try
-                {
-                    location = world->find_voxel_pool(Species(info[i].loc));
-                }
-                catch(NotFound e)
-                {
-                    ;
-                }
-            }
-            mt[i] = boost::shared_ptr<VoxelPool>(new MoleculePool(species[i], location, info[i].radius, info[i].D));
-        }
-    }
-    const Real factor(calculate_dimensional_factor(mt[0], mt[1], boost::const_pointer_cast<const SpatiocyteWorld>(world)));
+    const DimensionInfo dinfoA(get_dimension_info(world, reactants.at(0)));
+    const DimensionInfo dinfoB(get_dimension_info(world, reactants.at(1)));
+
+    const Real factor(calculate_dimensional_factor(
+                dinfoA.dimension, dinfoA.D, dinfoA.is_structure,
+                dinfoB.dimension, dinfoB.D, dinfoB.is_structure,
+                world));
+
     const Real alpha(1.0 / (factor * rr.k()));
+
     return alpha < 1.0 ? alpha : 1.0;
 }
 

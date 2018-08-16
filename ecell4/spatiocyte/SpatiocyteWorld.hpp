@@ -345,11 +345,6 @@ public:
         return get_root()->unit_area();
     }
 
-    // TODO
-    boost::shared_ptr<VoxelPool> vacant() const {
-        return get_root()->vacant();
-    }
-
     bool has_voxel(const ParticleID& pid) const
     {
         for (space_container_type::const_iterator itr(spaces_.begin());
@@ -473,7 +468,7 @@ public:
             if ((*itr)->has_species(species))
                 return (*itr)->find_voxel_pool(species);
         }
-        throw "No VoxelPool corresponding to a given Species is found";
+        throw NotFound("No VoxelPool corresponding to a given Species is found");
     }
 
     bool has_molecule_pool(const Species& species) const
