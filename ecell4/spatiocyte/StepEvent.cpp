@@ -32,7 +32,7 @@ StepEvent3D::StepEvent3D(boost::shared_ptr<Model> model,
                          const Real alpha)
     : StepEvent(model, world, space, species, t, alpha)
 {
-    const SpatiocyteWorld::molecule_info_type minfo(world_->get_molecule_info(species));
+    const MoleculeInfo minfo(world_->get_molecule_info(species));
     const Real D(minfo.D);
     const Real R(world_->voxel_radius());
 
@@ -101,7 +101,7 @@ StepEvent2D::StepEvent2D(boost::shared_ptr<Model> model,
                          const Real alpha)
     : StepEvent(model, world, space, species, t, alpha)
 {
-    const SpatiocyteWorld::molecule_info_type minfo(world_->get_molecule_info(species));
+    const MoleculeInfo minfo(world_->get_molecule_info(species));
     const Real D(minfo.D);
     const Real R(world_->voxel_radius());
 
